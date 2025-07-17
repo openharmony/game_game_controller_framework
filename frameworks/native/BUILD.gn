@@ -1,0 +1,160 @@
+# Copyright (c) 2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+import("//build/config/components/idl_tool/idl.gni")
+import("//build/ohos.gni")
+import("//build/ohos_var.gni")
+import(
+"//domains/game_controller/game_controller_framework/game_controller_framework.gni")
+
+idl_gen_interface("game_controller_interface") {
+  sources = [ "IGameControllerServerInterface.idl" ]
+  log_domainid = "0xD004732"
+  log_tag = "GameController"
+}
+
+config("gamecontroller_ipc_test_public") {
+  include_dirs = [
+    "${target_gen_dir}",
+    "${game_controller_framework_innerkits_path}/common/include",
+  ]
+}
+
+ohos_source_set("gamecontroller_ipc_test") {
+  output_values = get_target_outputs(":game_controller_interface")
+  sources = []
+  sources += filter_include(output_values, [ "*.cpp" ])
+  public_configs = [ ":gamecontroller_ipc_test_public" ]
+  deps = [ ":game_controller_interface" ]
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_core",
+    "samgr:samgr_proxy",
+  ]
+  subsystem_name = "game"
+  part_name = "game_controller_framework"
+}
+
+config("gamecontroller_client_config") {
+  include_dirs = [
+    "${target_gen_dir}",
+    "${game_controller_framework_innerkits_path}",
+    "${game_controller_framework_innerkits_path}/bundle_info/include",
+    "${game_controller_framework_innerkits_path}/gamecontroller_service/include",
+    "${game_controller_framework_innerkits_path}/input_to_touch/include",
+    "${game_controller_framework_innerkits_path}/common/include",
+    "${game_controller_framework_innerkits_path}/multi_modal_input/include",
+    "${game_controller_framework_innerkits_path}/window/include",
+    "${game_controller_framework_innerkits_path}/key_mapping/include",
+  ]
+}
+
+ohos_shared_library("gamecontroller_client") {
+  sanitize = {
+    boundary_sanitize = true
+    integer_overflow = true
+    cfi = true
+    debug = false
+    stack_protector_ret = true
+    ubsan = true
+  }
+  cflags = [
+    "-fstack-protector-strong",
+    "-fstack-protector-all",
+    "-D_FORTIFY_SOURCE=2",
+    "-O2",
+  ]
+  cflags_cc = cflags
+  sources = [
+    "bundle_info/src/bundle_manager.cpp",
+    "common/src/gamecontroller_utils.cpp",
+    "gamecontroller_service/src/gamecontroller_server_client.cpp",
+    "gamecontroller_service/src/gamecontroller_server_client_proxy.cpp",
+    "input_to_touch/src/input_to_touch_client.cpp",
+    "key_mapping/src/key_mapping_handle.cpp",
+    "key_mapping/src/key_mapping_service.cpp",
+    "key_mapping/src/key_to_touch_handler.cpp",
+    "key_mapping/src/key_to_touch_manager.cpp",
+    "multi_modal_input/src/device_event_callback.cpp",
+    "multi_modal_input/src/device_identify_service.cpp",
+    "multi_modal_input/src/device_info_service.cpp",
+    "multi_modal_input/src/game_device_client.cpp",
+    "multi_modal_input/src/input_device_listener.cpp",
+    "multi_modal_input/src/multi_modal_input_mgt_service.cpp",
+    "multi_modal_input/src/multi_modal_input_monitor.cpp",
+    "window/src/input_event_callback.cpp",
+    "window/src/input_event_client.cpp",
+    "window/src/window_input_intercept.cpp",
+  ]
+
+  output_values = get_target_outputs(":game_controller_interface")
+  print("output_values:", output_values)
+  sources += filter_include(output_values, [ "*.cpp" ])
+
+  public_configs = [ ":gamecontroller_client_config" ]
+
+  deps = [ ":game_controller_interface" ]
+
+  external_deps = [
+    "bundle_framework:appexecfwk_base",
+    "bundle_framework:appexecfwk_core",
+    "eventhandler:libeventhandler",
+    "c_utils:utils",
+    "ffrt:libffrt",
+    "hilog:libhilog",
+    "init:libbegetutil",
+    "input:libmmi-client",
+    "ipc:ipc_core",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+    "window_manager:libwm",
+  ]
+  subsystem_name = "game"
+  part_name = "game_controller_framework"
+}
+
+config("gamecontroller_event_config") {
+  include_dirs = [ "${game_controller_framework_innerkits_path}/event/include" ]
+}
+
+ohos_shared_library("gamecontroller_event") {
+  sanitize = {
+    boundary_sanitize = true
+    integer_overflow = true
+    cfi = true
+    debug = false
+    stack_protector_ret = true
+    ubsan = true
+  }
+  cflags = [
+    "-fstack-protector-strong",
+    "-fstack-protector-all",
+    "-D_FORTIFY_SOURCE=2",
+    "-O2",
+  ]
+  cflags_cc = cflags
+  sources = [
+    "event/src/entryModule.cpp",
+    "event/src/public_event_listener.cpp",
+  ]
+
+  deps = [ ":gamecontroller_client" ]
+
+  defines = []
+
+  public_configs = [ ":gamecontroller_event_config" ]
+
+  external_deps = [ "hilog:libhilog" ]
+  subsystem_name = "game"
+  part_name = "game_controller_framework"
+}

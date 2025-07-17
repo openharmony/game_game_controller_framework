@@ -1,0 +1,72 @@
+{
+  "name": "@ohos/game_controller_framework",
+  "version": "5.1",
+  "description": "game controller framework part",
+  "publishAs": "code-segment",
+  "homePage": "https://gitee.com/openharmony",
+  "license": "Apache License 2.0",
+  "scripts": {},
+  "envs": [],
+  "dirs": [],
+  "author": {},
+  "contributors": [],
+  "segment": {
+    "destPath": "domains/game_controller/game_controller_framework"
+  },
+  "component": {
+    "name": "game_controller_framework",
+    "subsystem": "game",
+    "syscap": [
+      "SystemCapability.Game.GameController"
+    ],
+    "hisysevent_config": [],
+    "features": [
+    ],
+    "adapted_system_type": [
+      "standard"
+    ],
+    "deps": {
+      "components": [
+        "hilog",
+        "ipc",
+        "safwk",
+        "samgr",
+        "c_utils",
+        "ffrt",
+        "json",
+        "input",
+        "window_manager",
+        "bundle_framework",
+        "eventhandler",
+        "init"
+      ]
+    },
+    "build": {
+      "sub_component": [
+        "//domains/game_controller/game_controller_framework:game_controller_framework_packages"
+      ],
+      "test": [
+        "//domains/game_controller/game_controller_framework/test/unittest:unittest"
+      ],
+      "inner_kits": [
+        {
+          "header": {
+            "header_base": "//domains/game_controller/game_controller_framework/frameworks/native",
+            "header_files": [
+              "common/include/gamecontroller_constants.h",
+              "common/include/gamecontroller_errors.h",
+              "common/include/gamecontroller_log.h",
+              "common/include/gamecontroller_utils.h",
+              "common/include/gamecontroller_client_model.h",
+              "common/include/gamecontroller_keymapping_model.h",
+              "multi_modal_input/include/game_device_client.h",
+              "gamecontroller_service/include/gamecontroller_server_client.h",
+              "window/include/input_event_client.h"
+            ]
+          },
+          "name": "//domains/game_controller/game_controller_framework/frameworks/native:gamecontroller_client"
+        }
+      ]
+    }
+  }
+}
