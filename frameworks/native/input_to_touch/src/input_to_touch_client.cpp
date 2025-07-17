@@ -31,7 +31,8 @@ namespace {
 constexpr const char* PERMISSION = "ohos.permission.PUBLISH_SYSTEM_COMMON_EVENT";
 constexpr const char* KEY_MAPPING_CHANGE_EVENT = "usual.event.ohos.gamecontroller.game.keymapping.change";
 constexpr const char* EVENT_PARAM_BUNDLE_NAME = "bundleName";
-constexpr const char* EVENT_PARAM_UNIQ = "uniq";
+constexpr const char* EVENT_PARAM_DEVICE_TYPE = "deviceType";
+
 const int32_t GAME_CONTROLLER_UID = 6227;
 static BundleBasicInfo g_bundleInfo;
 }
@@ -112,22 +113,17 @@ void GameCommonEventListener::OnReceiveEvent(const EventFwk::CommonEventData &da
     AAFwk::Want want = data.GetWant();
     std::string bundleName = want.GetStringParam(EVENT_PARAM_BUNDLE_NAME);
     if (bundleName != g_bundleInfo.bundleName) {
-        HILOGI("no need handle bundleName[%{public}s]'s public event. the current bundleName[%{public}s]'s",
+        HILOGW("no need handle bundleName[%{public}s]'s public event. the current bundleName[%{public}s]'s",
                bundleName.c_str(),
                g_bundleInfo.bundleName.c_str());
         return;
     }
 
-    std::string uniq = want.GetStringParam(EVENT_PARAM_UNIQ);
-    DeviceInfo deviceInfo = DelayedSingleton<MultiModalInputMgtService>::GetInstance()->GetDeviceInfoByUniq(uniq);
-    if (deviceInfo.UniqIsEmpty()) {
-        HILOGI("no need handle bundleName:%{public}s, uniq:%{public}s", bundleName.c_str(),
-               StringUtils::AnonymizationUniq(uniq).c_str());
-        return;
-    }
-
-    HILOGI("Get the keymapping info by bundleName:%{public}s, uniq:%{public}s", bundleName.c_str(),
-           StringUtils::AnonymizationUniq(uniq).c_str());
+    int deviceType = want.GetIntParam(EVENT_PARAM_DEVICE_TYPE, 0);
+    DeviceInfo deviceInfo;
+    deviceInfo.deviceType = static_cast<DeviceTypeEnum>(deviceType);
+    HILOGI("Get the keymapping info by bundleName:%{public}s, deviceType:%{public}d", bundleName.c_str(),
+           deviceType);
     DelayedSingleton<KeyMappingService>::GetInstance()->GetGameKeyMappingFromSa(deviceInfo, false);
 }
 }

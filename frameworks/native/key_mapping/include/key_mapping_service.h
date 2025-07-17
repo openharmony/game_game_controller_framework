@@ -124,7 +124,7 @@ private:
 
     std::string bundleVersion_;
 
-    std::unordered_map<std::string, KeyMappingInfo> customKeyMappingInfoMap_;
+    std::unordered_map<DeviceTypeEnum, KeyMappingInfo> customKeyMappingInfoMap_;
 
     std::unordered_map<DeviceTypeEnum, KeyMappingInfo> defaultKeyMappingInfoMap_;
 };

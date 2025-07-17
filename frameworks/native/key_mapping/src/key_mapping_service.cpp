@@ -102,7 +102,6 @@ void KeyMappingService::ExecuteGetGameKeyMapping(const DeviceInfo &deviceInfo)
     std::lock_guard<std::mutex> lock(isSupportGameKeyMappingMutex_);
     GetGameKeyMappingInfoParam param;
     param.bundleName = bundleName_;
-    param.uniq = deviceInfo.uniq;
     param.deviceType = deviceInfo.deviceType;
     GameKeyMappingInfo gameKeyMappingInfo;
     HILOGI("GetGameKeyMapping. uniq[%{public}s]", deviceInfo.anonymizationUniq.c_str());
@@ -111,14 +110,17 @@ void KeyMappingService::ExecuteGetGameKeyMapping(const DeviceInfo &deviceInfo)
     if (result == GAME_CONTROLLER_SUCCESS) {
         if (gameKeyMappingInfo.customKeyToTouchMappings.empty() &&
             gameKeyMappingInfo.defaultKeyToTouchMappings.empty()) {
-            HILOGW("uniq[%{public}s] doesn't have key-mapping config", deviceInfo.anonymizationUniq.c_str());
+            HILOGW("deviceType[%{public}s] doesn't have key-mapping config",
+                   std::to_string(deviceInfo.deviceType).c_str());
             return;
         }
-        HILOGI("uniq[%{public}s] has key-mapping config", deviceInfo.anonymizationUniq.c_str());
+        HILOGI("deviceType[%{public}s] has key-mapping config",
+               std::to_string(deviceInfo.deviceType).c_str());
         if (gameKeyMappingInfo.customKeyToTouchMappings.empty()) {
-            customKeyMappingInfoMap_.erase(deviceInfo.uniq);
+            customKeyMappingInfoMap_.erase(deviceInfo.deviceType);
         } else {
-            customKeyMappingInfoMap_[deviceInfo.uniq] = KeyMappingInfo(gameKeyMappingInfo.customKeyToTouchMappings);
+            customKeyMappingInfoMap_[deviceInfo.deviceType] = KeyMappingInfo(
+                gameKeyMappingInfo.customKeyToTouchMappings);
         }
         if (gameKeyMappingInfo.defaultKeyToTouchMappings.empty()) {
             defaultKeyMappingInfoMap_.erase(deviceInfo.deviceType);
@@ -128,8 +130,8 @@ void KeyMappingService::ExecuteGetGameKeyMapping(const DeviceInfo &deviceInfo)
         }
         return;
     }
-    HILOGE("GetGameKeyMapping failed. uniq[%{public}s]. result [%{public}d]",
-           deviceInfo.anonymizationUniq.c_str(), result);
+    HILOGE("GetGameKeyMapping failed. deviceType[%{public}s]. result [%{public}d]",
+           std::to_string(deviceInfo.deviceType).c_str(), result);
 }
 
 void KeyMappingService::ExecuteBroadCastDeviceInfo(const DeviceInfo &deviceInfo)
@@ -152,8 +154,8 @@ std::pair<bool, KeyToTouchMappingInfo> KeyMappingService::GetGameKeyMappingFromC
     /**
      * If a custom template exists, use the custom template firstly.
      */
-    if (customKeyMappingInfoMap_.find(deviceInfo.uniq) != customKeyMappingInfoMap_.end()) {
-        info = customKeyMappingInfoMap_[deviceInfo.uniq];
+    if (customKeyMappingInfoMap_.find(deviceInfo.deviceType) != customKeyMappingInfoMap_.end()) {
+        info = customKeyMappingInfoMap_[deviceInfo.deviceType];
     } else {
         if (defaultKeyMappingInfoMap_.find(deviceInfo.deviceType) != defaultKeyMappingInfoMap_.end()) {
             pair.first = true;
