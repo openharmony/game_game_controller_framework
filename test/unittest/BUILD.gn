@@ -1,0 +1,139 @@
+# Copyright (c) 2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/config/features.gni")
+import("//build/ohos.gni")
+import("//build/test.gni")
+import(
+    "//domains/game_controller/game_controller_framework/game_controller_framework.gni")
+
+module_output_path = "game_controller_framework/game_controller_framework"
+
+gamecontroller_framework_include_dirs = [
+  "${game_controller_framework_innerkits_path}",
+  "${game_controller_framework_innerkits_path}/bundle_info/include",
+  "${game_controller_framework_innerkits_path}/gamecontroller_service/include",
+  "${game_controller_framework_innerkits_path}/input_to_touch/include",
+  "${game_controller_framework_innerkits_path}/common/include",
+  "${game_controller_framework_innerkits_path}/key_mapping/include",
+  "${game_controller_framework_innerkits_path}/multi_modal_input/include",
+  "${game_controller_framework_innerkits_path}/window/include",
+  "${game_controller_framework_path}/test/mock/multi_modal_input",
+  "${game_controller_framework_path}/test/mock/gamecontroller_service",
+  "${game_controller_framework_path}/test/unittest/window",
+]
+
+config("gamecontroller_framework_unittest_config") {
+  visibility = [ ":*" ]
+  cflags_cc = [ "-fexceptions" ]
+  cflags = [ "--coverage" ]
+  ldflags = [ "--coverage" ]
+}
+
+# Just for test.
+ohos_static_library("gamecontroller_framework_static_test") {
+  testonly = true
+  use_exceptions = true
+  visibility = [ ":*" ]
+
+  include_dirs = gamecontroller_framework_include_dirs
+
+  cflags = [ "-w" ]
+  cflags_cc = []
+
+  sources = [
+    "${game_controller_framework_innerkits_path}/bundle_info/src/bundle_manager.cpp",
+    "${game_controller_framework_innerkits_path}/common/src/gamecontroller_utils.cpp",
+    "${game_controller_framework_innerkits_path}/gamecontroller_service/src/gamecontroller_server_client.cpp",
+    "${game_controller_framework_innerkits_path}/gamecontroller_service/src/gamecontroller_server_client_proxy.cpp",
+    "${game_controller_framework_innerkits_path}/input_to_touch/src/input_to_touch_client.cpp",
+    "${game_controller_framework_innerkits_path}/key_mapping/src/key_mapping_handle.cpp",
+    "${game_controller_framework_innerkits_path}/key_mapping/src/key_mapping_service.cpp",
+    "${game_controller_framework_innerkits_path}/key_mapping/src/key_to_touch_handler.cpp",
+    "${game_controller_framework_innerkits_path}/key_mapping/src/key_to_touch_manager.cpp",
+    "${game_controller_framework_innerkits_path}/multi_modal_input/src/device_event_callback.cpp",
+    "${game_controller_framework_innerkits_path}/multi_modal_input/src/device_identify_service.cpp",
+    "${game_controller_framework_innerkits_path}/multi_modal_input/src/device_info_service.cpp",
+    "${game_controller_framework_innerkits_path}/multi_modal_input/src/game_device_client.cpp",
+    "${game_controller_framework_innerkits_path}/multi_modal_input/src/input_device_listener.cpp",
+    "${game_controller_framework_innerkits_path}/multi_modal_input/src/multi_modal_input_mgt_service.cpp",
+    "${game_controller_framework_innerkits_path}/multi_modal_input/src/multi_modal_input_monitor.cpp",
+    "${game_controller_framework_innerkits_path}/window/src/input_event_callback.cpp",
+    "${game_controller_framework_innerkits_path}/window/src/input_event_client.cpp",
+    "${game_controller_framework_innerkits_path}/window/src/window_input_intercept.cpp",
+  ]
+
+  external_deps = [
+    "bundle_framework:appexecfwk_base",
+    "bundle_framework:appexecfwk_core",
+    "c_utils:utils",
+    "ffrt:libffrt",
+    "hilog:libhilog",
+    "init:libbegetutil",
+    "input:libmmi-client",
+    "ipc:ipc_core",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+    "window_manager:libwm",
+  ]
+
+  deps =
+      [ "${game_controller_framework_innerkits_path}:gamecontroller_ipc_test" ]
+
+  subsystem_name = "game"
+  part_name = "game_controller_framework"
+}
+
+ohos_unittest("GameControllerFrameworkTest") {
+  testonly = true
+  module_out_path = module_output_path
+
+  include_dirs = gamecontroller_framework_include_dirs
+
+  configs = [ ":gamecontroller_framework_unittest_config" ]
+  sources = [
+    "common/gamecontroller_client_model_test.cpp",
+    "common/gamecontroller_keymapping_model_test.cpp",
+    "common/gamecontroller_utils_test.cpp",
+    "multi_modal_input/device_event_callback_test.cpp",
+    "multi_modal_input/device_identify_service_test.cpp",
+    "multi_modal_input/game_device_client_test.cpp",
+    "multi_modal_input/multi_modal_input_mgt_service_test.cpp",
+    "window/input_event_callback_test.cpp",
+    "window/input_event_client_test.cpp",
+    "window/window_input_intercept_test.cpp",
+  ]
+  deps = [ ":gamecontroller_framework_static_test" ]
+
+  use_exceptions = true
+
+  external_deps = [
+    "c_utils:utils",
+    "ffrt:libffrt",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "hilog:libhilog",
+    "input:libmmi-client",
+    "ipc:ipc_core",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+    "window_manager:libwm",
+  ]
+  subsystem_name = "game"
+  part_name = "game_controller_framework"
+}
+
+group("unittest") {
+  testonly = true
+  deps = [ ":GameControllerFrameworkTest" ]
+}

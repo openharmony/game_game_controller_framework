@@ -1,0 +1,68 @@
+/*
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package OHOS.GameController; 
+
+sequenceable GamecontrollerClientModel..OHOS.GameController.DeviceInfo;
+sequenceable GamecontrollerClientModel..OHOS.GameController.IdentifiedDeviceInfo;
+sequenceable GamecontrollerKeymappingModel..OHOS.GameController.GameInfo;
+sequenceable GamecontrollerKeymappingModel..OHOS.GameController.GameKeyMappingInfo;
+sequenceable GamecontrollerKeymappingModel..OHOS.GameController.GetGameKeyMappingInfoParam;
+
+interface IGameControllerServerInterface {
+   /**
+     * Perform device identification.
+     */
+    void IdentifyDevice([in] DeviceInfo[] deviceInfos, [out] DeviceInfo[] identifyResult);
+
+    /**
+     * Synchronize Identified device information.
+     */
+    void SyncIdentifiedDeviceInfos([in] IdentifiedDeviceInfo[] deviceInfos);
+
+    /**
+     * Indicates whether to support game key mapping configuration.
+     */
+    void IsSupportGameKeyMapping([in]GameInfo gameInfo, [out] GameInfo resultGameInfo);
+
+    /**
+     * Synchronize games that support key mapping
+     */
+    void SyncSupportKeyMappingGames([in] boolean isSyncAll, [in]GameInfo[] gameInfos);
+
+    /**
+     * Set Custom Game Key Mapping Configuration
+     */
+    void SetCustomGameKeyMappingConfig([in] GameKeyMappingInfo gameKeyMappingInfo);
+
+    /**
+     * Set default game key mapping configuration
+     */
+    void SetDefaultGameKeyMappingConfig([in] GameKeyMappingInfo gameKeyMappingInfo);
+
+    /**
+     * Obtains the game key mapping configuration.
+     */
+    void GetGameKeyMappingConfig([in] GetGameKeyMappingInfoParam param, [out] GameKeyMappingInfo gameKeyMappingInfo);
+
+    /**
+     * Broadcast device information
+     */
+    void BroadcastDeviceInfo([in]GameInfo gameInfo, [in]DeviceInfo deviceInfo);
+
+    /**
+     * Broadcast open the template configuration page
+     */
+    void BroadcastOpenTemplateConfig([in]GameInfo gameInfo, [in]DeviceInfo deviceInfo);
+}
