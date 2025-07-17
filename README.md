@@ -1,0 +1,3 @@
+# game_game_controller_framework
+
+GameController用于给游戏开发者提供游戏外设接入能力的API以及给设备厂商提供输入转触控能力。其中game_controller_framework为GameController的framework层，用于提供游戏外设上下线监听和外设输入事件监听；以及给设备厂商提供输入转触控的实现能力。
