@@ -32,6 +32,7 @@
         "safwk",
         "samgr",
         "c_utils",
+        "common_event_service",
         "ffrt",
         "json",
         "input",
