@@ -2,8 +2,11 @@
 
 ## Introduction
 
-The Framework layer of the game controller listens to the online and offline of game devices and the input of game
-devices.
+The GameController provides game developers with APIs for integrating gaming peripherals and offers device manufacturers the capability
+to convert input into touch controls.
+The game_controller_framework is the framework layer of GameController, designed to provide listening capabilities for the connection 
+and disconnection of gaming peripherals and the monitoring of input events from these peripherals. It also offers device manufacturers 
+the ability to implement input-to-touch conversion.
 
 ## Directory Structure
 

@@ -82,6 +82,7 @@ ohos_static_library("gamecontroller_framework_static_test") {
     "init:libbegetutil",
     "input:libmmi-client",
     "ipc:ipc_core",
+    "ipc:ipc_single",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
     "window_manager:libwm",
