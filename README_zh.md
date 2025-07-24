@@ -43,8 +43,15 @@ GameController用于给游戏开发者提供游戏外设接入能力的API以及
         └── multi_modal_input 
         └── window   
 ```
+## 编译
 
+1. [下载OpenHarmony主干代码](https://www.openharmony.cn/download/)
+2. 执行编译
+```shell
+./build.sh --product-name rk3568 --ccache --build-target game_controller_framework --build-variant root
+```
 ## 约束
 
 - 语言版本
     - C++11或以上
+  
