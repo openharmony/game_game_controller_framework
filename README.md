@@ -46,6 +46,20 @@ the ability to implement input-to-touch conversion.
         └── multi_modal_input 
         └── window   
 ```
+## Compile
+
+1. [Download the master branch code of OpenHarmony](https://www.openharmony.cn/download/)
+2. Execute compilation
+```shell
+./build.sh --product-name rk3568 --ccache --build-target game_controller_framework --build-variant root
+```
+3. The result path of compilation : /out/rk3568/game/game_controller_framework
+
+
+## Reference Document
+[Development Guide](https://gitcode.com/weixin_42784160/docs/blob/master/zh-cn/application-dev/game-controller/Readme-CN.md)
+
+[API Documentation](https://gitcode.com/weixin_42784160/docs/blob/master/zh-cn/application-dev/reference/apis-game-controller-kit/Readme-CN.md)
 
 ## Constraints
 

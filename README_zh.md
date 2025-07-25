@@ -50,6 +50,13 @@ GameController用于给游戏开发者提供游戏外设接入能力的API以及
 ```shell
 ./build.sh --product-name rk3568 --ccache --build-target game_controller_framework --build-variant root
 ```
+3. 编译结果路径：/out/rk3568/game/game_controller_framework
+
+## 参考文档
+[开发指南](https://gitcode.com/weixin_42784160/docs/blob/master/zh-cn/application-dev/game-controller/Readme-CN.md)
+
+[API文档](https://gitcode.com/weixin_42784160/docs/blob/master/zh-cn/application-dev/reference/apis-game-controller-kit/Readme-CN.md)
+
 ## 约束
 
 - 语言版本
