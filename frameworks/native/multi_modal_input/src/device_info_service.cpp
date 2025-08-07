@@ -161,9 +161,12 @@ bool DeviceInfoService::GetUniqOnGetAllDeviceInfos(std::vector<InputDeviceInfo> 
         }
     }
     if (inputDeviceInfo.UniqIsEmpty()) {
-        HILOGW("[GameController]GetAllDeviceInfos discard system InputDeviceInfo %{public}s",
-               inputDeviceInfo.GetDeviceInfoDesc().c_str());
-        return false;
+        inputDeviceInfo.uniq = std::to_string(inputDeviceInfo.vendor) + "_"
+            + std::to_string(inputDeviceInfo.product);
+        HILOGI("[GameController] GetAllDeviceInfos: Embeded device. "
+               "deviceId is %{public}d, vendor is %{public}d, product is %{public}d. "
+               "Because uniq is empty,construct a new uniq. ",
+               inputDeviceInfo.id, inputDeviceInfo.vendor, inputDeviceInfo.product);
     }
     return true;
 }

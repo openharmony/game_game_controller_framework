@@ -51,12 +51,6 @@ int32_t GameControllerServerClient::BroadcastDeviceInfo(const GameInfo &gameInfo
         ->BroadcastDeviceInfo(gameInfo, deviceInfo);
 }
 
-int32_t GameControllerServerClient::IsSupportGameKeyMapping(const GameInfo &gameInfo, GameInfo &resultGameInfo)
-{
-    return DelayedSingleton<GameControllerServerClientProxy>::GetInstance()
-        ->IsSupportGameKeyMapping(gameInfo, resultGameInfo);
-}
-
 int32_t GameControllerServerClient::SyncSupportKeyMappingGames(bool isSyncAll,
                                                                const std::vector<GameInfo> &gameInfos)
 {
@@ -80,6 +74,12 @@ int32_t GameControllerServerClient::SyncIdentifiedDeviceInfos(const std::vector<
 {
     return DelayedSingleton<GameControllerServerClientProxy>::GetInstance()
         ->SyncIdentifiedDeviceInfos(deviceInfos);
+}
+
+int32_t GameControllerServerClient::EnableGameKeyMapping(const GameInfo &gameInfo, const bool isEnable)
+{
+    return DelayedSingleton<GameControllerServerClientProxy>::GetInstance()
+        ->EnableGameKeyMapping(gameInfo, isEnable);
 }
 
 }

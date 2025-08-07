@@ -205,20 +205,6 @@ int32_t GameControllerServerClientProxy::BroadcastDeviceInfo(const GameInfo &gam
     return ret;
 }
 
-int32_t GameControllerServerClientProxy::IsSupportGameKeyMapping(const GameInfo &gameInfo, GameInfo &resultGameInfo)
-{
-    sptr<IGameControllerServerInterface> serviceProxy = GetServiceProxy();
-    if (serviceProxy == nullptr) {
-        HILOGE("get GameControllerServerProxy failed!");
-        return GAME_ERR_IPC_CONNECT_STUB_FAIL;
-    }
-    int32_t ret = serviceProxy->IsSupportGameKeyMapping(gameInfo, resultGameInfo);
-    if (ret != GAME_CONTROLLER_SUCCESS) {
-        HILOGE("IsSupportGameKeyMapping failed. ret=[%{public}d]", ret);
-    }
-    return ret;
-}
-
 int32_t GameControllerServerClientProxy::SyncSupportKeyMappingGames(bool isSyncAll,
                                                                     const std::vector<GameInfo> &gameInfos)
 {
@@ -281,5 +267,21 @@ int32_t GameControllerServerClientProxy::SyncIdentifiedDeviceInfos(const std::ve
     return ret;
 }
 
+int32_t GameControllerServerClientProxy::EnableGameKeyMapping(const GameInfo &gameInfo, const bool isEnable)
+{
+    sptr<IGameControllerServerInterface> serviceProxy = GetServiceProxy();
+    if (serviceProxy == nullptr) {
+        HILOGE("get GameControllerServerProxy failed!");
+        return GAME_ERR_IPC_CONNECT_STUB_FAIL;
+    }
+
+    int32_t ret = serviceProxy->EnableGameKeyMapping(gameInfo, isEnable);
+    if (ret != GAME_CONTROLLER_SUCCESS) {
+        HILOGE("EnableGameKeyMapping failed. ret=[%{public}d]", ret);
+    }
+    return ret;
 }
 }
+}
+
+

@@ -84,14 +84,6 @@ public:
     virtual int32_t SyncIdentifiedDeviceInfos(const std::vector<IdentifiedDeviceInfo> &deviceInfos);
 
     /**
-    * Determines whether the game supports key mapping.
-    * @param gameInfo Game Information
-    * @param resultGameInfo Check Result
-    * @return Interface Invoking Result
-    */
-    int32_t IsSupportGameKeyMapping(const GameInfo &gameInfo, GameInfo &resultGameInfo);
-
-    /**
      * Synchronize games that support key mapping
      * @param If the value is true, full synchronization is performed. If the value is false,
      * only one record is updated.
@@ -138,6 +130,14 @@ public:
      * @return Interface Invoking Result
      */
     int32_t BroadcastOpenTemplateConfig(const GameInfo &gameInfo, const DeviceInfo &deviceInfo);
+
+    /**
+     * Enable input-to-touch for games with supported key mapping.
+     * @param gameInfo game information
+     * @param isEnable true means enable
+     * @return Interface Invoking Result
+     */
+    int32_t EnableGameKeyMapping(const GameInfo &gameInfo, const bool isEnable);
 
 private:
     sptr<IGameControllerServerInterface> GetServiceProxy();

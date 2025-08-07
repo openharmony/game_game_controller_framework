@@ -28,34 +28,110 @@ class KeyToTouchManager : public DelayedSingleton<KeyToTouchManager> {
 DECLARE_DELAYED_SINGLETON(KeyToTouchManager)
 
 public:
+    void SetSupportKeyMapping(bool isSupportKeyMapping);
+
     bool DispatchKeyEvent(const std::shared_ptr<MMI::KeyEvent> &keyEvent);
 
     bool DispatchPointerEvent(const std::shared_ptr<MMI::PointerEvent> &pointerEvent);
 
-    void UpdateTemplateConfig(const DeviceInfo &deviceInfo, const std::vector<KeyToTouchMappingInfo> &mappingInfos);
+    void UpdateTemplateConfig(const DeviceTypeEnum &deviceType, const std::vector<KeyToTouchMappingInfo> &mappingInfos);
 
     void UpdateWindowInfo(const WindowInfoEntity &windowInfoEntity);
 
+    void EnableKeyMapping(bool isEnable);
+
 private:
-    bool HandleKeyEvent(const std::shared_ptr<MMI::KeyEvent> &keyEvent, const DeviceInfo &deviceInfo);
 
-    bool HandlePointerEvent(const std::shared_ptr<MMI::PointerEvent> &pointerEvent, const DeviceInfo &deviceInfo);
+    bool IsCanEnableKeyMapping();
 
-    void HandleTemplateConfig(const DeviceInfo &deviceInfo, const std::vector<KeyToTouchMappingInfo> &mappingInfos);
+    void HandleKeyEvent(const std::shared_ptr<MMI::KeyEvent> &keyEvent, const DeviceTypeEnum &deviceType,
+                        const DeviceInfo &deviceInfo);
+
+    void HandlePointerEvent(const std::shared_ptr<MMI::PointerEvent> &pointerEvent, const DeviceTypeEnum &deviceType);
+
+    /**
+     * Get mapping info
+     * @param context context
+     * @param keyEvent keyEvent
+     * @param deviceInfo deviceInfo
+     * @param keyToTouchMappingInfo out param
+     * @return true means get mapping info success
+     */
+    bool GetMappingInfoByKeyCode(const std::shared_ptr<InputToTouchContext> &context,
+                                 const std::shared_ptr<MMI::KeyEvent> &keyEvent,
+                                 const DeviceInfo &deviceInfo,
+                                 KeyToTouchMappingInfo &keyToTouchMappingInfo);
+
+    bool GetMappingInfoByKeyCodeWhenKeyDown(const std::shared_ptr<InputToTouchContext> &context,
+                                            const std::shared_ptr<MMI::KeyEvent> &keyEvent,
+                                            const DeviceInfo &deviceInfo,
+                                            KeyToTouchMappingInfo &keyToTouchMappingInfo);
+
+    bool GetMappingInfoByKeyCodeWhenKeyUp(const std::shared_ptr<InputToTouchContext> &context,
+                                          const std::shared_ptr<MMI::KeyEvent> &keyEvent,
+                                          KeyToTouchMappingInfo &keyToTouchMappingInfo);
+
+    bool GetMappingInfoByKeyCodeFromCombinationKey(const std::shared_ptr<InputToTouchContext> &context,
+                                                   const std::shared_ptr<MMI::KeyEvent> &keyEvent,
+                                                   const DeviceInfo &deviceInfo,
+                                                   KeyToTouchMappingInfo &keyToTouchMappingInfo);
+
+    void HandleTemplateConfig(const DeviceTypeEnum &deviceType, const std::vector<KeyToTouchMappingInfo> &mappingInfos);
 
     void HandleWindowInfo(const WindowInfoEntity &windowInfoEntity);
 
+    void UpdateContextWindowInfo(const std::shared_ptr<InputToTouchContext> &context);
+
+    void InitGcKeyboardContext(const std::vector<KeyToTouchMappingInfo> &mappingInfos);
+
+    void InitHoverTouchPadContext(const std::vector<KeyToTouchMappingInfo> &mappingInfos);
+
+    void ReleaseContext(const std::shared_ptr<InputToTouchContext> &inputToTouchContext);
+
+    void ResetMonitor();
+
+    void ResetAllMonitorKeysAndMouseMonitor(const std::shared_ptr<InputToTouchContext> &context);
+
+    void AddToMonitorKeys(const DeviceTypeEnum &deviceType,
+                          const std::unordered_map<int32_t, KeyToTouchMappingInfo> &keyMap);
+
+    void AddToMonitorKeys(const DeviceTypeEnum &deviceType,
+                          const int32_t &keyCode);
+
+    bool IsHandleMouseMove(std::shared_ptr<InputToTouchContext> &context,
+                           const std::shared_ptr<MMI::PointerEvent> &pointerEvent);
+
+    bool IsHandleMouseRightButtonEvent(std::shared_ptr<InputToTouchContext> &context,
+                                       const std::shared_ptr<MMI::PointerEvent> &pointerEvent);
+
+    bool IsHandleMouseLeftButtonEvent(std::shared_ptr<InputToTouchContext> &context,
+                                      const std::shared_ptr<MMI::PointerEvent> &pointerEvent);
+
+    void ExecuteHandle(std::shared_ptr<InputToTouchContext> &context,
+                       const KeyToTouchMappingInfo &mappingInfo,
+                       const std::shared_ptr<MMI::KeyEvent> &keyEvent,
+                       const DeviceInfo &deviceInfo);
+
+    void ExecuteHandle(std::shared_ptr<InputToTouchContext> &context,
+                       const KeyToTouchMappingInfo &mappingInfo,
+                       const std::shared_ptr<MMI::PointerEvent> &pointerEvent);
+
+    void HandleEnableKeyMapping(bool isEnable);
+
+    void ResetContext(std::shared_ptr<InputToTouchContext> &context);
+
 private:
+    bool isSupportKeyMapping_{false};
     std::mutex checkMutex_;
     std::unique_ptr<ffrt::queue> handleQueue_{nullptr};
-
-    std::unordered_map<MappingTypeEnum, BaseKeyToTouchHandler> mappingHandler_;
-    InputToTouchContext gcKeyboardContext_;
-    InputToTouchContext hoverTouchPadContext_;
+    std::unordered_map<MappingTypeEnum, std::shared_ptr<BaseKeyToTouchHandler>> mappingHandler_;
+    std::shared_ptr<InputToTouchContext> gcKeyboardContext_{nullptr};
+    std::shared_ptr<InputToTouchContext> hoverTouchPadContext_{nullptr};
     std::unordered_map<int32_t, std::unordered_set<DeviceTypeEnum>> allMonitorKeys_;
     bool isMonitorMouse_ = false;
     std::unordered_set<int32_t> allMonitorMousePointerActions_;
     WindowInfoEntity windowInfoEntity_;
+    bool isEnableKeyMapping_{true};
 };
 }
 }

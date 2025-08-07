@@ -107,7 +107,7 @@ void InputEventCallback::OnGamePadButtonEventCallback(const GamePadButtonEvent &
         }
         GamePadButtonTypeEnum gamePadButtonTypeEnum = static_cast<GamePadButtonTypeEnum>(event.keyCode);
         if (gamePadButtonCallback_.find(gamePadButtonTypeEnum) == gamePadButtonCallback_.end()) {
-            HILOGD("[InputEventCallback]OnGamePadButtonEventCallback. No callback on keyCode [%{public}d]",
+            HILOGD("[InputEventCallback]OnGamePadButtonEventCallback. No callback on keyCode [%{private}d]",
                    event.keyCode);
             return;
         }

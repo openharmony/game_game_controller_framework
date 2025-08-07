@@ -310,9 +310,12 @@ bool MultiModalInputMgtService::GetUniqOnDeviceAddEvent(
         }
     }
     if (inputDeviceInfo.UniqIsEmpty()) {
-        HILOGW("[GameController]Discard DeviceOnlineEvent. deviceId is %{public}d, because uniq is empty",
-               inputDeviceInfo.id);
-        return false;
+        inputDeviceInfo.uniq = std::to_string(inputDeviceInfo.vendor) + "_"
+            + std::to_string(inputDeviceInfo.product);
+        HILOGI("[GameController] HandleDeviceAddEvent: Embeded device. "
+               "deviceId is %{public}d, vendor is %{public}d, product is %{public}d. "
+               "Because uniq is empty,construct a new uniq. ",
+               inputDeviceInfo.id, inputDeviceInfo.vendor, inputDeviceInfo.product);
     }
     return true;
 }

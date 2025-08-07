@@ -34,20 +34,6 @@ struct KeyMappingSupportConfig {
     explicit KeyMappingSupportConfig(const nlohmann::json &jsonObj);
 };
 
-struct KeyMappingInfo {
-    std::unordered_map<int32_t, KeyToTouchMappingInfo> keyMappingInfoMap;
-
-    KeyMappingInfo() = default;
-
-    KeyMappingInfo(const std::vector<KeyToTouchMappingInfo> mappingInfo)
-    {
-        for (const auto &item: mappingInfo) {
-            keyMappingInfoMap[item.keyCode] = item;
-            HILOGI("KeyMappingInfo [%{public}s]", item.GetKeyToTouchMappingInfoDesc().c_str());
-        }
-    }
-};
-
 class KeyMappingService : public DelayedSingleton<KeyMappingService> {
 DECLARE_DELAYED_SINGLETON(KeyMappingService)
 
@@ -67,15 +53,6 @@ public:
      * @param isBroadCastDeviceInfo Indicates whether to broadcast device information.
      */
     void GetGameKeyMappingFromSa(const DeviceInfo &deviceInfo, const bool isBroadCastDeviceInfo);
-
-    /**
-     * Get KeyMapping config from local cache
-     * @param deviceInfo DeviceInfo
-     * @param keyCode key code
-     * @return GameKeyMappingInfo
-     */
-    std::pair<bool, KeyToTouchMappingInfo> GetGameKeyMappingFromCache(const DeviceInfo &deviceInfo,
-                                                                      const int32_t keyCode);
 
     /**
      * Broadcast Opening Template Configuration Page
@@ -123,10 +100,6 @@ private:
     std::string bundleName_;
 
     std::string bundleVersion_;
-
-    std::unordered_map<DeviceTypeEnum, KeyMappingInfo> customKeyMappingInfoMap_;
-
-    std::unordered_map<DeviceTypeEnum, KeyMappingInfo> defaultKeyMappingInfoMap_;
 };
 }
 }

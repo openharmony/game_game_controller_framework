@@ -14,7 +14,6 @@
  */
 
 #include <display.h>
-#include <window_input_intercept_client.h>
 #include <input_manager.h>
 #include "key_mapping_handle.h"
 #include "gamecontroller_log.h"
@@ -30,21 +29,24 @@ const int32_t KEYCODE_OPEN_TEMP_FOR_HOVER_TOUCH_CONTROLLER = 3107;
 
 KeyMappingHandle::KeyMappingHandle()
 {
+    isOpenTemplateValidHandlerMap_ = {
+        {DeviceTypeEnum::HOVER_TOUCH_PAD, &KeyMappingHandle::OpenTemplateByHoverTouchPad},
+        {DeviceTypeEnum::GAME_KEY_BOARD,  &KeyMappingHandle::OpenTemplateByKeyBoard}
+    };
 }
 
 KeyMappingHandle::~KeyMappingHandle()
 {
 }
 
-bool KeyMappingHandle::IsNeedKeyToTouch(const std::shared_ptr<MMI::KeyEvent> &keyEvent)
+bool KeyMappingHandle::IsNotifyOpenTemplateConfigPage(const std::shared_ptr<MMI::KeyEvent> &keyEvent)
 {
     if (!isSupportKeyMapping_) {
         return false;
     }
 
     // Only the key up and down event needs to be processed.
-    if (keyEvent->GetKeyAction() != KeyEvent::KEY_ACTION_UP
-        && keyEvent->GetKeyAction() != KeyEvent::KEY_ACTION_DOWN) {
+    if (keyEvent->GetKeyAction() != KeyEvent::KEY_ACTION_DOWN) {
         return false;
     }
 
@@ -54,64 +56,7 @@ bool KeyMappingHandle::IsNeedKeyToTouch(const std::shared_ptr<MMI::KeyEvent> &ke
         return false;
     }
 
-    if (IsNotifyOpenTemplateConfigPage(keyEvent, deviceInfo)) {
-        return false;
-    }
-
-    int32_t keyCode = keyEvent->GetKeyCode();
-    std::pair<bool, KeyToTouchMappingInfo> keyMappingConfig = DelayedSingleton<KeyMappingService>::GetInstance()
-        ->GetGameKeyMappingFromCache(deviceInfo, keyCode);
-
-    // Processed only when the key mapping configuration exists.
-    if (!keyMappingConfig.first) {
-        HILOGD("key [%{public}d] no keyMappingConfig.", keyCode);
-        return false;
-    }
-
-    if (keyEvent->GetKeyAction() == KeyEvent::KEY_ACTION_DOWN) {
-        ChangeKeyEventToPointer(keyEvent, PointerEvent::POINTER_ACTION_DOWN, keyMappingConfig.second);
-    }
-    if (keyEvent->GetKeyAction() == KeyEvent::KEY_ACTION_UP) {
-        ChangeKeyEventToPointer(keyEvent, PointerEvent::POINTER_ACTION_UP, keyMappingConfig.second);
-    }
-    return true;
-}
-
-void KeyMappingHandle::ChangeKeyEventToPointer(const std::shared_ptr<MMI::KeyEvent> &keyEvent,
-                                               const int32_t &pointerAction,
-                                               const KeyToTouchMappingInfo &keyMappingInfo)
-{
-    std::shared_ptr<PointerEvent> pointerEvent = PointerEvent::Create();
-    if (pointerEvent == nullptr) {
-        HILOGE("Create PointerEvent failed.");
-        return;
-    }
-    PointerEvent::PointerItem pointerItem;
-    pointerItem.SetPointerId(0);
-    int32_t valX = keyMappingInfo.xValue;
-    pointerItem.SetDisplayX(valX);
-    pointerItem.SetDisplayXPos(valX);
-    pointerItem.SetWindowX(valX);
-    pointerItem.SetWindowXPos(valX);
-    int32_t valY = keyMappingInfo.yValue;
-    pointerItem.SetDisplayY(valY);
-    pointerItem.SetDisplayYPos(valY);
-    pointerItem.SetWindowY(valY);
-    pointerItem.SetWindowYPos(valY);
-    pointerItem.SetPressure(1);
-    pointerItem.SetDeviceId(1);
-    pointerEvent->SetActionTime(keyEvent->GetActionTime());
-    pointerEvent->SetAgentWindowId(keyEvent->GetAgentWindowId());
-    pointerEvent->SetTargetDisplayId(keyEvent->GetTargetDisplayId());
-    pointerEvent->SetTargetWindowId(keyEvent->GetTargetWindowId());
-    pointerEvent->AddPointerItem(pointerItem);
-    pointerEvent->SetId(std::numeric_limits<int32_t>::max());
-    pointerEvent->SetPointerAction(pointerAction);
-    pointerEvent->SetPointerId(0);
-    pointerEvent->SetSourceType(PointerEvent::SOURCE_TYPE_TOUCHSCREEN);
-    HILOGD("keyCode [%{public}d] changeToPointer. pointer is [%{public}s].", keyEvent->GetKeyCode(),
-           pointerEvent->ToString().c_str());
-    Rosen::WindowInputInterceptClient::SendInputEvent(pointerEvent);
+    return IsNotifyOpenTemplateConfigPage(keyEvent, deviceInfo);
 }
 
 void KeyMappingHandle::SetSupportKeyMapping(bool isSupportKeyMapping)
@@ -122,18 +67,57 @@ void KeyMappingHandle::SetSupportKeyMapping(bool isSupportKeyMapping)
 bool KeyMappingHandle::IsNotifyOpenTemplateConfigPage(const std::shared_ptr<MMI::KeyEvent> &keyEvent,
                                                       const DeviceInfo &deviceInfo)
 {
-    if (keyEvent->GetKeyAction() != KeyEvent::KEY_ACTION_DOWN) {
+    DeviceTypeEnum deviceType = deviceInfo.deviceType;
+
+    if (isOpenTemplateValidHandlerMap_.find(deviceType) != isOpenTemplateValidHandlerMap_.end()) {
+        return (this->*isOpenTemplateValidHandlerMap_[deviceType])(keyEvent, deviceInfo);
+    } else {
         return false;
     }
+}
 
-    if (deviceInfo.deviceType != DeviceTypeEnum::HOVER_TOUCH_PAD) {
-        return false;
-    }
-
-    int32_t keyCode = keyEvent->GetKeyCode();
-    if (keyCode == KEYCODE_OPEN_TEMP_FOR_HOVER_TOUCH_CONTROLLER) {
+bool KeyMappingHandle::OpenTemplateByHoverTouchPad(const std::shared_ptr<MMI::KeyEvent> &keyEvent,
+                                                   const DeviceInfo &deviceInfo)
+{
+    if (keyEvent->GetKeyCode() == KEYCODE_OPEN_TEMP_FOR_HOVER_TOUCH_CONTROLLER) {
+        HILOGI("Open template config page by HoverTouchPad is valid.");
         DelayedSingleton<KeyMappingService>::GetInstance()->BroadcastOpenTemplateConfig(deviceInfo);
         return true;
+    } else {
+        return false;
+    }
+}
+
+bool KeyMappingHandle::OpenTemplateByKeyBoard(const std::shared_ptr<MMI::KeyEvent> &keyEvent,
+                                              const DeviceInfo &deviceInfo)
+{
+    if (keyEvent->GetKeyCode() != MMI::KeyEvent::KEYCODE_P) {
+        return false;
+    }
+
+    std::unordered_map<int32_t, MMI::KeyEvent::KeyItem> currentItemsMap;
+
+    std::vector<MMI::KeyEvent::KeyItem> keyItems = keyEvent->GetKeyItems();
+    // Filter out the invalid keyItem.
+    for (const auto &keyItem: keyItems) {
+        if (!keyItem.IsPressed() || keyItem.GetDeviceId() != keyEvent->GetDeviceId() ||
+            keyItem.GetDownTime() < deviceInfo.onlineTime) {
+            continue;
+        }
+        currentItemsMap.insert({keyItem.GetKeyCode(), keyItem});
+    }
+
+    // Return true only when Q,W,P each occur sequentially.
+    if (currentItemsMap.find(MMI::KeyEvent::KEYCODE_Q) != currentItemsMap.end() &&
+        currentItemsMap.find(MMI::KeyEvent::KEYCODE_W) != currentItemsMap.end() &&
+        currentItemsMap.find(MMI::KeyEvent::KEYCODE_P) != currentItemsMap.end()) {
+        if (currentItemsMap[MMI::KeyEvent::KEYCODE_Q].GetDownTime() <=
+            currentItemsMap[MMI::KeyEvent::KEYCODE_W].GetDownTime() <=
+            currentItemsMap[MMI::KeyEvent::KEYCODE_P].GetDownTime()) {
+            HILOGI("Open template config page by KeyBoard is valid.");
+            DelayedSingleton<KeyMappingService>::GetInstance()->BroadcastOpenTemplateConfig(deviceInfo);
+            return true;
+        }
     }
     return false;
 }

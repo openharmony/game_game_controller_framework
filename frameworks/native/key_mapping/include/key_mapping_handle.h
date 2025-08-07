@@ -28,6 +28,9 @@ class KeyMappingHandle : public DelayedSingleton<KeyMappingHandle> {
 DECLARE_DELAYED_SINGLETON(KeyMappingHandle)
 
 public:
+    typedef bool(KeyMappingHandle::*IsOpenTemplateValidHandler)(const std::shared_ptr<MMI::KeyEvent> &keyEvent,
+                                                                const DeviceInfo &deviceInfo);
+
     void SetSupportKeyMapping(bool isSupportKeyMapping);
 
     /**
@@ -35,13 +38,9 @@ public:
      * @param keyEvent Key Event
      * @return true means perform key-to-touch control.
      */
-    bool IsNeedKeyToTouch(const std::shared_ptr<MMI::KeyEvent> &keyEvent);
+    bool IsNotifyOpenTemplateConfigPage(const std::shared_ptr<MMI::KeyEvent> &keyEvent);
 
 private:
-    void ChangeKeyEventToPointer(const std::shared_ptr<MMI::KeyEvent> &keyEvent,
-                                 const int32_t &pointerAction,
-                                 const KeyToTouchMappingInfo &keyMappingInfo);
-
     /**
      * Send Notification of Opening Template Configuration Page
      * @param keyEvent Key Event
@@ -51,9 +50,14 @@ private:
     bool IsNotifyOpenTemplateConfigPage(const std::shared_ptr<MMI::KeyEvent> &keyEvent,
                                         const DeviceInfo &deviceInfo);
 
+    bool OpenTemplateByHoverTouchPad(const std::shared_ptr<MMI::KeyEvent> &keyEvent, const DeviceInfo &deviceInfo);
+
+    bool OpenTemplateByKeyBoard(const std::shared_ptr<MMI::KeyEvent> &keyEvent, const DeviceInfo &deviceInfo);
+
 private:
 
     bool isSupportKeyMapping_{false};
+    std::unordered_map<DeviceTypeEnum, IsOpenTemplateValidHandler> isOpenTemplateValidHandlerMap_;
 };
 }
 }

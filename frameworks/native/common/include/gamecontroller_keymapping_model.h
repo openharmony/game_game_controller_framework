@@ -25,13 +25,20 @@
 
 namespace OHOS {
 namespace GameController {
-
-namespace {
+const size_t MAX_COMBINATION_KEYS = 2;
+const size_t COMBINATION_FIRST_KEYCODE_IDX = 0;
+const size_t COMBINATION_LAST_KEYCODE_IDX = 1;
 const int32_t MAX_KEY_MAPPING_SIZE = 100;
 const size_t MAX_BUNDLE_NAME_LENGTH = 256;
 const size_t MAX_VERSION_LENGTH = 50;
-const size_t MAX_COMBINATION_KEYS = 2;
-}
+const size_t SUM_OF_MAPPING_TYPE = 11;
+
+struct ParameterByCheck {
+    std::vector<size_t> keyMappingNumber = std::vector<size_t>(SUM_OF_MAPPING_TYPE, 0);
+    std::unordered_map<int32_t, int32_t> uniqKeyCodeMap;
+    std::unordered_map<int32_t, int32_t> combinationKeysMap;
+    int32_t uniqRightButtonMappingType = -1;
+};
 
 enum MappingTypeEnum {
     // Single-button switch to touch clicking
@@ -40,7 +47,7 @@ enum MappingTypeEnum {
     // Combining-button switch to touch clicking
     COMBINATION_KEY_TO_TOUCH = 1,
 
-    // DirectionPad of keybd switch to touch clicking and moving
+    // DirectionPad of keyboard switch to touch clicking and moving
     DPAD_KEY_TO_TOUCH = 2,
 
     // Use the right-button of mouse to walk.
@@ -62,7 +69,10 @@ enum MappingTypeEnum {
     CROSSHAIR_KEY_TO_TOUCH = 8,
 
     // Use the left-button of mouse to shoot for shooting games
-    MOUSE_LEFT_FIRE_TO_TOUCH = 9
+    MOUSE_LEFT_FIRE_TO_TOUCH = 9,
+
+    // Right-button of mouse switch to touch clicking
+    MOUSE_RIGHT_KEY_CLICK_TO_TOUCH = 10
 };
 
 /**
@@ -116,6 +126,11 @@ struct DpadKeyCodeEntity : public Parcelable {
         ret = nullptr;
         return nullptr;
     }
+
+    bool Contains(int32_t keyCode)
+    {
+        return up == keyCode || down == keyCode || left == keyCode || right == keyCode;
+    }
 };
 
 /**
@@ -128,7 +143,7 @@ struct KeyToTouchMappingInfo : public Parcelable {
 
     int32_t yValue = 0;
 
-    MappingTypeEnum mappingType;
+    MappingTypeEnum mappingType = SINGE_KEY_TO_TOUCH;
 
     DpadKeyCodeEntity dpadKeyCodeEntity;
 
@@ -281,7 +296,39 @@ struct KeyToTouchMappingInfo : public Parcelable {
         tmp.append(", keyCode:" + std::to_string(keyCode));
         tmp.append(", xValue:" + std::to_string(xValue));
         tmp.append(", yValue:" + std::to_string(yValue));
+        tmp.append(", radius:" + std::to_string(radius));
+        tmp.append(", skillRange:" + std::to_string(skillRange));
+        tmp.append(", xStep:" + std::to_string(xStep));
+        tmp.append(", yStep:" + std::to_string(yStep));
+        tmp.append(", combinationKeys:");
+        for (auto combinationKey: combinationKeys) {
+            tmp.append(std::to_string(combinationKey) + "|");
+        }
+        tmp.append(", dpadKeyCode:" + std::to_string(dpadKeyCodeEntity.up));
+        tmp.append("|" + std::to_string(dpadKeyCodeEntity.down));
+        tmp.append("|" + std::to_string(dpadKeyCodeEntity.left));
+        tmp.append("|" + std::to_string(dpadKeyCodeEntity.right));
         return tmp;
+    }
+
+    void SetDpadInfoToDefault()
+    {
+        dpadKeyCodeEntity.up = 0;
+        dpadKeyCodeEntity.down = 0;
+        dpadKeyCodeEntity.left = 0;
+        dpadKeyCodeEntity.right = 0;
+    }
+
+    void SetSkillRangeRadiusToDefault()
+    {
+        skillRange = 0;
+        radius = 0;
+    }
+
+    void SetStepToDefault()
+    {
+        xStep = 0;
+        yStep = 0;
     }
 };
 
@@ -529,7 +576,7 @@ struct GameKeyMappingInfo : public Parcelable {
      * Validates parameters of the SetCustomGameKeyMappingConfig interface.
      * @return true means valid
      */
-    bool CheckParamValidForSetCustom() const
+    bool CheckParamValidForSetCustom()
     {
         return CheckParamValidForSetDefault();
     };
@@ -538,7 +585,7 @@ struct GameKeyMappingInfo : public Parcelable {
      * Validates parameters of the SetDefaultGameKeyMappingConfig interface.
      * @return true means valid
      */
-    bool CheckParamValidForSetDefault() const
+    bool CheckParamValidForSetDefault()
     {
         if (bundleName.empty() || bundleName.length() > MAX_BUNDLE_NAME_LENGTH) {
             return false;
@@ -552,8 +599,44 @@ struct GameKeyMappingInfo : public Parcelable {
         if (defaultKeyToTouchMappings.size() > static_cast<size_t>(MAX_KEY_MAPPING_SIZE)) {
             return false;
         }
-        return true;
+        if (deviceType == DeviceTypeEnum::HOVER_TOUCH_PAD) {
+            return CheckKeyMappingForHoverTouchPad(defaultKeyToTouchMappings) &&
+                CheckKeyMappingForHoverTouchPad(customKeyToTouchMappings);
+        }
+        return CheckKeyMapping(defaultKeyToTouchMappings) && CheckKeyMapping(customKeyToTouchMappings);
     }
+
+    /**
+     * Validates a GameKeyMappingConfig.
+     * @return true means valid
+     */
+    bool CheckKeyMapping(std::vector<KeyToTouchMappingInfo> &KeyToTouchMappings);
+
+    bool CheckSingleKey(KeyToTouchMappingInfo &currentKeyMapping, ParameterByCheck &parameter);
+
+    bool CheckCombinationKey(KeyToTouchMappingInfo &currentKeyMapping, ParameterByCheck &parameter);
+
+    bool CheckDpadKey(KeyToTouchMappingInfo &currentKeyMapping, ParameterByCheck &parameter);
+
+    bool CheckMouseRightKeyWalking(KeyToTouchMappingInfo &currentKeyMapping, ParameterByCheck &parameter);
+
+    bool CheckSkillKey(KeyToTouchMappingInfo &currentKeyMapping, ParameterByCheck &parameter);
+
+    bool CheckObservationKey(KeyToTouchMappingInfo &currentKeyMapping, ParameterByCheck &parameter);
+
+    bool CheckMouseObservation(KeyToTouchMappingInfo &currentKeyMapping, ParameterByCheck &parameter);
+
+    bool CheckKeyBoardObservation(KeyToTouchMappingInfo &currentKeyMapping, ParameterByCheck &parameter);
+
+    bool CheckCrosshairKey(KeyToTouchMappingInfo &currentKeyMapping, ParameterByCheck &parameter);
+
+    bool CheckMouseLeftFire(KeyToTouchMappingInfo &currentKeyMapping, ParameterByCheck &parameter);
+
+    bool CheckMouseRightKeyClick(KeyToTouchMappingInfo &currentKeyMapping, ParameterByCheck &parameter);
+
+    bool IsDpadKeyCodeUniq(KeyToTouchMappingInfo &currentKeyMapping, ParameterByCheck &parameter);
+
+    bool CheckKeyMappingForHoverTouchPad(std::vector<KeyToTouchMappingInfo> &KeyToTouchMappings);
 
     /**
      * Indicates whether to delete the default configuration based on the bundle name.

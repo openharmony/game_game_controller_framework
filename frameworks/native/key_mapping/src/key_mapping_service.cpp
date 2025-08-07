@@ -17,6 +17,7 @@
 #include "gamecontroller_errors.h"
 #include "gamecontroller_server_client.h"
 #include "gamecontroller_log.h"
+#include "key_to_touch_manager.h"
 #include <unistd.h>
 #include <fstream>
 #include <cstdlib>
@@ -72,6 +73,11 @@ bool KeyMappingService::IsSupportGameKeyMapping(const std::string &bundleName, c
 
     json config = ret.second;
     if (config.empty()) {
+        HILOGW("it's empty.");
+        return false;
+    }
+    if (!config.is_array()) {
+        HILOGW("it's not array json.");
         return false;
     }
     for (const auto &jsonObj: config) {
@@ -88,6 +94,11 @@ bool KeyMappingService::IsSupportGameKeyMapping(const std::string &bundleName, c
 void KeyMappingService::GetGameKeyMappingFromSa(const DeviceInfo &deviceInfo, bool isBroadCastDeviceInfo)
 {
     if (isSupportGameKeyMapping_) {
+        if (deviceInfo.deviceType == DeviceTypeEnum::GAME_MOUSE || deviceInfo.deviceType == DeviceTypeEnum::UNKNOWN) {
+            HILOGI("[GetGameKeyMappingFromSa] Device type is [%{public}s]. No key-mapping and broadcast. ",
+                   std::to_string(deviceInfo.deviceType).c_str());
+            return;
+        }
         handleQueue_->submit([deviceInfo, isBroadCastDeviceInfo, this] {
             ExecuteGetGameKeyMapping(deviceInfo);
             if (isBroadCastDeviceInfo) {
@@ -114,23 +125,24 @@ void KeyMappingService::ExecuteGetGameKeyMapping(const DeviceInfo &deviceInfo)
                    std::to_string(deviceInfo.deviceType).c_str());
             return;
         }
+
         HILOGI("deviceType[%{public}s] has key-mapping config",
                std::to_string(deviceInfo.deviceType).c_str());
+
+        std::vector<KeyToTouchMappingInfo> mappingInfos;
         if (gameKeyMappingInfo.customKeyToTouchMappings.empty()) {
-            customKeyMappingInfoMap_.erase(deviceInfo.deviceType);
+            if (!gameKeyMappingInfo.defaultKeyToTouchMappings.empty()) {
+                mappingInfos = gameKeyMappingInfo.defaultKeyToTouchMappings;
+            }
         } else {
-            customKeyMappingInfoMap_[deviceInfo.deviceType] = KeyMappingInfo(
-                gameKeyMappingInfo.customKeyToTouchMappings);
+            mappingInfos = gameKeyMappingInfo.customKeyToTouchMappings;
         }
-        if (gameKeyMappingInfo.defaultKeyToTouchMappings.empty()) {
-            defaultKeyMappingInfoMap_.erase(deviceInfo.deviceType);
-        } else {
-            defaultKeyMappingInfoMap_[deviceInfo.deviceType] = KeyMappingInfo(
-                gameKeyMappingInfo.defaultKeyToTouchMappings);
-        }
+
+        DelayedSingleton<KeyToTouchManager>::GetInstance()->UpdateTemplateConfig(deviceInfo.deviceType,
+                                                                                 mappingInfos);
         return;
     }
-    HILOGE("GetGameKeyMapping failed. deviceType[%{public}s]. result [%{public}d]",
+    HILOGE("GetGameKeyMapping failed. deviceType[%{public}s]. result [%{private}d]",
            std::to_string(deviceInfo.deviceType).c_str(), result);
 }
 
@@ -142,37 +154,6 @@ void KeyMappingService::ExecuteBroadCastDeviceInfo(const DeviceInfo &deviceInfo)
     HILOGI("ExecuteBroadCastDeviceInfo");
     DelayedSingleton<GameControllerServerClient>::GetInstance()->BroadcastDeviceInfo(gameInfo,
                                                                                      deviceInfo);
-}
-
-std::pair<bool, KeyToTouchMappingInfo> KeyMappingService::GetGameKeyMappingFromCache(const DeviceInfo &deviceInfo,
-                                                                                     const int32_t keyCode)
-{
-    std::lock_guard<std::mutex> lock(isSupportGameKeyMappingMutex_);
-    std::pair<bool, KeyToTouchMappingInfo> pair;
-    KeyMappingInfo info;
-
-    /**
-     * If a custom template exists, use the custom template firstly.
-     */
-    if (customKeyMappingInfoMap_.find(deviceInfo.deviceType) != customKeyMappingInfoMap_.end()) {
-        info = customKeyMappingInfoMap_[deviceInfo.deviceType];
-    } else {
-        if (defaultKeyMappingInfoMap_.find(deviceInfo.deviceType) != defaultKeyMappingInfoMap_.end()) {
-            pair.first = true;
-            info = defaultKeyMappingInfoMap_[deviceInfo.deviceType];
-        } else {
-            pair.first = false;
-            return pair;
-        }
-    }
-
-    if (info.keyMappingInfoMap.find(keyCode) == info.keyMappingInfoMap.end()) {
-        pair.first = false;
-        return pair;
-    }
-    pair.first = true;
-    pair.second = info.keyMappingInfoMap[keyCode];
-    return pair;
 }
 
 void KeyMappingService::BroadcastOpenTemplateConfig(const DeviceInfo &deviceInfo)
@@ -209,7 +190,13 @@ std::pair<bool, nlohmann::json> KeyMappingService::ReadJsonFromFile(const std::s
         return std::make_pair(false, content);
     }
 
-    ifs >> content;
+    content = nlohmann::json::parse(ifs, 0, false);
+    if (content.is_discarded()) {
+        HILOGE("parse [%{public}s] file failed.", canonicalPath);
+        ifs.close();
+        return std::make_pair(false, content);
+    }
+
     if ((ifs.fail()) || (ifs.bad())) {
         HILOGE("load [%{public}s] file failed.", canonicalPath);
         ifs.close();
