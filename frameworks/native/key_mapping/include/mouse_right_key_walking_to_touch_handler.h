@@ -37,7 +37,6 @@ private:
 
     void HandleMouseMove(std::shared_ptr<InputToTouchContext> &context,
                          const std::shared_ptr<MMI::PointerEvent> &pointerEvent);
-
 };
 }
 }

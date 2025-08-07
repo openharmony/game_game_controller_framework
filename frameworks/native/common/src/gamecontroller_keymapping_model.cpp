@@ -27,20 +27,19 @@ const size_t MAX_SINGLE_KEY_MAPPING_SIZE = 50;
 const size_t MAX_COMBINATION_KEY_MAPPING_SIZE = 30;
 const size_t MAX_SKILL_KEY_MAPPING_SIZE = 10;
 const size_t MAX_SINGLE_KEY_SIZE_FOR_HOVER_TOUCH_PAD = 2;
-std::unordered_map<MappingTypeEnum, CheckHandler> checkKeyMappingHandlerMap =
-    {
-        {MappingTypeEnum::SINGE_KEY_TO_TOUCH,               &GameKeyMappingInfo::CheckSingleKey},
-        {MappingTypeEnum::COMBINATION_KEY_TO_TOUCH,         &GameKeyMappingInfo::CheckCombinationKey},
-        {MappingTypeEnum::MOUSE_RIGHT_KEY_WALKING_TO_TOUCH, &GameKeyMappingInfo::CheckMouseRightKeyWalking},
-        {MappingTypeEnum::DPAD_KEY_TO_TOUCH,                &GameKeyMappingInfo::CheckDpadKey},
-        {MappingTypeEnum::SKILL_KEY_TO_TOUCH,               &GameKeyMappingInfo::CheckSkillKey},
-        {MappingTypeEnum::OBSERVATION_KEY_TO_TOUCH,         &GameKeyMappingInfo::CheckObservationKey},
-        {MappingTypeEnum::MOUSE_OBSERVATION_TO_TOUCH,       &GameKeyMappingInfo::CheckMouseObservation},
-        {MappingTypeEnum::KEY_BOARD_OBSERVATION_TO_TOUCH,   &GameKeyMappingInfo::CheckKeyBoardObservation},
-        {MappingTypeEnum::CROSSHAIR_KEY_TO_TOUCH,           &GameKeyMappingInfo::CheckCrosshairKey},
-        {MappingTypeEnum::MOUSE_LEFT_FIRE_TO_TOUCH,         &GameKeyMappingInfo::CheckMouseLeftFire},
-        {MappingTypeEnum::MOUSE_RIGHT_KEY_CLICK_TO_TOUCH,   &GameKeyMappingInfo::CheckMouseRightKeyClick}
-    };
+std::unordered_map<MappingTypeEnum, CheckHandler> checkKeyMappingHandlerMap = {
+    {MappingTypeEnum::SINGE_KEY_TO_TOUCH,               &GameKeyMappingInfo::CheckSingleKey},
+    {MappingTypeEnum::COMBINATION_KEY_TO_TOUCH,         &GameKeyMappingInfo::CheckCombinationKey},
+    {MappingTypeEnum::MOUSE_RIGHT_KEY_WALKING_TO_TOUCH, &GameKeyMappingInfo::CheckMouseRightKeyWalking},
+    {MappingTypeEnum::DPAD_KEY_TO_TOUCH,                &GameKeyMappingInfo::CheckDpadKey},
+    {MappingTypeEnum::SKILL_KEY_TO_TOUCH,               &GameKeyMappingInfo::CheckSkillKey},
+    {MappingTypeEnum::OBSERVATION_KEY_TO_TOUCH,         &GameKeyMappingInfo::CheckObservationKey},
+    {MappingTypeEnum::MOUSE_OBSERVATION_TO_TOUCH,       &GameKeyMappingInfo::CheckMouseObservation},
+    {MappingTypeEnum::KEY_BOARD_OBSERVATION_TO_TOUCH,   &GameKeyMappingInfo::CheckKeyBoardObservation},
+    {MappingTypeEnum::CROSSHAIR_KEY_TO_TOUCH,           &GameKeyMappingInfo::CheckCrosshairKey},
+    {MappingTypeEnum::MOUSE_LEFT_FIRE_TO_TOUCH,         &GameKeyMappingInfo::CheckMouseLeftFire},
+    {MappingTypeEnum::MOUSE_RIGHT_KEY_CLICK_TO_TOUCH,   &GameKeyMappingInfo::CheckMouseRightKeyClick}
+};
 }
 
 bool GameKeyMappingInfo::CheckSingleKey(KeyToTouchMappingInfo &currentKeyMapping, ParameterByCheck &parameter)

@@ -133,7 +133,7 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_001, TestSize.Level0)
 
 /**
  * @tc.name: HandleKeyDown_002
- * @tc.desc: when key is down and context_->isWalking is true 
+ * @tc.desc: when key is down and context_->isWalking is true
  * and context->currentWalking.mappingType is MOUSE_RIGHT_KEY_WALKING_TO_TOUCH, will discard the event
  * @tc.type: FUNC
  * @tc.require: issueNumber

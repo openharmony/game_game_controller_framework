@@ -34,7 +34,6 @@ protected:
     void HandleKeyUp(std::shared_ptr<InputToTouchContext> &context,
                      const std::shared_ptr<MMI::KeyEvent> &keyEvent,
                      const DeviceInfo &deviceInfo) override;
-
 };
 }
 }

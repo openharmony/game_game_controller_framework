@@ -17,15 +17,9 @@
 #include <gtest/hwext/gtest-tag.h>
 #include <gmock/gmock-actions.h>
 #include <gmock/gmock-spec-builders.h>
-
-#define private public
-
-#include "keyboard_observation_to_touch_handler.h"
-
-#undef private
-
 #include <gtest/gtest.h>
 #include "refbase.h"
+#include "keyboard_observation_to_touch_handler.h"
 
 using ::testing::Return;
 using namespace testing::ext;

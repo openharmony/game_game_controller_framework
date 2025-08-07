@@ -391,7 +391,6 @@ HWTEST_F(GameControllerKeymappingModeTest, GameKeyMappingInfo_CheckKeyMapping_00
         testKeyMappingInfos[i].keyCode = i;
     }
     ASSERT_TRUE(config.CheckKeyMapping(testKeyMappingInfos));
-
     for (int i = 1; i < testKeyMappingInfos.size(); ++i) {
         if (testKeyMappingInfos[i].mappingType == MappingTypeEnum::DPAD_KEY_TO_TOUCH) {
             testKeyMappingInfos[i].dpadKeyCodeEntity.up = 0;

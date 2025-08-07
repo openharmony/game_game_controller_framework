@@ -21,22 +21,30 @@ namespace GameController {
 namespace {
 const std::string JOINER = "_";
 const int32_t INVALID_VALUE = -1;
+const int32_t UP_ANGLE = 270;
+const int32_t DOWN_ANGLE = 90;
+const int32_t LEFT_ANGLE = 180;
+const int32_t RIGHT_ANGLE = 0;
+const int32_t UP_LEFT_ANGLE = 225;
+const int32_t UP_RIGHT_ANGLE = 315;
+const int32_t DOWN_LEFT_ANGLE = 135;
+const int32_t DOWN_RIGHT_ANGLE = 45;
 }
 
 DpadKeyToTouchHandler::DpadKeyToTouchHandler()
 {
-    keyAngleMap_[std::to_string(DPAD_UP)] = 270;
-    keyAngleMap_[std::to_string(DPAD_UP) + JOINER + std::to_string(DPAD_LEFT)] = 225;
-    keyAngleMap_[std::to_string(DPAD_LEFT) + JOINER + std::to_string(DPAD_UP)] = 225;
-    keyAngleMap_[std::to_string(DPAD_UP) + JOINER + std::to_string(DPAD_RIGHT)] = 315;
-    keyAngleMap_[std::to_string(DPAD_RIGHT) + JOINER + std::to_string(DPAD_UP)] = 315;
-    keyAngleMap_[std::to_string(DPAD_DOWN)] = 90;
-    keyAngleMap_[std::to_string(DPAD_DOWN) + JOINER + std::to_string(DPAD_LEFT)] = 135;
-    keyAngleMap_[std::to_string(DPAD_LEFT) + JOINER + std::to_string(DPAD_DOWN)] = 135;
-    keyAngleMap_[std::to_string(DPAD_DOWN) + JOINER + std::to_string(DPAD_RIGHT)] = 45;
-    keyAngleMap_[std::to_string(DPAD_RIGHT) + JOINER + std::to_string(DPAD_DOWN)] = 45;
-    keyAngleMap_[std::to_string(DPAD_LEFT)] = 180;
-    keyAngleMap_[std::to_string(DPAD_RIGHT)] = 0;
+    keyAngleMap_[std::to_string(DPAD_UP)] = UP_ANGLE;
+    keyAngleMap_[std::to_string(DPAD_UP) + JOINER + std::to_string(DPAD_LEFT)] = UP_LEFT_ANGLE;
+    keyAngleMap_[std::to_string(DPAD_LEFT) + JOINER + std::to_string(DPAD_UP)] = UP_LEFT_ANGLE;
+    keyAngleMap_[std::to_string(DPAD_UP) + JOINER + std::to_string(DPAD_RIGHT)] = UP_RIGHT_ANGLE;
+    keyAngleMap_[std::to_string(DPAD_RIGHT) + JOINER + std::to_string(DPAD_UP)] = UP_RIGHT_ANGLE;
+    keyAngleMap_[std::to_string(DPAD_DOWN)] = DOWN_ANGLE;
+    keyAngleMap_[std::to_string(DPAD_DOWN) + JOINER + std::to_string(DPAD_LEFT)] = DOWN_LEFT_ANGLE;
+    keyAngleMap_[std::to_string(DPAD_LEFT) + JOINER + std::to_string(DPAD_DOWN)] = DOWN_LEFT_ANGLE;
+    keyAngleMap_[std::to_string(DPAD_DOWN) + JOINER + std::to_string(DPAD_RIGHT)] = DOWN_RIGHT_ANGLE;
+    keyAngleMap_[std::to_string(DPAD_RIGHT) + JOINER + std::to_string(DPAD_DOWN)] = DOWN_RIGHT_ANGLE;
+    keyAngleMap_[std::to_string(DPAD_LEFT)] = LEFT_ANGLE;
+    keyAngleMap_[std::to_string(DPAD_RIGHT)] = RIGHT_ANGLE;
 }
 
 void DpadKeyToTouchHandler::HandleKeyDown(std::shared_ptr<InputToTouchContext> &context,

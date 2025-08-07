@@ -121,7 +121,6 @@ HWTEST_F(CombinationKeyToTouchHandlerTest, HandleKeyDown_001, TestSize.Level0)
  */
 HWTEST_F(CombinationKeyToTouchHandlerTest, HandleKeyDown_002, TestSize.Level1)
 {
-
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
     mappingInfo_.combinationKeys.push_back(1);
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);

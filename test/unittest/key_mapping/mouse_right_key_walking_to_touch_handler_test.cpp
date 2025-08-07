@@ -72,8 +72,8 @@ public:
         pointerItem_.SetWindowY(MOUSE_Y_VALUE);
         pointerEvent_->AddPointerItem(pointerItem_);
         mappingInfo_ = BuildKeyToTouchMappingInfo();
-        context_->windowInfoEntity.xCenter = MAX_WIDTH / 2;
-        context_->windowInfoEntity.yCenter = MAX_HEIGHT / 2;
+        context_->windowInfoEntity.xCenter = MAX_WIDTH / HALF_LENGTH;
+        context_->windowInfoEntity.yCenter = MAX_HEIGHT / HALF_LENGTH;
     }
 
     KeyToTouchMappingInfo BuildKeyToTouchMappingInfo()
