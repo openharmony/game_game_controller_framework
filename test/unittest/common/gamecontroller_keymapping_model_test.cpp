@@ -367,6 +367,38 @@ HWTEST_F(GameControllerKeymappingModeTest, GameKeyMappingInfo_CheckKeyMapping_00
     ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
 }
 
+static void CheckDpadKeyCannotRepeat(GameKeyMappingInfo &config, std::vector<KeyToTouchMappingInfo> &testKeyMappingInfos,
+                      KeyToTouchMappingInfo &keyToTouchMappingInfo) {
+    keyToTouchMappingInfo.dpadKeyCodeEntity.up = 0;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.up = DPAD_UP;
+    keyToTouchMappingInfo.dpadKeyCodeEntity.down = 0;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.down = DPAD_DOWN;
+    keyToTouchMappingInfo.dpadKeyCodeEntity.left = 0;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.left = DPAD_LEFT;
+    keyToTouchMappingInfo.dpadKeyCodeEntity.right = 0;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.right = DPAD_RIGHT;
+}
+
+static void CheckKeyboardCannotRepeat(GameKeyMappingInfo &config, std::vector<KeyToTouchMappingInfo> &testKeyMappingInfos,
+                                         KeyToTouchMappingInfo &keyToTouchMappingInfo) {
+    keyToTouchMappingInfo.dpadKeyCodeEntity.up = 0;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.up = KEYBOARD_OBSERVATION_UP;
+    keyToTouchMappingInfo.dpadKeyCodeEntity.down = 0;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.down = KEYBOARD_OBSERVATION_DOWN;
+    keyToTouchMappingInfo.dpadKeyCodeEntity.left = 0;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.left = KEYBOARD_OBSERVATION_LEFT;
+    keyToTouchMappingInfo.dpadKeyCodeEntity.right = 0;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.right = KEYBOARD_OBSERVATION_RIGHT;
+}
+
 /**
 * @tc.name: GameKeyMappingInfo_CheckKeyMapping_004
 * @tc.desc: Keycode for mapping type 0、2、4、5、7、8 cannot repeat
@@ -393,31 +425,9 @@ HWTEST_F(GameControllerKeymappingModeTest, GameKeyMappingInfo_CheckKeyMapping_00
     ASSERT_TRUE(config.CheckKeyMapping(testKeyMappingInfos));
     for (int i = 1; i < testKeyMappingInfos.size(); ++i) {
         if (testKeyMappingInfos[i].mappingType == MappingTypeEnum::DPAD_KEY_TO_TOUCH) {
-            testKeyMappingInfos[i].dpadKeyCodeEntity.up = 0;
-            ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
-            testKeyMappingInfos[i].dpadKeyCodeEntity.up = DPAD_UP;
-            testKeyMappingInfos[i].dpadKeyCodeEntity.down = 0;
-            ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
-            testKeyMappingInfos[i].dpadKeyCodeEntity.down = DPAD_DOWN;
-            testKeyMappingInfos[i].dpadKeyCodeEntity.left = 0;
-            ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
-            testKeyMappingInfos[i].dpadKeyCodeEntity.left = DPAD_LEFT;
-            testKeyMappingInfos[i].dpadKeyCodeEntity.right = 0;
-            ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
-            testKeyMappingInfos[i].dpadKeyCodeEntity.right = DPAD_RIGHT;
+            CheckDpadKeyCannotRepeat(config, testKeyMappingInfos, testKeyMappingInfos[i]);
         } else if (testKeyMappingInfos[i].mappingType == MappingTypeEnum::KEY_BOARD_OBSERVATION_TO_TOUCH) {
-            testKeyMappingInfos[i].dpadKeyCodeEntity.up = 0;
-            ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
-            testKeyMappingInfos[i].dpadKeyCodeEntity.up = KEYBOARD_OBSERVATION_UP;
-            testKeyMappingInfos[i].dpadKeyCodeEntity.down = 0;
-            ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
-            testKeyMappingInfos[i].dpadKeyCodeEntity.down = KEYBOARD_OBSERVATION_DOWN;
-            testKeyMappingInfos[i].dpadKeyCodeEntity.left = 0;
-            ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
-            testKeyMappingInfos[i].dpadKeyCodeEntity.left = KEYBOARD_OBSERVATION_LEFT;
-            testKeyMappingInfos[i].dpadKeyCodeEntity.right = 0;
-            ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
-            testKeyMappingInfos[i].dpadKeyCodeEntity.right = KEYBOARD_OBSERVATION_RIGHT;
+            CheckKeyboardCannotRepeat(config, testKeyMappingInfos, testKeyMappingInfos[i]);
         } else {
             testKeyMappingInfos[i].keyCode = 0;
             ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));

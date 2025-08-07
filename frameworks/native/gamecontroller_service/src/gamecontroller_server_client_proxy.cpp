@@ -284,5 +284,3 @@ int32_t GameControllerServerClientProxy::EnableGameKeyMapping(const GameInfo &ga
 
 }
 }
-
-

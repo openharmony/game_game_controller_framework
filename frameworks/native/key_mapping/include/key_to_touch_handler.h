@@ -56,12 +56,12 @@ struct DpadKeyItem {
 };
 
 enum TouchPointId {
-    SINGLE_POINT_ID = 1,
-    WALK_POINT_ID = 2,
-    SKILL_POINT_ID = 3,
-    OBSERVATION_POINT_ID = 4,
-    CROSSHAIR_POINT_ID = 5,
-    COMBINATION_POINT_ID = 6,
+    SINGLE_POINT_ID = 2,
+    WALK_POINT_ID = 3,
+    SKILL_POINT_ID = 4,
+    OBSERVATION_POINT_ID = 5,
+    CROSSHAIR_POINT_ID = 6,
+    COMBINATION_POINT_ID = 7,
 };
 
 /**
