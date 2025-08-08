@@ -17,14 +17,30 @@
 #include <gtest/hwext/gtest-tag.h>
 #include <gmock/gmock-actions.h>
 #include <gmock/gmock-spec-builders.h>
-#include "gamecontroller_keymapping_model.h"
 #include <gtest/gtest.h>
 #include "refbase.h"
+#include "gamecontroller_keymapping_model.h"
 
 using ::testing::Return;
 using namespace testing::ext;
 namespace OHOS {
 namespace GameController {
+
+namespace {
+const int32_t MAX_SINGLE_KEY_MAPPING_SIZE = 50;
+const int32_t MAX_COMBINATION_KEY_MAPPING_SIZE = 30;
+const int32_t MAX_SKILL_KEY_MAPPING_SIZE = 10;
+const int32_t DPAD_UP = 2012;
+const int32_t DPAD_DOWN = 2013;
+const int32_t DPAD_LEFT = 2014;
+const int32_t DPAD_RIGHT = 2015;
+const int32_t KEYBOARD_OBSERVATION_UP = 2039;
+const int32_t KEYBOARD_OBSERVATION_DOWN = 2035;
+const int32_t KEYBOARD_OBSERVATION_LEFT = 2017;
+const int32_t KEYBOARD_OBSERVATION_RIGHT = 2020;
+const size_t MAX_SINGLE_KEY_SIZE_FOR_HOVER_TOUCH_PAD = 2;
+}
+
 class GameControllerKeymappingModeTest : public testing::Test {
 public:
     void SetUp() override;
@@ -47,6 +63,33 @@ static KeyToTouchMappingInfo BuildKeyMapping(int32_t keyCode, int32_t xValue, in
     keyMapping.keyCode = keyCode;
     keyMapping.yValue = xValue;
     keyMapping.xValue = yValue;
+    return keyMapping;
+}
+
+static KeyToTouchMappingInfo BuildKeyMapping(MappingTypeEnum mappingType)
+{
+    KeyToTouchMappingInfo keyMapping;
+    keyMapping.mappingType = mappingType;
+    switch (mappingType) {
+        case MappingTypeEnum::DPAD_KEY_TO_TOUCH:
+            keyMapping.dpadKeyCodeEntity.up = DPAD_UP;
+            keyMapping.dpadKeyCodeEntity.down = DPAD_DOWN;
+            keyMapping.dpadKeyCodeEntity.left = DPAD_LEFT;
+            keyMapping.dpadKeyCodeEntity.right = DPAD_RIGHT;
+            break;
+        case MappingTypeEnum::KEY_BOARD_OBSERVATION_TO_TOUCH:
+            keyMapping.dpadKeyCodeEntity.up = KEYBOARD_OBSERVATION_UP;
+            keyMapping.dpadKeyCodeEntity.down = KEYBOARD_OBSERVATION_DOWN;
+            keyMapping.dpadKeyCodeEntity.left = KEYBOARD_OBSERVATION_LEFT;
+            keyMapping.dpadKeyCodeEntity.right = KEYBOARD_OBSERVATION_RIGHT;
+            break;
+        case MappingTypeEnum::SKILL_KEY_TO_TOUCH:
+            keyMapping.skillRange = 1;
+            keyMapping.radius = 1;
+            break;
+        default:
+            break;
+    }
     return keyMapping;
 }
 
@@ -88,6 +131,22 @@ static GetGameKeyMappingInfoParam BuildGetGameKeyMappingInfoParam()
     param.deviceType = GAME_PAD;
     param.uniq = std::string(MAX_UNIQ_LENGTH, 'c');
     return param;
+}
+
+static void CheckKeyMappingNumbers(GameKeyMappingInfo &config, MappingTypeEnum mappingType, int32_t number)
+{
+    std::vector<KeyToTouchMappingInfo> testKeyMappingInfos(number,
+                                                           BuildKeyMapping(mappingType));
+    for (int32_t i = 0; i < static_cast<int32_t>(testKeyMappingInfos.size()); ++i) {
+        if (mappingType == MappingTypeEnum::COMBINATION_KEY_TO_TOUCH) {
+            testKeyMappingInfos[i].combinationKeys = std::vector<int32_t>{i, i + MAX_COMBINATION_KEY_MAPPING_SIZE};
+            continue;
+        }
+        testKeyMappingInfos[i].keyCode = i;
+    }
+    ASSERT_TRUE(config.CheckKeyMapping(testKeyMappingInfos));
+    testKeyMappingInfos.push_back(BuildKeyMapping(mappingType));
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
 }
 
 /**
@@ -142,7 +201,7 @@ HWTEST_F(GameControllerKeymappingModeTest, GameKeyMappingInfo_CheckParamValidFor
 {
     // check bundleName
     GameKeyMappingInfo config = BuildDefaultKeyMappingConfig();
-    ASSERT_TRUE(config.CheckParamValidForSetDefault());
+
     config.bundleName = "";
     ASSERT_FALSE(config.CheckParamValidForSetDefault());
     config.bundleName = std::string(MAX_BUNDLE_NAME_LENGTH + 1, 'a');
@@ -152,6 +211,8 @@ HWTEST_F(GameControllerKeymappingModeTest, GameKeyMappingInfo_CheckParamValidFor
     config = BuildDefaultKeyMappingConfig();
     config.defaultKeyToTouchMappings.push_back(BuildKeyMapping(-1, -1, -1));
     ASSERT_FALSE(config.CheckParamValidForSetDefault());
+    config.defaultKeyToTouchMappings.clear();
+    ASSERT_TRUE(config.CheckParamValidForSetDefault());
 }
 
 /**
@@ -164,7 +225,7 @@ HWTEST_F(GameControllerKeymappingModeTest, GameKeyMappingInfo_CheckParamValidFor
 {
     // check bundleName
     GameKeyMappingInfo config = BuildCustomKeyMappingConfig();
-    ASSERT_TRUE(config.CheckParamValidForSetCustom());
+
     config.bundleName = "";
     ASSERT_FALSE(config.CheckParamValidForSetCustom());
     config.bundleName = std::string(MAX_BUNDLE_NAME_LENGTH + 1, 'a');
@@ -174,6 +235,8 @@ HWTEST_F(GameControllerKeymappingModeTest, GameKeyMappingInfo_CheckParamValidFor
     config = BuildCustomKeyMappingConfig();
     config.customKeyToTouchMappings.push_back(BuildKeyMapping(-1, -1, -1));
     ASSERT_FALSE(config.CheckParamValidForSetCustom());
+    config.customKeyToTouchMappings.clear();
+    ASSERT_TRUE(config.CheckParamValidForSetCustom());
 }
 
 /**
@@ -208,6 +271,242 @@ HWTEST_F(GameControllerKeymappingModeTest, GameKeyMappingInfo_IsDelByBundleNameW
 
     config.deviceType = UNKNOWN;
     ASSERT_TRUE(config.IsDelByBundleNameWhenSetCustom());
+}
+
+/**
+* @tc.name: GameKeyMappingInfo_CheckKeyMapping_001
+* @tc.desc: Check the number of KeyToTouchMappingInfo for each mappingType
+* @tc.type: FUNC
+* @tc.require: issueNumber
+*/
+HWTEST_F(GameControllerKeymappingModeTest, GameKeyMappingInfo_CheckKeyMapping_001, TestSize.Level0)
+{
+    GameKeyMappingInfo config = BuildDefaultKeyMappingConfig();
+
+    CheckKeyMappingNumbers(config, MappingTypeEnum::SINGE_KEY_TO_TOUCH, MAX_SINGLE_KEY_MAPPING_SIZE);
+    CheckKeyMappingNumbers(config, MappingTypeEnum::COMBINATION_KEY_TO_TOUCH, MAX_COMBINATION_KEY_MAPPING_SIZE);
+    CheckKeyMappingNumbers(config, MappingTypeEnum::DPAD_KEY_TO_TOUCH, 1);
+    CheckKeyMappingNumbers(config, MappingTypeEnum::MOUSE_RIGHT_KEY_WALKING_TO_TOUCH, 1);
+    CheckKeyMappingNumbers(config, MappingTypeEnum::SKILL_KEY_TO_TOUCH, MAX_SKILL_KEY_MAPPING_SIZE);
+    CheckKeyMappingNumbers(config, MappingTypeEnum::OBSERVATION_KEY_TO_TOUCH, 1);
+    CheckKeyMappingNumbers(config, MappingTypeEnum::MOUSE_OBSERVATION_TO_TOUCH, 1);
+    CheckKeyMappingNumbers(config, MappingTypeEnum::KEY_BOARD_OBSERVATION_TO_TOUCH, 1);
+    CheckKeyMappingNumbers(config, MappingTypeEnum::CROSSHAIR_KEY_TO_TOUCH, 1);
+    CheckKeyMappingNumbers(config, MappingTypeEnum::MOUSE_LEFT_FIRE_TO_TOUCH, 1);
+    CheckKeyMappingNumbers(config, MappingTypeEnum::MOUSE_RIGHT_KEY_WALKING_TO_TOUCH, 1);
+}
+
+/**
+* @tc.name: GameKeyMappingInfo_CheckKeyMapping_002
+* @tc.desc: Check combination key size no more than 2
+*           Check combination key cannot repeat
+* @tc.type: FUNC
+* @tc.require: issueNumber
+*/
+HWTEST_F(GameControllerKeymappingModeTest, GameKeyMappingInfo_CheckKeyMapping_002, TestSize.Level0)
+{
+    GameKeyMappingInfo config = BuildDefaultKeyMappingConfig();
+    std::vector<KeyToTouchMappingInfo> testKeyMappingInfos;
+    KeyToTouchMappingInfo keyMapping = BuildKeyMapping(MappingTypeEnum::COMBINATION_KEY_TO_TOUCH);
+    keyMapping.combinationKeys = {1, 2};
+    testKeyMappingInfos.push_back(keyMapping);
+    ASSERT_TRUE(config.CheckKeyMapping(testKeyMappingInfos));
+
+    testKeyMappingInfos.clear();
+    keyMapping.combinationKeys = {1, 1};
+    testKeyMappingInfos.push_back(keyMapping);
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+
+    testKeyMappingInfos.clear();
+    keyMapping.combinationKeys = {1, 2, 3};
+    testKeyMappingInfos.push_back(keyMapping);
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+
+    testKeyMappingInfos.clear();
+    keyMapping.combinationKeys = {1, 2};
+    testKeyMappingInfos.push_back(keyMapping);
+    keyMapping.combinationKeys = {3, 4};
+    testKeyMappingInfos.push_back(keyMapping);
+    ASSERT_TRUE(config.CheckKeyMapping(testKeyMappingInfos));
+
+    keyMapping.combinationKeys = {2, 1};
+    testKeyMappingInfos.push_back(keyMapping);
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    testKeyMappingInfos.pop_back();
+    keyMapping.combinationKeys = {1, 2};
+    testKeyMappingInfos.push_back(keyMapping);
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+}
+
+/**
+* @tc.name: GameKeyMappingInfo_CheckKeyMapping_003
+* @tc.desc: Check skill-key-mapping's skillRange and radius greater than 0
+* @tc.type: FUNC
+* @tc.require: issueNumber
+*/
+HWTEST_F(GameControllerKeymappingModeTest, GameKeyMappingInfo_CheckKeyMapping_003, TestSize.Level0)
+{
+    GameKeyMappingInfo config = BuildDefaultKeyMappingConfig();
+    std::vector<KeyToTouchMappingInfo> testKeyMappingInfos;
+    KeyToTouchMappingInfo keyMapping = BuildKeyMapping(MappingTypeEnum::SKILL_KEY_TO_TOUCH);
+    testKeyMappingInfos.push_back(keyMapping);
+    ASSERT_TRUE(config.CheckKeyMapping(testKeyMappingInfos));
+
+    testKeyMappingInfos.clear();
+    keyMapping = BuildKeyMapping(MappingTypeEnum::SKILL_KEY_TO_TOUCH);
+    keyMapping.skillRange = 0;
+    keyMapping.radius = 1;
+    testKeyMappingInfos.push_back(keyMapping);
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+
+    testKeyMappingInfos.clear();
+    keyMapping = BuildKeyMapping(MappingTypeEnum::SKILL_KEY_TO_TOUCH);
+    keyMapping.skillRange = 1;
+    keyMapping.radius = 0;
+    testKeyMappingInfos.push_back(keyMapping);
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+}
+
+static void CheckDpadKeyCannotRepeat(GameKeyMappingInfo &config,
+                                     std::vector<KeyToTouchMappingInfo> &testKeyMappingInfos,
+                                     KeyToTouchMappingInfo &keyToTouchMappingInfo)
+{
+    keyToTouchMappingInfo.dpadKeyCodeEntity.up = 0;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.up = DPAD_UP;
+    keyToTouchMappingInfo.dpadKeyCodeEntity.down = 0;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.down = DPAD_DOWN;
+    keyToTouchMappingInfo.dpadKeyCodeEntity.left = 0;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.left = DPAD_LEFT;
+    keyToTouchMappingInfo.dpadKeyCodeEntity.right = 0;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.right = DPAD_RIGHT;
+}
+
+static void CheckKeyboardCannotRepeat(GameKeyMappingInfo &config,
+                                      std::vector<KeyToTouchMappingInfo> &testKeyMappingInfos,
+                                      KeyToTouchMappingInfo &keyToTouchMappingInfo)
+{
+    keyToTouchMappingInfo.dpadKeyCodeEntity.up = 0;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.up = KEYBOARD_OBSERVATION_UP;
+    keyToTouchMappingInfo.dpadKeyCodeEntity.down = 0;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.down = KEYBOARD_OBSERVATION_DOWN;
+    keyToTouchMappingInfo.dpadKeyCodeEntity.left = 0;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.left = KEYBOARD_OBSERVATION_LEFT;
+    keyToTouchMappingInfo.dpadKeyCodeEntity.right = 0;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.right = KEYBOARD_OBSERVATION_RIGHT;
+}
+
+/**
+* @tc.name: GameKeyMappingInfo_CheckKeyMapping_004
+* @tc.desc: Keycode for mapping type 0、2、4、5、7、8 cannot repeat
+* @tc.type: FUNC
+* @tc.require: issueNumber
+*/
+HWTEST_F(GameControllerKeymappingModeTest, GameKeyMappingInfo_CheckKeyMapping_004, TestSize.Level0)
+{
+    GameKeyMappingInfo config = BuildDefaultKeyMappingConfig();
+    std::vector<KeyToTouchMappingInfo> testKeyMappingInfos;
+    testKeyMappingInfos.push_back(BuildKeyMapping(MappingTypeEnum::SINGE_KEY_TO_TOUCH));
+    testKeyMappingInfos.push_back(BuildKeyMapping(MappingTypeEnum::DPAD_KEY_TO_TOUCH));
+    testKeyMappingInfos.push_back(BuildKeyMapping(MappingTypeEnum::SKILL_KEY_TO_TOUCH));
+    testKeyMappingInfos.push_back(BuildKeyMapping(MappingTypeEnum::OBSERVATION_KEY_TO_TOUCH));
+    testKeyMappingInfos.push_back(BuildKeyMapping(MappingTypeEnum::KEY_BOARD_OBSERVATION_TO_TOUCH));
+    testKeyMappingInfos.push_back(BuildKeyMapping(MappingTypeEnum::CROSSHAIR_KEY_TO_TOUCH));
+    for (int i = 0; i < testKeyMappingInfos.size(); ++i) {
+        MappingTypeEnum type = testKeyMappingInfos[i].mappingType;
+        if (type == MappingTypeEnum::DPAD_KEY_TO_TOUCH || type == MappingTypeEnum::KEY_BOARD_OBSERVATION_TO_TOUCH) {
+            continue;
+        }
+        testKeyMappingInfos[i].keyCode = i;
+    }
+    ASSERT_TRUE(config.CheckKeyMapping(testKeyMappingInfos));
+    for (int i = 1; i < testKeyMappingInfos.size(); ++i) {
+        if (testKeyMappingInfos[i].mappingType == MappingTypeEnum::DPAD_KEY_TO_TOUCH) {
+            CheckDpadKeyCannotRepeat(config, testKeyMappingInfos, testKeyMappingInfos[i]);
+        } else if (testKeyMappingInfos[i].mappingType == MappingTypeEnum::KEY_BOARD_OBSERVATION_TO_TOUCH) {
+            CheckKeyboardCannotRepeat(config, testKeyMappingInfos, testKeyMappingInfos[i]);
+        } else {
+            testKeyMappingInfos[i].keyCode = 0;
+            ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+            testKeyMappingInfos[i].keyCode = i;
+        }
+    }
+}
+
+/**
+* @tc.name: GameKeyMappingInfo_CheckKeyMapping_005
+* @tc.desc: Mapping type 3 and 6 and 10 cannot exit simultaneously
+* @tc.type: FUNC
+* @tc.require: issueNumber
+*/
+HWTEST_F(GameControllerKeymappingModeTest, GameKeyMappingInfo_CheckKeyMapping_005, TestSize.Level0)
+{
+    GameKeyMappingInfo config = BuildDefaultKeyMappingConfig();
+    std::vector<MappingTypeEnum> mouseRightVector;
+    mouseRightVector.push_back(MappingTypeEnum::MOUSE_RIGHT_KEY_WALKING_TO_TOUCH);
+    mouseRightVector.push_back(MappingTypeEnum::MOUSE_OBSERVATION_TO_TOUCH);
+    mouseRightVector.push_back(MappingTypeEnum::MOUSE_RIGHT_KEY_CLICK_TO_TOUCH);
+    std::vector<KeyToTouchMappingInfo> testKeyMappingInfos;
+    for (const auto &mouseRight: mouseRightVector) {
+        for (const auto &other: mouseRightVector) {
+            testKeyMappingInfos.clear();
+            testKeyMappingInfos.push_back(BuildKeyMapping(mouseRight));
+            if (other == mouseRight) {
+                ASSERT_TRUE(config.CheckKeyMapping(testKeyMappingInfos));
+                continue;
+            }
+            testKeyMappingInfos.push_back(BuildKeyMapping(other));
+            ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+        }
+    }
+}
+
+/**
+* @tc.name: GameKeyMappingInfo_CheckKeyMappingForHoverTouchPad_001
+* @tc.desc: HoverTouchPad only support 2 SINGE_KEY_TO_TOUCH key mappings
+*           Keycode cannot repeat
+* @tc.type: FUNC
+* @tc.require: issueNumber
+*/
+HWTEST_F(GameControllerKeymappingModeTest, GameKeyMappingInfo_CheckKeyMappingForHoverTouchPad_001, TestSize.Level0)
+{
+    GameKeyMappingInfo config = BuildDefaultKeyMappingConfig();
+    config.deviceType = DeviceTypeEnum::HOVER_TOUCH_PAD;
+    std::vector<KeyToTouchMappingInfo> testKeyMappingInfos;
+    KeyToTouchMappingInfo keyMapping = BuildKeyMapping(MappingTypeEnum::SINGE_KEY_TO_TOUCH);
+    testKeyMappingInfos.push_back(keyMapping);
+    ASSERT_TRUE(config.CheckKeyMapping(testKeyMappingInfos));
+
+    for (int i = 1; i < static_cast<int>(SUM_OF_MAPPING_TYPE); ++i) {
+        testKeyMappingInfos.clear();
+        keyMapping = BuildKeyMapping(static_cast<MappingTypeEnum>(i));
+        testKeyMappingInfos.push_back(keyMapping);
+        ASSERT_FALSE(config.CheckKeyMappingForHoverTouchPad(testKeyMappingInfos));
+    }
+
+    testKeyMappingInfos.clear();
+    keyMapping = BuildKeyMapping(MappingTypeEnum::SINGE_KEY_TO_TOUCH);
+    testKeyMappingInfos.push_back(keyMapping);
+    keyMapping = BuildKeyMapping(MappingTypeEnum::SINGE_KEY_TO_TOUCH);
+    keyMapping.keyCode = 1;
+    testKeyMappingInfos.push_back(keyMapping);
+    ASSERT_TRUE(config.CheckKeyMappingForHoverTouchPad(testKeyMappingInfos));
+
+    keyMapping = BuildKeyMapping(MappingTypeEnum::SINGE_KEY_TO_TOUCH);
+    keyMapping.keyCode = 2;
+    testKeyMappingInfos.push_back(keyMapping);
+    ASSERT_FALSE(config.CheckKeyMappingForHoverTouchPad(testKeyMappingInfos));
+
+    testKeyMappingInfos.pop_back();
+    testKeyMappingInfos.back().keyCode = 0;
+    ASSERT_FALSE(config.CheckKeyMappingForHoverTouchPad(testKeyMappingInfos));
 }
 }
 }

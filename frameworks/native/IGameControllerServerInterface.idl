@@ -32,11 +32,6 @@ interface IGameControllerServerInterface {
     void SyncIdentifiedDeviceInfos([in] IdentifiedDeviceInfo[] deviceInfos);
 
     /**
-     * Indicates whether to support game key mapping configuration.
-     */
-    void IsSupportGameKeyMapping([in]GameInfo gameInfo, [out] GameInfo resultGameInfo);
-
-    /**
      * Synchronize games that support key mapping
      */
     void SyncSupportKeyMappingGames([in] boolean isSyncAll, [in]GameInfo[] gameInfos);
@@ -65,4 +60,9 @@ interface IGameControllerServerInterface {
      * Broadcast open the template configuration page
      */
     void BroadcastOpenTemplateConfig([in]GameInfo gameInfo, [in]DeviceInfo deviceInfo);
+
+    /**
+     * Enable input-to-touch for games with supported key mapping.
+     */
+    void EnableGameKeyMapping([in]GameInfo gameInfo, [in] boolean isEnable);
 }

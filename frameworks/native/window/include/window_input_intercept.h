@@ -112,11 +112,11 @@ private:
                            const DeviceInfo &deviceInfo);
 
     /**
-     * Indicates whether to perform key-to-touch control.
+     * Indicates whether notify open template page.
      * @param keyEvent Key Event
-     * @return true means perform key-to-touch control.
+     * @return true means notify open template page.
      */
-    bool IsNeedKeyToTouch(const std::shared_ptr<MMI::KeyEvent> &keyEvent);
+    bool IsNotifyOpenTemplateConfigPage(const std::shared_ptr<MMI::KeyEvent> &keyEvent);
 
 private:
     /**

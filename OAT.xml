@@ -23,6 +23,9 @@
             <filefilter name="defaultFilter" desc="Files not to check">
                 <filteritem type="filename" name="*.gif" desc="GIF file for README"/>
             </filefilter>
+            <filefilter name="binaryFileTypePolicyFilter" desc="Filters for binary file policies" >
+                <filteritem type="filepath" name="figures/.*" desc="Self-developed image"/>
+            </filefilter>
         </filefilterlist>
     </oatconfig>
 </configuration>

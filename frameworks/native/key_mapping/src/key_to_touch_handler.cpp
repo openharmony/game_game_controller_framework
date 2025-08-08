@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include <cmath>
 #include <window_input_intercept_client.h>
 #include "key_to_touch_handler.h"
 #include "gamecontroller_log.h"
@@ -20,12 +21,19 @@
 namespace OHOS {
 namespace GameController {
 namespace {
+const int32_t MOUSE_LEFT_BUTTON_ID = 0;
+const int32_t MOUSE_RIGHT_BUTTON_ID = 1;
 const int32_t DEVICE_ID = 3;
+const double ANGLE = 180.0;
+const int32_t TOUCH_RANGE = 10;
 }
 
-void BaseKeyToTouchHandler::BuildAndSendPointerEvent(InputToTouchContext &context,
+void BaseKeyToTouchHandler::BuildAndSendPointerEvent(std::shared_ptr<InputToTouchContext> &context,
                                                      const TouchEntity &touchEntity)
 {
+    if (context == nullptr) {
+        return;
+    }
     std::shared_ptr<PointerEvent> pointerEvent = PointerEvent::Create();
     if (pointerEvent == nullptr) {
         HILOGE("Create PointerEvent failed.");
@@ -33,41 +41,285 @@ void BaseKeyToTouchHandler::BuildAndSendPointerEvent(InputToTouchContext &contex
     }
     PointerEvent::PointerItem pointerItem = BuildPointerItem(context, touchEntity);
     if (touchEntity.pointerAction == PointerEvent::POINTER_ACTION_UP) {
-        if (context.pointerItems.find(touchEntity.pointerId) != context.pointerItems.end()) {
-            context.pointerItems.erase(touchEntity.pointerId);
+        if (context->pointerItems.find(touchEntity.pointerId) != context->pointerItems.end()) {
+            context->pointerItems.erase(touchEntity.pointerId);
         }
-        pointerEvent->AddPointerItem(pointerItem);
     } else {
-        context.pointerItems[touchEntity.pointerId] = pointerItem;
+        context->pointerItems[touchEntity.pointerId] = pointerItem;
     }
-    for (auto &pair: context.pointerItems) {
-        pointerEvent->AddPointerItem(pair.second);
-    }
+    pointerEvent->AddPointerItem(pointerItem);
+    pointerEvent->SetDeviceId(DEVICE_ID);
+    pointerEvent->SetActionTime(touchEntity.actionTime);
+    pointerEvent->SetAgentWindowId(context->windowInfoEntity.windowId);
+    pointerEvent->SetTargetWindowId(context->windowInfoEntity.windowId);
+
     pointerEvent->SetId(std::numeric_limits<int32_t>::max());
     pointerEvent->SetPointerAction(touchEntity.pointerAction);
     pointerEvent->SetPointerId(touchEntity.pointerId);
     pointerEvent->SetSourceType(PointerEvent::SOURCE_TYPE_TOUCHSCREEN);
-    HILOGD("pointer is [%{public}s].", pointerEvent->ToString().c_str());
+    HILOGI("pointer is [%{public}s].", pointerEvent->ToString().c_str());
     Rosen::WindowInputInterceptClient::SendInputEvent(pointerEvent);
 }
 
-PointerEvent::PointerItem BaseKeyToTouchHandler::BuildPointerItem(InputToTouchContext &context,
+PointerEvent::PointerItem BaseKeyToTouchHandler::BuildPointerItem(std::shared_ptr<InputToTouchContext> &context,
                                                                   const TouchEntity &touchEntity)
 {
     PointerEvent::PointerItem pointerItem;
     pointerItem.SetPointerId(touchEntity.pointerId);
     pointerItem.SetOriginPointerId(touchEntity.pointerId);
-    pointerItem.SetDisplayX(touchEntity.xValue);
-    pointerItem.SetDisplayXPos(touchEntity.xValue);
     pointerItem.SetWindowX(touchEntity.xValue);
-    pointerItem.SetWindowXPos(touchEntity.xValue);
-    pointerItem.SetDisplayY(touchEntity.yValue);
-    pointerItem.SetDisplayYPos(touchEntity.yValue);
     pointerItem.SetWindowY(touchEntity.yValue);
-    pointerItem.SetWindowYPos(touchEntity.yValue);
     pointerItem.SetDeviceId(DEVICE_ID);
     pointerItem.SetDownTime(touchEntity.actionTime);
+    pointerItem.SetPressure(1);
+    pointerItem.SetWidth(TOUCH_RANGE);
+    pointerItem.SetHeight(TOUCH_RANGE);
+    pointerItem.SetTargetWindowId(context->windowInfoEntity.windowId);
     return pointerItem;
+}
+
+TouchEntity BaseKeyToTouchHandler::BuildTouchEntity(const KeyToTouchMappingInfo &mappingInfo,
+                                                    const TouchPointId touchPointId,
+                                                    const int32_t pointerAction,
+                                                    const int64_t actionTime)
+{
+    TouchEntity touchEntity;
+    touchEntity.pointerId = touchPointId;
+    touchEntity.xValue = mappingInfo.xValue;
+    touchEntity.yValue = mappingInfo.yValue;
+    touchEntity.pointerAction = pointerAction;
+    touchEntity.actionTime = actionTime;
+    return touchEntity;
+}
+
+TouchEntity BaseKeyToTouchHandler::BuildTouchUpEntity(const PointerEvent::PointerItem lastPointItem,
+                                                      const TouchPointId touchPointId,
+                                                      const int32_t pointerAction,
+                                                      const int64_t actionTime)
+{
+    TouchEntity touchEntity;
+    touchEntity.pointerId = touchPointId;
+    touchEntity.xValue = lastPointItem.GetWindowX();
+    touchEntity.yValue = lastPointItem.GetWindowY();
+    touchEntity.pointerAction = pointerAction;
+    touchEntity.actionTime = actionTime;
+    return touchEntity;
+}
+
+TouchEntity BaseKeyToTouchHandler::BuildMoveTouchEntity(const TouchPointId touchPointId,
+                                                        const Point &destPoint,
+                                                        const int64_t actionTime)
+{
+    TouchEntity touchEntity;
+    touchEntity.pointerId = touchPointId;
+    touchEntity.xValue = static_cast<int32_t>(destPoint.x);
+    touchEntity.yValue = static_cast<int32_t>(destPoint.y);
+    touchEntity.pointerAction = PointerEvent::POINTER_ACTION_MOVE;
+    touchEntity.actionTime = actionTime;
+    return touchEntity;
+}
+
+double BaseKeyToTouchHandler::CalculateAngle(const Point &centerPoint, const Point &targetPoint)
+{
+    double dx = targetPoint.x - centerPoint.x;
+    double dy = targetPoint.y - centerPoint.y;
+    return std::atan2(dy, dx) * (ANGLE / M_PI);
+}
+
+double BaseKeyToTouchHandler::CalculateDistance(const Point &centerPoint, const Point &targetPoint)
+{
+    double dx = targetPoint.x - centerPoint.x;
+    double dy = targetPoint.y - centerPoint.y;
+    return sqrt(dx * dx + dy * dy);
+}
+
+Point BaseKeyToTouchHandler::ComputeTargetPoint(const Point &centerPoint, const double radius, const double angle)
+{
+    double thetaRadians = angle * (M_PI / ANGLE);
+    Point point;
+    point.x = centerPoint.x + radius * cos(thetaRadians);
+    point.y = centerPoint.y + radius * sin(thetaRadians);
+    return point;
+}
+
+void BaseKeyToTouchHandler::ComputeTouchPointByMouseMoveEvent(std::shared_ptr<InputToTouchContext> &context,
+                                                              const std::shared_ptr<MMI::PointerEvent> &pointerEvent,
+                                                              const KeyToTouchMappingInfo &mappingInfo,
+                                                              const TouchPointId &touchPointId)
+{
+    if (pointerEvent->GetPointerAction() != PointerEvent::POINTER_ACTION_MOVE) {
+        return;
+    }
+    if (context->pointerItems.find(touchPointId) == context->pointerItems.end()) {
+        HILOGW("discard mouse move event, because cannot find the last move event");
+        return;
+    }
+
+    PointerEvent::PointerItem lastMovePoint = context->pointerItems[touchPointId];
+
+    // Get current mouse pointer
+    PointerEvent::PointerItem currentPointItem;
+    pointerEvent->GetPointerItem(pointerEvent->GetPointerId(), currentPointItem);
+
+    Point targetPoint;
+    targetPoint.x = ComputeMovePosition(currentPointItem.GetWindowX(), context->lastMousePointer.GetWindowX(),
+                                        lastMovePoint.GetWindowX(), context->windowInfoEntity.maxWidth,
+                                        mappingInfo.xStep);
+    targetPoint.y = ComputeMovePosition(currentPointItem.GetWindowY(), context->lastMousePointer.GetWindowY(),
+                                        lastMovePoint.GetWindowY(), context->windowInfoEntity.maxHeight,
+                                        mappingInfo.yStep);
+    int64_t actionTime = pointerEvent->GetActionTime();
+    TouchEntity touchEntity = BuildMoveTouchEntity(touchPointId, targetPoint, actionTime);
+    BuildAndSendPointerEvent(context, touchEntity);
+    context->lastMousePointer = currentPointItem;
+}
+
+int32_t BaseKeyToTouchHandler::ComputeMovePosition(int32_t currentMousePosition, int32_t lastMousePosition,
+                                                   int32_t lastMovePosition,
+                                                   int32_t maxEdge, int32_t step)
+{
+    int32_t result;
+    if (currentMousePosition > lastMousePosition) {
+        result = std::min(lastMovePosition + step, maxEdge);
+    } else if (currentMousePosition < lastMousePosition) {
+        result = std::max(lastMovePosition - step, MIN_EDGE);
+    } else {
+        if (currentMousePosition <= MIN_EDGE) {
+            // mouse has moved to left or top edge
+            result = std::max(lastMovePosition - step, MIN_EDGE);
+        } else {
+            result = std::min(lastMovePosition + step, maxEdge);
+        }
+    }
+    return result;
+}
+
+bool BaseKeyToTouchHandler::IsMouseLeftButtonEvent(const std::shared_ptr<MMI::PointerEvent> &pointerEvent)
+{
+    if (pointerEvent->GetSourceType() != PointerEvent::SOURCE_TYPE_MOUSE) {
+        return false;
+    }
+    if (pointerEvent->GetButtonId() == MOUSE_LEFT_BUTTON_ID &&
+        (pointerEvent->GetPointerAction() == PointerEvent::POINTER_ACTION_BUTTON_DOWN ||
+            pointerEvent->GetPointerAction() == PointerEvent::POINTER_ACTION_BUTTON_UP)) {
+        return true;
+    }
+    return false;
+}
+
+bool BaseKeyToTouchHandler::IsMouseRightButtonEvent(const std::shared_ptr<MMI::PointerEvent> &pointerEvent)
+{
+    if (pointerEvent->GetSourceType() != PointerEvent::SOURCE_TYPE_MOUSE) {
+        return false;
+    }
+    if (pointerEvent->GetButtonId() == MOUSE_RIGHT_BUTTON_ID &&
+        (pointerEvent->GetPointerAction() == PointerEvent::POINTER_ACTION_BUTTON_DOWN ||
+            pointerEvent->GetPointerAction() == PointerEvent::POINTER_ACTION_BUTTON_UP)) {
+        return true;
+    }
+    return false;
+}
+
+bool BaseKeyToTouchHandler::IsMouseMoveEvent(const std::shared_ptr<MMI::PointerEvent> &pointerEvent)
+{
+    if (pointerEvent->GetSourceType() != PointerEvent::SOURCE_TYPE_MOUSE) {
+        return false;
+    }
+    return pointerEvent->GetPointerAction() == PointerEvent::POINTER_ACTION_MOVE;
+}
+
+std::vector<DpadKeyItem> BaseKeyToTouchHandler::CollectValidDpadKeys(
+    const std::shared_ptr<MMI::KeyEvent> &keyEvent,
+    const DeviceInfo &deviceInfo,
+    const KeyToTouchMappingInfo &mapping)
+{
+    std::vector<KeyEvent::KeyItem> keyItems = keyEvent->GetKeyItems();
+    std::vector<DpadKeyItem> dpadKeys;
+    int32_t deviceId = keyEvent->GetDeviceId();
+    for (const auto &keyItem: keyItems) {
+        if (!keyItem.IsPressed() || keyItem.GetDeviceId() != deviceId ||
+            keyItem.GetDownTime() < deviceInfo.onlineTime) {
+            continue;
+        }
+        DpadKeyTypeEnum type = GetDpadKeyType(keyItem.GetKeyCode(), mapping);
+        if (type == DPAD_KEYTYPE_UNKNOWN) {
+            continue;
+        }
+        dpadKeys.push_back(DpadKeyItem(keyItem, type));
+    }
+    SortDpadKeys(dpadKeys);
+    return dpadKeys;
+}
+
+DpadKeyTypeEnum BaseKeyToTouchHandler::GetDpadKeyType(const int32_t keyCode, const KeyToTouchMappingInfo &mappingInfo)
+{
+    DpadKeyCodeEntity dpad = mappingInfo.dpadKeyCodeEntity;
+    if (keyCode == dpad.up) {
+        return DPAD_UP;
+    } else if (keyCode == dpad.down) {
+        return DPAD_DOWN;
+    } else if (keyCode == dpad.left) {
+        return DPAD_LEFT;
+    } else if (keyCode == dpad.right) {
+        return DPAD_RIGHT;
+    } else {
+        return DPAD_KEYTYPE_UNKNOWN;
+    }
+}
+
+void BaseKeyToTouchHandler::SortDpadKeys(std::vector<DpadKeyItem> &dpadKeys)
+{
+    //Sort in ascending order by downTime.
+    std::sort(dpadKeys.begin(), dpadKeys.end(),
+              [](const DpadKeyItem &a, const DpadKeyItem &b) {
+                  return a.downTime < b.downTime;
+              });
+}
+
+InputToTouchContext::InputToTouchContext(const DeviceTypeEnum &type,
+                                         const WindowInfoEntity &windowInfo,
+                                         const std::vector<KeyToTouchMappingInfo> &mappingInfos)
+{
+    deviceType = type;
+    windowInfoEntity = windowInfo;
+    int32_t lastKeyCode;
+    int32_t firstKeyCode;
+    for (auto &mappingInfo: mappingInfos) {
+        if (mappingInfo.mappingType == COMBINATION_KEY_TO_TOUCH) {
+            if (mappingInfo.combinationKeys.size() != MAX_COMBINATION_KEYS) {
+                HILOGW("discard the combinationKeys because the combinationKeys.size is less than max");
+                continue;
+            }
+            lastKeyCode = mappingInfo.combinationKeys.at(COMBINATION_LAST_KEYCODE_IDX);
+            firstKeyCode = mappingInfo.combinationKeys.at(0);
+            std::unordered_map<int32_t, KeyToTouchMappingInfo> map = combinationKeyMappings[lastKeyCode];
+            map[firstKeyCode] = mappingInfo;
+            combinationKeyMappings[lastKeyCode] = map;
+        } else if (mappingInfo.mappingType == DPAD_KEY_TO_TOUCH
+            || mappingInfo.mappingType == KEY_BOARD_OBSERVATION_TO_TOUCH) {
+            singleKeyMappings[mappingInfo.dpadKeyCodeEntity.up] = mappingInfo;
+            singleKeyMappings[mappingInfo.dpadKeyCodeEntity.down] = mappingInfo;
+            singleKeyMappings[mappingInfo.dpadKeyCodeEntity.left] = mappingInfo;
+            singleKeyMappings[mappingInfo.dpadKeyCodeEntity.right] = mappingInfo;
+        } else if (mappingInfo.mappingType == MOUSE_RIGHT_KEY_WALKING_TO_TOUCH
+            || mappingInfo.mappingType == MOUSE_OBSERVATION_TO_TOUCH) {
+            mouseBtnKeyMappings[MOUSE_RIGHT_BUTTON_KEYCODE] = mappingInfo;
+            isMonitorMouseMove = true;
+        } else if (mappingInfo.mappingType == MOUSE_RIGHT_KEY_CLICK_TO_TOUCH) {
+            mouseBtnKeyMappings[MOUSE_RIGHT_BUTTON_KEYCODE] = mappingInfo;
+        } else if (mappingInfo.mappingType == MOUSE_LEFT_FIRE_TO_TOUCH) {
+            mouseBtnKeyMappings[MOUSE_LEFT_BUTTON_KEYCODE] = mappingInfo;
+        } else if (mappingInfo.mappingType == SKILL_KEY_TO_TOUCH
+            || mappingInfo.mappingType == CROSSHAIR_KEY_TO_TOUCH
+            || mappingInfo.mappingType == OBSERVATION_KEY_TO_TOUCH) {
+            singleKeyMappings[mappingInfo.keyCode] = mappingInfo;
+            isMonitorMouseMove = true;
+        } else if (mappingInfo.mappingType == SINGE_KEY_TO_TOUCH) {
+            singleKeyMappings[mappingInfo.keyCode] = mappingInfo;
+        } else {
+            HILOGW("unknown mappingType[%{public}d]", static_cast<int32_t>(mappingInfo.mappingType));
+        }
+    }
 }
 }
 }

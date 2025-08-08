@@ -36,6 +36,13 @@ public:
     ~GameCommonEventListener() = default;
 
     void OnReceiveEvent(const EventFwk::CommonEventData &data) override;
+
+private:
+    void HandleTemplateChangeEvent(const std::string &bundleName, const EventFwk::CommonEventData &data);
+
+    void HandleKeyMappingEnableChangeEvent(const EventFwk::CommonEventData &data);
+
+    bool IsCurrentGameEvent(const std::string &bundleName);
 };
 
 class InputToTouchClient {
@@ -52,6 +59,8 @@ private:
     static void StartInputMonitor();
 
     static void StartPublicEventMonitor();
+
+    static void SimulateKeyboardOnlineByPC();
 
 private:
     static std::shared_ptr<GameCommonEventListener> subscriber_;

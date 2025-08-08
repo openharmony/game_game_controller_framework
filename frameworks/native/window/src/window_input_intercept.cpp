@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 #include <optional>
+#include "input_manager.h"
 #include "window_input_intercept.h"
 #include "window_input_intercept_client.h"
 #include "gamecontroller_log.h"
@@ -21,6 +22,7 @@
 #include "multi_modal_input_mgt_service.h"
 #include "gamecontroller_client_model.h"
 #include "key_mapping_handle.h"
+#include "key_to_touch_manager.h"
 
 namespace OHOS {
 namespace GameController {
@@ -95,17 +97,23 @@ WindowInputInterceptConsumer::WindowInputInterceptConsumer() noexcept
 
 void WindowInputInterceptConsumer::OnInputEvent(const std::shared_ptr<MMI::KeyEvent> &keyEvent)
 {
-    if (IsNeedKeyToTouch(keyEvent)) {
-        // When input is transferred to touch, the original event is discarded.
+    HILOGD("OnKeyEvent is %s", keyEvent->ToString().c_str());
+    if (IsNotifyOpenTemplateConfigPage(keyEvent)) {
         return;
     }
-
+    if (DelayedSingleton<KeyToTouchManager>::GetInstance()->DispatchKeyEvent(keyEvent)) {
+        return;
+    }
     ConsumeKeyInputEvent(keyEvent);
     Rosen::WindowInputInterceptClient::SendInputEvent(keyEvent);
 }
 
 void WindowInputInterceptConsumer::OnInputEvent(const std::shared_ptr<MMI::PointerEvent> &pointerEvent)
 {
+    HILOGD("OnInputEvent is %s", pointerEvent->ToString().c_str());
+    if (DelayedSingleton<KeyToTouchManager>::GetInstance()->DispatchPointerEvent(pointerEvent)) {
+        return;
+    }
     ConsumePointerInputEvent(pointerEvent);
     Rosen::WindowInputInterceptClient::SendInputEvent(pointerEvent);
 }
@@ -124,9 +132,6 @@ void WindowInputInterceptConsumer::ConsumeKeyInputEvent(const std::shared_ptr<MM
     }
     buttonEvent.keyCode = keyEvent->GetKeyCode();
     if (BUTTON_CODE_NAME_TRANSFORMATION.find(buttonEvent.keyCode) == BUTTON_CODE_NAME_TRANSFORMATION.end()) {
-        // The key has not been mapped.
-        HILOGD("OnKeyEvent Unknown keyCode is %{public}d",
-               buttonEvent.keyCode);
         return;
     }
     buttonEvent.keyCodeName = BUTTON_CODE_NAME_TRANSFORMATION.at(buttonEvent.keyCode).second;
@@ -158,21 +163,18 @@ bool WindowInputInterceptConsumer::PressedKeyIsValid(const std::shared_ptr<MMI::
                                                      const DeviceInfo &deviceInfo)
 {
     if (BUTTON_CODE_NAME_TRANSFORMATION.find(pressedKeyCode) == BUTTON_CODE_NAME_TRANSFORMATION.end()) {
-        // The key has not been mapped.
-        HILOGW("OnKeyEvent discard unknown pressed keyCode [%{public}d]",
-               pressedKeyCode);
         return false;
     }
 
     std::optional<MMI::KeyEvent::KeyItem> keyItem = keyEvent->GetKeyItem(pressedKeyCode);
     if (!keyItem.has_value()) {
-        HILOGW("OnKeyEvent discard pressed keyCode [%{public}d], no keyItem",
+        HILOGW("OnKeyEvent discard pressed keyCode [%{private}d], no keyItem",
                pressedKeyCode);
         return false;
     }
 
     if (keyItem.value().GetDeviceId() != keyEvent->GetDeviceId()) {
-        HILOGD("OnKeyEvent discard pressed keyCode [%{public}d], the deviceId is invalid",
+        HILOGD("OnKeyEvent discard pressed keyCode [%{private}d], the deviceId is invalid",
                pressedKeyCode);
         return false;
     }
@@ -182,7 +184,7 @@ bool WindowInputInterceptConsumer::PressedKeyIsValid(const std::shared_ptr<MMI::
          * In some scenarios, when the device goes offline, the multi-mode input module does not receive the button
          * up event. As a result, the multi-mode input module considers that the button is still pressed.
          */
-        HILOGE("OnKeyEvent discard pressed keyCode [%{public}d], downTime must be more than device onlineTime",
+        HILOGE("OnKeyEvent discard pressed keyCode [%{private}d], downTime must be more than device onlineTime",
                pressedKeyCode);
         return false;
     }
@@ -202,13 +204,9 @@ bool WindowInputInterceptConsumer::IsAxisEvent(const int32_t action)
 
 void WindowInputInterceptConsumer::ConsumePointerInputEvent(const std::shared_ptr<MMI::PointerEvent> &pointerEvent)
 {
-    if (pointerEvent->GetSourceType() != MMI::PointerEvent::SOURCE_TYPE_TOUCHSCREEN &&
-        IsAxisEvent(pointerEvent->GetPointerAction())) {
+    if (pointerEvent->GetSourceType() != MMI::PointerEvent::SOURCE_TYPE_TOUCHSCREEN
+        && IsAxisEvent(pointerEvent->GetPointerAction())) {
         ConsumeGamePadAxisInputEvent(pointerEvent);
-    } else {
-        HILOGD("ConsumePointerInputEvent failed. the source type [%{public}d],"
-               " PointerAction is [%{public}d]",
-               pointerEvent->GetSourceType(), pointerEvent->GetPointerAction());
     }
 }
 
@@ -331,9 +329,9 @@ GamePadAxisEvent WindowInputInterceptConsumer::BuildGamePadAxisEvent(const int32
     return axisEvent;
 }
 
-bool WindowInputInterceptConsumer::IsNeedKeyToTouch(const std::shared_ptr<MMI::KeyEvent> &keyEvent)
+bool WindowInputInterceptConsumer::IsNotifyOpenTemplateConfigPage(const std::shared_ptr<MMI::KeyEvent> &keyEvent)
 {
-    return DelayedSingleton<KeyMappingHandle>::GetInstance()->IsNeedKeyToTouch(keyEvent);
+    return DelayedSingleton<KeyMappingHandle>::GetInstance()->IsNotifyOpenTemplateConfigPage(keyEvent);
 }
 
 WindowInputIntercept::~WindowInputIntercept()

@@ -24,11 +24,8 @@
 namespace OHOS {
 namespace GameController {
 const size_t MAX_UNIQ_LENGTH = 50;
-
-namespace {
 const int32_t MAX_SIZE = 10;
 const size_t MAX_DEVICE_NAME_LENGTH = 256;
-}
 
 enum DeviceChangeType {
     REMOVE = 0,
