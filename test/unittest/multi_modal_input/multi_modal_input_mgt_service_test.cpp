@@ -512,7 +512,7 @@ HWTEST_F(MultiModalInputMgtServiceTest, HandleDeviceChangeEvent_006, TestSize.Le
 /**
 * @tc.name: HandleDeviceChangeEvent_007
 * @tc.desc: Receives virtual device event. if it's external device's virtual device event,
- * system will get uniq from received device event.
+* Construct uniq using vendor and product
 * @tc.type: FUNC
 * @tc.require: issueNumber
 */
@@ -556,17 +556,16 @@ HWTEST_F(MultiModalInputMgtServiceTest, HandleDeviceChangeEvent_007, TestSize.Le
 
     ASSERT_TRUE(DelayedSingleton<MultiModalInputMgtService>::GetInstance()->needStartDelayHandle_);
     ASSERT_EQ(0, DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceChangeEventCache_.size());
-    ASSERT_EQ(1, DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceInfoByUniqMap_.size());
+    ASSERT_EQ(2, DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceInfoByUniqMap_.size());
+    ASSERT_EQ(1, DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceInfoByUniqMap_.count(
+        inputDeviceInfo1.uniq));
     ASSERT_EQ(1, DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceInfoByUniqMap_.count(
         inputDeviceInfo1.uniq));
     ASSERT_EQ(2, DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceIdUniqMap_.size());
     ASSERT_EQ(inputDeviceInfo1.uniq,
-              DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceIdUniqMap_[inputDeviceInfo1.id]);
-    ASSERT_EQ(inputDeviceInfo1.uniq,
-              DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceIdUniqMap_[inputDeviceInfo2.id]);
-    DeviceInfo deviceInfo = DelayedSingleton<MultiModalInputMgtService>::GetInstance()
-        ->deviceInfoByUniqMap_[inputDeviceInfo1.uniq];
-    ASSERT_EQ(inputDeviceInfo1.uniq, deviceInfo.uniq);
+    DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceIdUniqMap_[inputDeviceInfo1.id]);
+    std::string uniq = std::to_string(inputDeviceInfo2.vendor) + "_" + std::to_string(inputDeviceInfo2.product);
+    ASSERT_EQ(uniq, DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceIdUniqMap_[inputDeviceInfo2.id]);
 }
 
 /**
