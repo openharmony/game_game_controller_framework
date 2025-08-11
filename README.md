@@ -12,9 +12,9 @@ manufacturers
 the ability to implement input-to-touch conversion.
 
 System Architecture Diagram:
-![System Architecture Diagram](./figures/system_arch_en.png)
+![System Architecture Diagram](./figures/system_arch_en.PNG)
 Core Modules of GameControllerFramework:
-![Code Architecture Diagram](./figures/code_arch.png)
+![Code Architecture Diagram](./figures/code_arch.PNG)
 
 - **window**
 

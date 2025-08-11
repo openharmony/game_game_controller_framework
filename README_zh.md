@@ -7,9 +7,9 @@ GameController用于给游戏开发者提供游戏外设接入能力的API以及
 以及给设备厂商提供输入转触控的实现能力。
 
 系统架构图：
-![系统架构图](./figures/system_arch.png)
+![系统架构图](./figures/system_arch.PNG)
 GameControllerFramework内部核心模块：
-![代码架构图](./figures/code_arch.png)
+![代码架构图](./figures/code_arch.PNG)
 
 - **window**
 
