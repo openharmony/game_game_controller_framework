@@ -15,7 +15,16 @@ Currently, the component in use is the game_controller_framework.
       conversion feature.
     - Offering InnerApi to terminal device manufacturers for configuring information about
       game peripherals and the input-to-touch conversion settings.
-
+- The game_controller_service is the CoreService layer of the GameController. Its primary functions include:
+    - Saving game peripheral information to the configuration file `device_config.json`.
+    - Saving the list of supported games for input-to-touch conversion to the configuration
+      file `game_support_key_mapping.json`.
+    - Saving the default input-to-touch conversion template for games to the configuration
+      file `default_key_mapping.json` and custom templates to the configuration file `custom_key_mapping.json`.
+    - Identifying the categories of game peripherals.
+    - Query the default and custom input-to-touch mapping information for the game from default_key_mapping.json and
+      custom_key_mapping.json.
+  
 System Architecture Diagram:
 ![System Architecture Diagram](./figures/system_arch_en.PNG)
 Core Modules of GameControllerFramework:
