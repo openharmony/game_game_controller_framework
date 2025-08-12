@@ -2,46 +2,69 @@
 
 ## Introduction
 
-The GameController provides game developers with APIs for integrating gaming peripherals and offers device manufacturers
-the capability
-to convert input into touch controls.
-The game_controller_framework is the framework layer of GameController, designed to provide listening capabilities for
-the connection
-and disconnection of gaming peripherals and the monitoring of input events from these peripherals. It also offers device
-manufacturers
-the ability to implement input-to-touch conversion.
+The GameController is designed to provide game developers with the capability to integrate game peripherals and
+to offer terminal device manufacturers the ability to convert input into touch controls.
+It consists of two components: the game_controller_framework and the game_controller_service.
+Currently, the component in use is the game_controller_framework.
+
+- The game_controller_framework serves as the framework layer for GameController. Its primary functions include:
+    - Providing API interfaces for game developers to implement the monitoring of the connection and disconnection
+      of game peripherals, as well as the input monitoring of these peripherals.
+    - Enabling terminal device manufacturers to offer gamers the ability to play games using peripherals such as
+      keyboards and mouse, without requiring game developers to adapt their software, through the input-to-touch
+      conversion feature.
+    - Offering InnerApi to terminal device manufacturers for configuring information about
+      game peripherals and the input-to-touch conversion settings.
 
 System Architecture Diagram:
 ![System Architecture Diagram](./figures/system_arch_en.PNG)
 Core Modules of GameControllerFramework:
 ![Code Architecture Diagram](./figures/code_arch.PNG)
 
-- **window**
+- **Window**
 
-1) Register the devices that need to be intercepted and monitored at the window,
-   and intercept input events from peripherals.
+1) Registering with the window requires intercepting and listening to input events from game peripherals.
+    - If the developer calls the API to listen to input events from game peripherals,
+      the intercepted input event callbacks will be notified to the game.
+    - If the game is configured to support input-to-touch conversion, the intercepted input events from
+      game peripherals will be used for the input-to-touch feature.
 
-2) Monitor window size and state changes.
+2) Monitor window size changes for use in input-to-touch feature.
 
-- **multi_modal_input**
+- **MultiModalInput**
 
-1) Interface with multi-mode inputs to monitor the online and offline events of devices.
-2) When a device goes online, perform device authentication for the peripheral.
+1) Connect to multi-mode-input and monitor the online and offline events of gaming peripherals.
 
-- **key_mapping**
+    - If the developer calls the API to monitor the online and offline events of gaming peripherals, the online and
+      offline event callbacks of the gaming peripherals will be notified to the game.
+    - If the game is configured to support input-to-touch conversion, the corresponding input-to-touch conversion
+      template for the gaming peripheral type will be loaded.
 
-1) Read the configuration to determine whether to enable the input-to-touch function.
-2) Read the template configuration for key mapping.
-3) Monitor the device's key information and send a notification to open the edit template configuration.
-4) Based on the key mapping template configuration, convert input into touch commands.
+2) Upon receiving the gaming equipment online, identify the category of the gaming peripherals.
 
-- **gamecontroller_service**
+- **KeyMapping**
 
-Provide the InnerAPI interface for GameControllerService.
+1) Read the configuration from game_support_key_mapping.json to determine whether to enable the input-to-touch
+   functionality.
+2) Read the corresponding game peripheral type's touch conversion template from the game_controller_service.
+3) Based on the input events and categories of gaming peripherals, determine whether to send a notification for
+   configuring the input-to-touch template.
+    - When the keyboard inputs Q, W, or P, it indicates the need to open the input-to-touch template configuration
+      page for the keyboard.
+    - When the floating controller function key is clicked, it indicates the need to open the input-to-touch template
+      configuration interface for the floating controller.
 
-- **bundle_info**
+4) Based on the input-to-touch template, the input events of gaming peripherals (such as key events, mouse events, etc.)
+   are converted into touchscreen events on the screen.
 
-Retrieve information about the current application.
+- **GameControllerService**
+
+Provide the InnerAPI interface of the game_controller_service to terminal manufacturers for configuring game peripheral
+information and input-to-touch conversion data.
+
+- **BundleInfo**
+
+Obtain information about the current application for input-to-touch conversion features.
 
 ## Directory Structure
 
@@ -100,9 +123,8 @@ Retrieve information about the current application.
 
 ## Related Repository
 
-- [Game Controller Service](https://gitcode.com/openharmony-sig/game_game_controller_service)
+[Game Controller Service](https://gitcode.com/openharmony-sig/game_game_controller_service)
 
 ## Constraints
 
-- Programming language version
-    - C++ 11 or later
+Programming language version: C++ 11 or later
