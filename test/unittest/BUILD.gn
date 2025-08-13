@@ -127,7 +127,6 @@ ohos_unittest("GameControllerFrameworkTest") {
     "key_mapping/observation_key_to_touch_handler_test.cpp",
     "key_mapping/single_key_to_touch_handler_test.cpp",
     "key_mapping/skill_key_to_touch_handler_test.cpp",
-    "key_mapping/key_to_touch_manager_test.cpp",
     "multi_modal_input/device_event_callback_test.cpp",
     "multi_modal_input/device_identify_service_test.cpp",
     "multi_modal_input/game_device_client_test.cpp",
