@@ -19,6 +19,9 @@ GameController用于给游戏开发者提供游戏外设接入能力以及给终
 系统架构图：
 ![系统架构图](./figures/system_arch.PNG)
 
+- GameController(Framework)为game_controller_framework部件。
+- GameController(SA)为game_controller_service部件。
+
 GameControllerFramework内部核心模块：
 ![代码架构图](./figures/code_arch.PNG)
 

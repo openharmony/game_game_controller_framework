@@ -24,9 +24,13 @@ Currently, the component in use is the game_controller_framework.
     - Identifying the categories of game peripherals.
     - Query the default and custom input-to-touch mapping information for the game from default_key_mapping.json and
       custom_key_mapping.json.
-  
+
 System Architecture Diagram:
 ![System Architecture Diagram](./figures/system_arch_en.PNG)
+
+- GameController(Framework) is the game_controller_framework component.
+- GameController(SA) is the game_controller_framework component.
+
 Core Modules of GameControllerFramework:
 ![Code Architecture Diagram](./figures/code_arch.PNG)
 
