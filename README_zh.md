@@ -14,7 +14,7 @@ GameController用于给游戏开发者提供游戏外设接入能力以及给终
     - 实现支持输入转触控游戏的名单列表保存到配置文件game_support_key_mapping.json。
     - 实现游戏的默认转触控模板保存到配置文件default_key_mapping.json和自定义模板保存到配置文件custom_key_mapping.json。
     - 实现对游戏外设类别的识别。
-    - 实现获取在特定游戏游戏下对应的默认和自定义的输入转触控模板信息。
+    - 从default_key_mapping.json和custom_key_mapping.json查询游戏对应的默认和自定义的输入转触控模板信息。
 
 系统架构图：
 ![系统架构图](./figures/system_arch.PNG)
