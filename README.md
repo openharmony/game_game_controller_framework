@@ -19,8 +19,8 @@ Currently, the component in use is the game_controller_framework.
     - Saving game peripheral information to the configuration file `device_config.json`.
     - Saving the list of supported games for input-to-touch conversion to the configuration
       file `game_support_key_mapping.json`.
-    - Saving the default input-to-touch conversion template for games to the configuration
-      file `default_key_mapping.json` and custom templates to the configuration file `custom_key_mapping.json`.
+    - Saving the default input-to-touch conversion configuration for games to the configuration
+      file `default_key_mapping.json` and custom configuration to the configuration file `custom_key_mapping.json`.
     - Identifying the categories of game peripherals.
     - Query the default and custom input-to-touch mapping information for the game from default_key_mapping.json and
       custom_key_mapping.json.
@@ -51,7 +51,7 @@ Core Modules of GameControllerFramework:
     - If the developer calls the API to monitor the online and offline events of gaming peripherals, the online and
       offline event callbacks of the gaming peripherals will be notified to the game.
     - If the game is configured to support input-to-touch conversion, the corresponding input-to-touch conversion
-      template for the gaming peripheral type will be loaded.
+      configuration for the gaming peripheral type will be loaded.
 
 2) Upon receiving the gaming equipment online, identify the category of the gaming peripherals.
 
@@ -59,15 +59,17 @@ Core Modules of GameControllerFramework:
 
 1) Read the configuration from game_support_key_mapping.json to determine whether to enable the input-to-touch
    functionality.
-2) Read the corresponding game peripheral type's touch conversion template from the game_controller_service.
+2) Read the corresponding game peripheral type's touch conversion configuration from the game_controller_service.
 3) Based on the input events and categories of gaming peripherals, determine whether to send a notification for
-   configuring the input-to-touch template.
-    - When the keyboard inputs Q, W, or P, it indicates the need to open the input-to-touch template configuration
+   configuring the input-to-touch configuration.
+    - When the keyboard inputs Q, W, or P, it indicates the need to open the input-to-touch configuration
       page for the keyboard.
-    - When the floating controller function key is clicked, it indicates the need to open the input-to-touch template
+    - When the floating controller function key is clicked, it indicates the need to open the input-to-touch
+      configuration
       configuration interface for the floating controller.
 
-4) Based on the input-to-touch template, the input events of gaming peripherals (such as key events, mouse events, etc.)
+4) Based on the input-to-touch configuration, the input events of gaming peripherals (such as key events, mouse events,
+   etc.)
    are converted into touchscreen events on the screen.
 
 - **GameControllerService**
@@ -131,6 +133,8 @@ Obtain information about the current application for input-to-touch conversion f
 [Development Guide](https://gitcode.com/weixin_42784160/docs/blob/master/zh-cn/application-dev/game-controller/Readme-CN.md)
 
 [API Documentation](https://gitcode.com/weixin_42784160/docs/blob/master/zh-cn/application-dev/reference/apis-game-controller-kit/Readme-CN.md)
+
+[Development Guide for Terminal Device Manufacturers Based on GameController's InnerAPI](https://gitcode.com/openharmony-sig/game_game_controller_framework/wiki/%E7%BB%88%E7%AB%AF%E8%AE%BE%E5%A4%87%E5%8E%82%E5%95%86%E5%9F%BA%E4%BA%8EGameController%E7%9A%84InnerAPI%E7%9A%84%E5%BC%80%E5%8F%91%E6%8C%87%E5%8D%97.md)
 
 [Input-To-Touch Feature](https://gitcode.com/openharmony-sig/game_game_controller_framework/wiki/%E8%BE%93%E5%85%A5%E8%BD%AC%E8%A7%A6%E6%8E%A7%E7%89%B9%E6%80%A7.md)
 

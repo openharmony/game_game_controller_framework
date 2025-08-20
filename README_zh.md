@@ -12,9 +12,9 @@ GameController用于给游戏开发者提供游戏外设接入能力以及给终
 - game_controller_service为GameController的CoreService层。主要作用为：
     - 实现游戏外设信息保存到配置文件device_config.json。
     - 实现支持输入转触控游戏的名单列表保存到配置文件game_support_key_mapping.json。
-    - 实现游戏的默认转触控模板保存到配置文件default_key_mapping.json和自定义模板保存到配置文件custom_key_mapping.json。
+    - 实现游戏的默认转触控配置保存到配置文件default_key_mapping.json和自定义配置保存到配置文件custom_key_mapping.json。
     - 实现对游戏外设类别的识别。
-    - 从default_key_mapping.json和custom_key_mapping.json查询游戏对应的默认和自定义的输入转触控模板信息。
+    - 从default_key_mapping.json和custom_key_mapping.json查询游戏对应的默认和自定义的输入转触控配置信息。
 
 系统架构图：
 ![系统架构图](./figures/system_arch.PNG)
@@ -37,20 +37,20 @@ GameControllerFramework内部核心模块：
 
 1) 对接多模输入，监听游戏外设的上线和下线事件。
     - 如果开发者调用API监听游戏外设的上线和下线事件，则将游戏外设的上线和下线事件回调通知给游戏。
-    - 如果游戏被配置支持输入转触控，则加载对应游戏外设类型的输入转触控模板。
+    - 如果游戏被配置支持输入转触控，则加载对应游戏外设类型的输入转触控配置。
 2) 收到游戏设备上线时，对游戏外设的设备类别进行识别。
 
 - **KeyMapping**
 
 1) 从game_support_key_mapping.json读取配置判断是否需要启动输入转触控功能。
 
-2) 从game_controller_service读取对应游戏外设类型的转触控模板。
+2) 从game_controller_service读取对应游戏外设类型的转触控配置。
 
-3) 基于游戏外设的输入事件和游戏外设类别，判断是否需要发送编辑输入转触控模板配置的通知。
-    - 键盘输入Q、W、P时，表示需要打开键盘的输入转触控的模板配置界面。
-    - 单击悬浮手柄功能键时，表示需要打开悬浮手柄的输入转触控的模板配置界面。
+3) 基于游戏外设的输入事件和游戏外设类别，判断是否需要发送编辑输入转触控配置的通知。
+    - 键盘输入Q、W、P时，表示需要打开键盘的输入转触控的配置界面。
+    - 单击悬浮手柄功能键时，表示需要打开悬浮手柄的输入转触控的配置界面。
 
-4) 基于输入转触控模板，将游戏外设的输入事件（按键事件、鼠标事件等）转为屏幕的触屏事件。
+4) 基于输入转触控配置，将游戏外设的输入事件（按键事件、鼠标事件等）转为屏幕的触屏事件。
 
 - **GameControllerService**
 
@@ -112,6 +112,8 @@ GameControllerFramework内部核心模块：
 - [开发指南](https://gitcode.com/weixin_42784160/docs/blob/master/zh-cn/application-dev/game-controller/Readme-CN.md)
 
 - [API文档](https://gitcode.com/weixin_42784160/docs/blob/master/zh-cn/application-dev/reference/apis-game-controller-kit/Readme-CN.md)
+
+- [终端设备厂商基于GameController的InnerAPI的开发指南](https://gitcode.com/openharmony-sig/game_game_controller_framework/wiki/%E7%BB%88%E7%AB%AF%E8%AE%BE%E5%A4%87%E5%8E%82%E5%95%86%E5%9F%BA%E4%BA%8EGameController%E7%9A%84InnerAPI%E7%9A%84%E5%BC%80%E5%8F%91%E6%8C%87%E5%8D%97.md)
 
 - [输入转触控特性](https://gitcode.com/openharmony-sig/game_game_controller_framework/wiki/%E8%BE%93%E5%85%A5%E8%BD%AC%E8%A7%A6%E6%8E%A7%E7%89%B9%E6%80%A7.md)
 
