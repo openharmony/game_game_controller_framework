@@ -134,9 +134,9 @@ Obtain information about the current application for input-to-touch conversion f
 
 [API Documentation](https://gitcode.com/weixin_42784160/docs/blob/master/zh-cn/application-dev/reference/apis-game-controller-kit/Readme-CN.md)
 
-[Development Guide for Terminal Device Manufacturers Based on GameController's InnerAPI](https://gitcode.com/openharmony-sig/game_game_controller_framework/wiki/%E7%BB%88%E7%AB%AF%E8%AE%BE%E5%A4%87%E5%8E%82%E5%95%86%E5%9F%BA%E4%BA%8EGameController%E7%9A%84InnerAPI%E7%9A%84%E5%BC%80%E5%8F%91%E6%8C%87%E5%8D%97.md)
+[Development Guide for Terminal Device Manufacturers Based on GameController's InnerAPI](https://gitcode.com/openharmony-sig/game_game_controller_framework/wiki/Home.md)
 
-[Input-To-Touch Feature](https://gitcode.com/openharmony-sig/game_game_controller_framework/wiki/%E8%BE%93%E5%85%A5%E8%BD%AC%E8%A7%A6%E6%8E%A7%E7%89%B9%E6%80%A7.md)
+[Input-To-Touch Feature](https://gitcode.com/openharmony-sig/game_game_controller_framework/wiki/Home.md)
 
 ## Related Repository
 
