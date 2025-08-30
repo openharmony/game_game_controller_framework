@@ -60,6 +60,21 @@ GameControllerFramework内部核心模块：
 
 获取当前应用的信息，用于输入转触控特性。
 
+## GameController(SA)的启动
+
+GameController(SA)不是一个常驻进程，以下两种场景会启动SA。
+
+- 场景一：在游戏外设连接上线时，GameControllerFramework会通过samgr(系统服务管理部件)拉起SA进行设备类型识别。
+- 场景二：终端设备厂商的游戏服务通过GameControllerFramework的InnerApi配置游戏外设信息或输入转触控的配置信息时，
+  GameControllerFramework会通过samgr(系统服务管理部件)拉起SA。
+
+涉及存在拉起的SA的InnerAPI在[gamecontroller_server_client.h](https://gitcode.com/openharmony-sig/game_game_controller_framework/blob/master/frameworks/native/gamecontroller_service/include/gamecontroller_server_client.h)
+
+## 窗口部件的Framework加载GameControllerFramework
+
+应用启动的时候，窗口部件的Framework层会通过dlopen的方式加载GameControllerFramework下的libgamecontroller_event.z.so
+从而实现应用启动时应用进程自动加载GameControllerFramework。
+
 ## 目录
 
 ```
@@ -105,7 +120,11 @@ GameControllerFramework内部核心模块：
 ./build.sh --product-name rk3568 --ccache --build-target game_controller_framework --build-variant root
 ```
 
-3. 编译结果路径：/out/rk3568/game/game_controller_framework
+3. 编译结果路径:/out/rk3568/game/game_controller_framework
+
+- libgamecontroller_client.z.so
+- libgamecontroller_event.z.so
+- libohgame_controller.z.so
 
 ## 参考文档
 

@@ -81,6 +81,25 @@ information and input-to-touch conversion data.
 
 Obtain information about the current application for input-to-touch conversion features.
 
+## Launch of GameController(SA)
+
+The GameController (SA) is not a persistent process; it will be initiated in the following two scenarios.
+
+- Scene 1: When the gaming peripherals are connected, the GameControllerFramework will initiate the SA through samgr (
+  System Service Management Component) to identify the device type.
+- Scene 2: When the game service of the terminal device manufacturer configures game peripheral information or
+  input-to-touch conversion configuration information through the InnerApi of the GameControllerFramework, the
+  GameControllerFramework will invoke the SA via samgr (the system service management component).
+
+The InnerAPI involving the SA that is being pulled up is located
+in [gamecontroller_server_client.h](https://gitcode.com/openharmony-sig/game_game_controller_framework/blob/master/frameworks/native/gamecontroller_service/include/gamecontroller_server_client.h).
+
+## The Framework of the window loads the GameControllerFramework
+
+When the application starts, the framework layer of the window will load the GameControllerFramework's
+libgamecontroller_event.z.so through dlopen, thereby enabling the automatic loading of the GameControllerFramework by
+the application process upon startup.
+
 ## Directory Structure
 
 ```
@@ -126,7 +145,11 @@ Obtain information about the current application for input-to-touch conversion f
 ./build.sh --product-name rk3568 --ccache --build-target game_controller_framework --build-variant root
 ```
 
-3. The result path of compilation : /out/rk3568/game/game_controller_framework
+3. The result path of compilation : /out/rk3568/game/game_controller_framework.
+
+- libgamecontroller_client.z.so
+- libgamecontroller_event.z.so
+- libohgame_controller.z.so
 
 ## Reference Document
 
