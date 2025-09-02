@@ -1,0 +1,50 @@
+# Copyright (c) 2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+import("//build/ohos.gni")
+
+ohos_prebuilt_etc("custom_key_mapping") {
+  source = "./config/custom_key_mapping.json"
+  relative_install_dir = "game_controller/game_controller_service/"
+  part_name = "game_controller_framework"
+  subsystem_name = "game"
+}
+
+ohos_prebuilt_etc("default_key_mapping") {
+  source = "./config/default_key_mapping.json"
+  relative_install_dir = "game_controller/game_controller_service/"
+  part_name = "game_controller_framework"
+  subsystem_name = "game"
+}
+
+ohos_prebuilt_etc("device_config") {
+  source = "./config/device_config.json"
+  relative_install_dir = "game_controller/game_controller_service/"
+  part_name = "game_controller_framework"
+  subsystem_name = "game"
+}
+
+ohos_prebuilt_etc("game_support_key_mapping") {
+  source = "./config/game_support_key_mapping.json"
+  relative_install_dir = "game_controller/game_controller_service/"
+  part_name = "game_controller_framework"
+  subsystem_name = "game"
+}
+
+group("game_controller_service_business_config") {
+  deps = [
+    ":custom_key_mapping",
+    ":default_key_mapping",
+    ":device_config",
+    ":game_support_key_mapping"
+  ]
+}

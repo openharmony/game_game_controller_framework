@@ -85,30 +85,23 @@ GameController(SA)不是一个常驻进程，以下两种场景会启动SA。
 │   │   └── src
 │   └── native                     # 前后端组件对接层
 │       ├── bundle_info            # 包信息查询
-│       │   ├── include
-│       │   └── src
 │       ├── gamecontroller_service # 对接GameController的SA
-│       │   ├── include
-│       │   └── src
 │       ├── key_mapping            # 按键映射的实现
-│       │   ├── include
-│       │   └── src
 │       ├── multi_modal_input      # 对接多模输入实现设备的监听
-│       │   ├── include
-│       │   └── src
 │       └── window                 # 对接窗口实现外设输入的监听
-│           ├── include
-│           └── src  
+├── service                        # 服务层代码
+│   ├── common                     # 公共方法
+│   ├── device_manager             # 设备管理
+│   ├── event                      # 提供事件处理能力
+│   ├── ipc                        # IPC接口的实现
+│   └── key_mapping                # 按键映射管理
 ├── interfaces                     # 接口存放目录 
 │   └── kits                       # 对外接口存放目录 
 │       └── c                      # napi接口存放目录
 ├── test                           # 测试代码
     └── mock                       # mock代码
-        └── gamecontroller_service
-        └── multi_modal_input
     └── unittest                   # 单元测试  
-        └── multi_modal_input 
-        └── window   
+    └── fuzztest                   # Fuzze测试 
 ```
 
 ## 编译

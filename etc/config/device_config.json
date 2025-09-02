@@ -1,0 +1,11 @@
+{
+  "GamePad": [{
+    "Product": 33382,
+    "Vendor": 9354,
+    "NamePrefix": "BEITONG_A1N2"
+  },{
+    "Product": 20574,
+    "Vendor": 273,
+    "NamePrefix": "JZ-V4 BFM"
+  }]
+}

@@ -10,22 +10,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import("//build/ohos.gni")
 
-################################################################################
-
-group("game_controller_framework_packages") {
-  deps = [
-    "etc:game_controller_service_business_config",
-    "etc/init:gamecontroller_server.cfg",
-    "sa_profile:game_controller_sa_profile",
-    "frameworks/native:gamecontroller_client",
-    "frameworks/native:gamecontroller_event",
-    "interfaces/kits/c:ohgame_controller",
-    "etc:game_controller_service_business_config",
-    "etc/init:gamecontroller_server.cfg",
-    "sa_profile:game_controller_sa_profile",
-    "service:gamecontroller_server",
-  ]
+ohos_prebuilt_etc("gamecontroller_server.cfg") {
+    source = "gamecontroller_server.cfg"
+    relative_install_dir = "init"
+    subsystem_name = "game"
+    part_name = "game_controller_framework"
 }

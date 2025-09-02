@@ -39,7 +39,9 @@
         "window_manager",
         "bundle_framework",
         "eventhandler",
-        "init"
+        "init",
+        "access_token",
+        "bundle_framework"
       ]
     },
     "build": {
@@ -47,7 +49,8 @@
         "//domains/game_controller/game_controller_framework:game_controller_framework_packages"
       ],
       "test": [
-        "//domains/game_controller/game_controller_framework/test/unittest:unittest"
+        "//domains/game_controller/game_controller_framework/test/unittest:unittest",
+        "//domains/game_controller/game_controller_framework/test/fuzztest:fuzztest"
       ],
       "inner_kits": [
         {
