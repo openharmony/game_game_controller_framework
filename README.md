@@ -4,10 +4,8 @@
 
 The GameController is designed to provide game developers with the capability to integrate game peripherals and
 to offer terminal device manufacturers the ability to convert input into touch controls.
-It consists of two components: the game_controller_framework and the game_controller_service.
-Currently, the component in use is the game_controller_framework.
 
-- The game_controller_framework serves as the framework layer for GameController. Its primary functions include:
+- The primary functions of the framework layer for GameController include:
     - Providing API interfaces for game developers to implement the monitoring of the connection and disconnection
       of game peripherals, as well as the input monitoring of these peripherals.
     - Enabling terminal device manufacturers to offer gamers the ability to play games using peripherals such as
@@ -15,7 +13,7 @@ Currently, the component in use is the game_controller_framework.
       conversion feature.
     - Offering InnerApi to terminal device manufacturers for configuring information about
       game peripherals and the input-to-touch conversion settings.
-- The game_controller_service is the CoreService layer of the GameController. Its primary functions include:
+- The primary functions of the service layer for GameController include:
     - Saving game peripheral information to the configuration file `device_config.json`.
     - Saving the list of supported games for input-to-touch conversion to the configuration
       file `game_support_key_mapping.json`.
@@ -28,62 +26,85 @@ Currently, the component in use is the game_controller_framework.
 System Architecture Diagram:
 ![System Architecture Diagram](./figures/system_arch_en.PNG)
 
-- GameController(Framework) is the game_controller_framework component.
-- GameController(SA) is the game_controller_framework component.
+- GameController(Framework) is the framework layer for GameController.
+- GameController(SA) is the service layer for GameController.
 
 Core Modules of GameControllerFramework:
 ![Code Architecture Diagram](./figures/code_arch.PNG)
 
+### Framework Layer
+
 - **Window**
+    - Registering with the window requires intercepting and listening to input events from game peripherals.
+        - If the developer calls the API to listen to input events from game peripherals,
+          the intercepted input event callbacks will be notified to the game.
+        - If the game is configured to support input-to-touch conversion, the intercepted input events from
+          game peripherals will be used for the input-to-touch feature.
 
-1) Registering with the window requires intercepting and listening to input events from game peripherals.
-    - If the developer calls the API to listen to input events from game peripherals,
-      the intercepted input event callbacks will be notified to the game.
-    - If the game is configured to support input-to-touch conversion, the intercepted input events from
-      game peripherals will be used for the input-to-touch feature.
-
-2) Monitor window size changes for use in input-to-touch feature.
+    - Monitor window size changes for use in input-to-touch feature.
 
 - **MultiModalInput**
 
-1) Connect to multi-mode-input and monitor the online and offline events of gaming peripherals.
+    - Connect to multi-mode-input and monitor the online and offline events of gaming peripherals.
 
-    - If the developer calls the API to monitor the online and offline events of gaming peripherals, the online and
-      offline event callbacks of the gaming peripherals will be notified to the game.
-    - If the game is configured to support input-to-touch conversion, the corresponding input-to-touch conversion
-      configuration for the gaming peripheral type will be loaded.
+        - If the developer calls the API to monitor the online and offline events of gaming peripherals, the online and
+          offline event callbacks of the gaming peripherals will be notified to the game.
+        - If the game is configured to support input-to-touch conversion, the corresponding input-to-touch conversion
+          configuration for the gaming peripheral type will be loaded.
 
-2) Upon receiving the gaming equipment online, identify the category of the gaming peripherals.
+    - Upon receiving the gaming equipment online, identify the category of the gaming peripherals.
 
 - **KeyMapping**
 
-1) Read the configuration from game_support_key_mapping.json to determine whether to enable the input-to-touch
-   functionality.
-2) Read the corresponding game peripheral type's touch conversion configuration from the game_controller_service.
-3) Based on the input events and categories of gaming peripherals, determine whether to send a notification for
-   configuring the input-to-touch configuration.
-    - When the keyboard inputs Q, W, or P, it indicates the need to open the input-to-touch configuration
-      page for the keyboard.
-    - When the floating controller function key is clicked, it indicates the need to open the input-to-touch
-      configuration
-      configuration interface for the floating controller.
+    - Read the configuration from game_support_key_mapping.json to determine whether to enable the input-to-touch
+      functionality.
+    - Read the corresponding game peripheral type's touch conversion configuration from the game_controller_service.
+    - Based on the input events and categories of gaming peripherals, determine whether to send a notification for
+      configuring the input-to-touch configuration.
+        - When the keyboard inputs Q, W, or P, it indicates the need to open the input-to-touch configuration
+          page for the keyboard.
+        - When the floating controller function key is clicked, it indicates the need to open the input-to-touch
+          configuration
+          configuration interface for the floating controller.
 
-4) Based on the input-to-touch configuration, the input events of gaming peripherals (such as key events, mouse events,
-   etc.)
-   are converted into touchscreen events on the screen.
+    - Based on the input-to-touch configuration, the input events of gaming peripherals (such as key events, mouse
+      events,
+      etc.)
+      are converted into touchscreen events on the screen.
 
 - **GameControllerService**
 
-Provide the InnerAPI interface of the game_controller_service to terminal manufacturers for configuring game peripheral
-information and input-to-touch conversion data.
+  Provide the InnerAPI interface of the game_controller_service to terminal manufacturers for configuring game
+  peripheral information and input-to-touch conversion data.
 
 - **BundleInfo**
 
-Obtain information about the current application for input-to-touch conversion features.
+  Obtain information about the current application for input-to-touch conversion features.
+
+### Service Layer
+
+- **DeviceManager**
+    - Perform device category identification for gaming peripherals. Determine whether the device category is a
+      keyboard, game pad, etc.
+    - Other system SA synchronize gaming peripheral information to the GameControllerService. Other system SA refers to
+      system service developed by terminal device manufacturers, such as Game Services Of Terminal Manufacturers
+      in the system architecture diagram.
+- **Event**
+    - Send notifications to other system SA about the online status of gaming peripherals and the opening of the
+      configuration editing page for input-to-touch conversion.
+    - Notify the current game of the configuration update event for input-to-touch conversion and the switch change
+      event for
+      input-to-touch conversion.
+- **KeyMapping**
+    - Other system SA synchronize the list of games that support input-to-touch conversion with the
+      GameControllerService.
+    - Other system SA synchronize the default and custom configuration for input-to-touch conversion with the
+      GameControllerService.
 
 ## Launch of GameController(SA)
 
-The GameController (SA) is not a persistent process; it will be initiated in the following two scenarios.
+GameController (SA) is an independent process and not a resident process. The following two scenarios will start SA.it
+will be initiated in the following two scenarios.
 
 - Scene 1: When the gaming peripherals are connected, the GameControllerFramework will initiate the SA through samgr (
   System Service Management Component) to identify the device type.
@@ -110,30 +131,23 @@ the application process upon startup.
 │   │   └── src
 │   └── native                     # Native Code
 │       ├── bundle_info            # Bundle Information Inquiry
-│       │   ├── include
-│       │   └── src
 │       ├── gamecontroller_service # Connects to the SA of the GameController.
-│       │   ├── include
-│       │   └── src
 │       ├── key_mapping            # Implementation of Key Mapping 
-│       │   ├── include
-│       │   └── src
 │       ├── multi_modal_input      # Interconnection with multi-mode input 
-│       │   ├── include
-│       │   └── src
 │       └── window                 # Interconnection window to game devices's input
-│           ├── include
-│           └── src  
+├── service                        # Service Layer Code
+│   ├── common                     # Provide common methods
+│   ├── device_manager             # Device Management
+│   ├── event                      # Provides the event processing capability
+│   ├── ipc                        # IPC interface implementation layer
+│   └── key_mapping                # Input-to-touch configuration management
 ├── interfaces                     # Interface Storage Directory 
 │   └── kits                        
 │       └── c                      # Directory for storing the NAPI interface.
 ├── test                           # Test Code
     └── mock                       # Mock Code
-        └── gamecontroller_service
-        └── multi_modal_input
-    └── unittest                   # Unit test  
-        └── multi_modal_input 
-        └── window   
+    └── unittest                   # Unit Test Code 
+    └── fuzztest                   # Fuzze Test Code
 ```
 
 ## Compile
@@ -148,6 +162,7 @@ the application process upon startup.
 3. The result path of compilation : /out/rk3568/game/game_controller_framework.
 
 - libgamecontroller_client.z.so
+- libgamecontroller_service.z.so
 - libgamecontroller_event.z.so
 - libohgame_controller.z.so
 
@@ -163,7 +178,8 @@ the application process upon startup.
 
 ## Related Repository
 
-[Game Controller Service](https://gitcode.com/openharmony-sig/game_game_controller_service)
+- [Window](https://gitee.com/openharmony/window_window_manager/blob/master/README.md)
+- [MultiModalInput](https://gitee.com/openharmony/multimodalinput_input/blob/master/README.md)
 
 ## Constraints
 
