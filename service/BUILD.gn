@@ -13,12 +13,12 @@
 import("//build/ohos.gni")
 import("//build/ohos_var.gni")
 import(
-    "//domains/game_controller/game_controller_framework/game_controller_framework.gni")
+    "//domains/game/game_controller_framework/game_controller_framework.gni")
 
 config("gamecontroller_service_config") {
   visibility = [
     ":*",
-    "//domains/game_controller/game_controller_framework/service:*",
+    "//domains/game/game_controller_framework/service:*",
   ]
   include_dirs = [
     "${game_controller_service_path}/service/common/include",

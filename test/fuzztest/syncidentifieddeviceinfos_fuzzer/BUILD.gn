@@ -14,7 +14,7 @@ import("//build/config/features.gni")
 import("//build/test.gni")
 import("//build/ohos.gni")
 import("//build/ohos_var.gni")
-import("//domains/game_controller/game_controller_framework/game_controller_framework.gni")
+import("//domains/game/game_controller_framework/game_controller_framework.gni")
 
 ohos_fuzztest("SyncIdentifiedDeviceInfosFuzzTest") {
   module_out_path = "game_controller_framework/game_controller_framework"

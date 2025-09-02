@@ -103,7 +103,7 @@ the application process upon startup.
 ## Directory Structure
 
 ```
-/domain/game_controller/game_controller_framework
+/domain/game/game_controller_framework
 ├── frameworks                     # Framework Code
 │   ├── capi                       # NAPI Implementation Layer
 │   │   ├── include

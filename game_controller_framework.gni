@@ -11,12 +11,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-game_controller_framework_path = "//domains/game_controller/game_controller_framework"
+game_controller_framework_path = "//domains/game/game_controller_framework"
 game_controller_framework_innerkits_path = "${game_controller_framework_path}/frameworks/native"
 game_controller_framework_capi_path = "${game_controller_framework_path}/interfaces/kits"
 
 
-game_controller_service_path = "//domains/game_controller/game_controller_framework"
+game_controller_service_path = "//domains/game/game_controller_framework"
 
 fuzztest_include_dirs = [
   "${game_controller_service_path}/service/common/include",

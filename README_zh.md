@@ -78,7 +78,7 @@ GameController(SA)不是一个常驻进程，以下两种场景会启动SA。
 ## 目录
 
 ```
-/domain/game_controller/game_controller_framework
+/domain/game/game_controller_framework
 ├── frameworks                     # 框架代码
 │   ├── capi                       # capi的实现层
 │   │   ├── include

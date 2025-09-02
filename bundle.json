@@ -11,7 +11,7 @@
   "author": {},
   "contributors": [],
   "segment": {
-    "destPath": "domains/game_controller/game_controller_framework"
+    "destPath": "domains/game/game_controller_framework"
   },
   "component": {
     "name": "game_controller_framework",
@@ -46,16 +46,16 @@
     },
     "build": {
       "sub_component": [
-        "//domains/game_controller/game_controller_framework:game_controller_framework_packages"
+        "//domains/game/game_controller_framework:game_controller_framework_packages"
       ],
       "test": [
-        "//domains/game_controller/game_controller_framework/test/unittest:unittest",
-        "//domains/game_controller/game_controller_framework/test/fuzztest:fuzztest"
+        "//domains/game/game_controller_framework/test/unittest:unittest",
+        "//domains/game/game_controller_framework/test/fuzztest:fuzztest"
       ],
       "inner_kits": [
         {
           "header": {
-            "header_base": "//domains/game_controller/game_controller_framework/frameworks/native",
+            "header_base": "//domains/game/game_controller_framework/frameworks/native",
             "header_files": [
               "common/include/gamecontroller_constants.h",
               "common/include/gamecontroller_errors.h",
@@ -68,7 +68,7 @@
               "window/include/input_event_client.h"
             ]
           },
-          "name": "//domains/game_controller/game_controller_framework/frameworks/native:gamecontroller_client"
+          "name": "//domains/game/game_controller_framework/frameworks/native:gamecontroller_client"
         }
       ]
     }
