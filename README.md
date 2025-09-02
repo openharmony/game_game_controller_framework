@@ -60,12 +60,8 @@ Core Modules of GameControllerFramework:
       functionality.
     - Read the corresponding game peripheral type's touch conversion configuration from the game_controller_service.
     - Based on the input events and categories of gaming peripherals, determine whether to send a notification for
-      configuring the input-to-touch configuration.
-        - When the keyboard inputs Q, W, or P, it indicates the need to open the input-to-touch configuration
-          page for the keyboard.
-        - When the floating controller function key is clicked, it indicates the need to open the input-to-touch
-          configuration
-          configuration interface for the floating controller.
+      configuring the input-to-touch configuration. When pressing Q, W, and P simultaneously on the keyboard, it
+      indicates the need to open the input to touch configuration interface of the keyboard.
 
     - Based on the input-to-touch configuration, the input events of gaming peripherals (such as key events, mouse
       events,
