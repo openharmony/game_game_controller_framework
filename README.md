@@ -1,9 +1,11 @@
-# GameController Framework
+# Game Controller
 
 ## Introduction
 
-The GameController is designed to provide game developers with the capability to integrate game peripherals and
-to offer terminal device manufacturers the ability to convert input into touch controls.
+GameController provides game developers with an API that enables access to game peripherals, enabling monitoring of both
+online and offline game peripherals as well as input events;
+Provide InnerAPI to terminal device manufacturers, allowing them to manage identification information for external
+devices and configure input-to-touch.
 
 - The primary functions of the framework layer for GameController include:
     - Providing API interfaces for game developers to implement the monitoring of the connection and disconnection
