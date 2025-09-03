@@ -15,7 +15,7 @@ import("//build/config/features.gni")
 import("//build/ohos.gni")
 import("//build/test.gni")
 import(
-    "//domains/game_controller/game_controller_framework/game_controller_framework.gni")
+    "//domains/game/game_controller_framework/game_controller_framework.gni")
 
 module_output_path = "game_controller_framework/game_controller_framework"
 
@@ -156,7 +156,92 @@ ohos_unittest("GameControllerFrameworkTest") {
   part_name = "game_controller_framework"
 }
 
+gamecontroller_service_include_dirs = [
+  "${game_controller_service_path}/service/common/include",
+  "${game_controller_service_path}/service/event/include",
+  "${game_controller_service_path}/service/device_manager/include",
+  "${game_controller_service_path}/service/key_mapping/include",
+]
+
+config("gamecontroller_service_unittest_config") {
+  visibility = [ ":*" ]
+  cflags_cc = [ "-fexceptions" ]
+  cflags = [ "--coverage" ]
+  ldflags = [ "--coverage" ]
+}
+
+# Just for test.
+ohos_static_library("gamecontroller_service_static_test") {
+  testonly = true
+  use_exceptions = true
+  visibility = [ ":*" ]
+
+  include_dirs = gamecontroller_service_include_dirs
+
+  cflags = [ "-w" ]
+  cflags_cc = []
+
+  sources = [
+    "${game_controller_service_path}/service/common/src/json_utils.cpp",
+    "${game_controller_service_path}/service/common/src/permission_utils.cpp",
+    "${game_controller_service_path}/service/device_manager/src/device_manager.cpp",
+    "${game_controller_service_path}/service/event/src/event_publisher.cpp",
+    "${game_controller_service_path}/service/key_mapping/src/game_support_key_mapping_manager.cpp",
+    "${game_controller_service_path}/service/key_mapping/src/key_mapping_config_manager.cpp",
+  ]
+  deps = [ "${game_controller_framework_innerkits_path}:gamecontroller_client" ]
+  external_deps = [
+    "eventhandler:libeventhandler",
+    "hilog:libhilog",
+    "ipc:ipc_core",
+    "json:nlohmann_json_static",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+    "access_token:libaccesstoken_sdk",
+    "access_token:libtokenid_sdk",
+    "bundle_framework:appexecfwk_core",
+  ]
+
+  deps = []
+
+  subsystem_name = "game"
+  part_name = "game_controller_framework"
+}
+
+ohos_unittest("GameControllerServiceTest") {
+  testonly = true
+  module_out_path = module_output_path
+
+  include_dirs = gamecontroller_service_include_dirs
+
+  configs = [ ":gamecontroller_service_unittest_config" ]
+  sources = [
+    "service/device_manager/device_manager_test.cpp",
+    "service/key_mapping/game_support_key_mapping_manager_test.cpp",
+    "service/key_mapping/key_mapping_config_manager_test.cpp"
+  ]
+  deps = [ ":gamecontroller_service_static_test","${game_controller_framework_innerkits_path}:gamecontroller_client"]
+  use_exceptions = true
+
+  external_deps = [
+    "ace_engine:ace_ndk",
+    "c_utils:utils",
+    "ffrt:libffrt",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "hilog:libhilog",
+    "input:libmmi-client",
+    "ipc:ipc_core",
+    "ipc:ipc_single",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+    "bundle_framework:appexecfwk_core",
+  ]
+  subsystem_name = "game"
+  part_name = "game_controller_framework"
+}
+
 group("unittest") {
   testonly = true
-  deps = [ ":GameControllerFrameworkTest" ]
+  deps = [ ":GameControllerFrameworkTest", ":GameControllerServiceTest" ]
 }
