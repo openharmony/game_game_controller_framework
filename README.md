@@ -104,7 +104,7 @@ will be initiated in the following two scenarios.
   GameControllerFramework will invoke the SA via samgr (the system service management component).
 
 The InnerAPI involving the SA that is being pulled up is located
-in [gamecontroller_server_client.h](https://gitcode.com/openharmony-sig/game_game_controller_framework/blob/master/frameworks/native/gamecontroller_service/include/gamecontroller_server_client.h).
+in [gamecontroller_server_client.h](https://gitcode.com/openharmony-sig/game_game_controller_framework/blob/master/frameworks/native/sa_client/include/gamecontroller_server_client.h).
 
 ## The Framework of the window loads the GameControllerFramework
 
