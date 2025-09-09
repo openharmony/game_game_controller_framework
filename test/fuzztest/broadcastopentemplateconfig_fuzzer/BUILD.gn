@@ -35,6 +35,7 @@ ohos_fuzztest("BroadcastOpenTemplateConfigFuzzTest") {
   sources = fuzztest_sources + ["broadcastopentemplateconfig_fuzzer.cpp"]
 
   deps = [
+    "${game_controller_framework_innerkits_path}:gamecontroller_client",
     "${game_controller_service_path}/service:gamecontroller_server",
   ]
 

@@ -23,7 +23,7 @@ fuzztest_include_dirs = [
   "${game_controller_service_path}/service/event/include",
   "${game_controller_service_path}/service/device_manager/include",
   "${game_controller_service_path}/service/ipc/include",
-  "${game_controller_service_path}/service/key_mapping/include",
+  "${game_controller_service_path}/service/key_mapping_manager/include",
 ]
 
 fuzztest_sources = [
@@ -33,8 +33,8 @@ fuzztest_sources = [
   "${game_controller_service_path}/service/device_manager/src/device_manager.cpp",
   "${game_controller_service_path}/service/ipc/src/ability_event_handler.cpp",
   "${game_controller_service_path}/service/ipc/src/gamecontroller_server_ability.cpp",
-  "${game_controller_service_path}/service/key_mapping/src/game_support_key_mapping_manager.cpp",
-  "${game_controller_service_path}/service/key_mapping/src/key_mapping_config_manager.cpp",
+  "${game_controller_service_path}/service/key_mapping_manager/src/game_support_key_mapping_manager.cpp",
+  "${game_controller_service_path}/service/key_mapping_manager/src/key_mapping_config_manager.cpp",
 ]
 
 fuzztest_external_deps = [
