@@ -7,7 +7,7 @@ online and offline game peripherals as well as input events;
 Provide InnerAPI to terminal device manufacturers, allowing them to manage identification information for external
 devices and configure input-to-touch.
 
-- The primary functions of the framework layer for GameController include:
+- The primary functions of GameControllerFramework include:
     - Providing API interfaces for game developers to implement the monitoring of the connection and disconnection
       of game peripherals, as well as the input monitoring of these peripherals.
     - Enabling terminal device manufacturers to offer gamers the ability to play games using peripherals such as
@@ -15,7 +15,7 @@ devices and configure input-to-touch.
       conversion feature.
     - Offering InnerApi to terminal device manufacturers for configuring information about
       game peripherals and the input-to-touch conversion settings.
-- The primary functions of the service layer for GameController include:
+- The primary functions of GameControllerSA include:
     - Saving game peripheral information to the configuration file `device_config.json`.
     - Saving the list of supported games for input-to-touch conversion to the configuration
       file `game_support_key_mapping.json`.
@@ -28,80 +28,73 @@ devices and configure input-to-touch.
 System Architecture Diagram:
 ![System Architecture Diagram](./figures/system_arch_en.PNG)
 
-- GameController(Framework) is the framework layer for GameController.
-- GameController(SA) is the service layer for GameController.
+Note: Currently, only CAPI is available, and ArkTS interface will be planned for the future.
 
-Core Modules of GameControllerFramework:
+## Core Modules of GameController:
+
 ![Code Architecture Diagram](./figures/code_arch.PNG)
 
-### Framework Layer
+### GameControllerFramework
 
+- **GameDevice**
+
+  Provide game developers with an API for querying device information and receiving notifications of peripheral device
+  connection and disconnection events.
+
+- **GamePad**
+
+  Provide an API for game developers to receive input event notifications from game controllers.
 - **Window**
-    - Registering with the window requires intercepting and listening to input events from game peripherals.
-        - If the developer calls the API to listen to input events from game peripherals,
-          the intercepted input event callbacks will be notified to the game.
-        - If the game is configured to support input-to-touch conversion, the intercepted input events from
-          game peripherals will be used for the input-to-touch feature.
 
-    - Monitor window size changes for use in input-to-touch feature.
+  Connect to the window Framework and register the input events of the game peripherals that need to be intercepted and
+  monitored to the window. Upon receiving the events, perform the following processing:
+    - If the developer calls the API to listen to input events from game peripherals,
+      the intercepted input event callbacks will be notified to the game.
+    - If the game supports input conversion to touch, the intercepted game peripheral input events will be used for the
+      input-to-touch feature.
 
 - **MultiModalInput**
 
-    - Connect to multi-mode-input and monitor the online and offline events of gaming peripherals.
-
-        - If the developer calls the API to monitor the online and offline events of gaming peripherals, the online and
-          offline event callbacks of the gaming peripherals will be notified to the game.
-        - If the game is configured to support input-to-touch conversion, the corresponding input-to-touch conversion
-          configuration for the gaming peripheral type will be loaded.
-
-    - Upon receiving the gaming equipment online, identify the category of the gaming peripherals.
+  Connect to multi-modal-input to monitor the online and offline events of gaming peripherals. Upon receiving an
+  event, perform the following processing:
+    - If the developer calls the API to monitor the online and offline events of gaming peripherals, the online and
+      offline event callbacks of the gaming peripherals will be notified to the game.
+    - If the game supports input conversion to touch, call InnerAPI to read input-to-touch configuration for
+      the corresponding game peripheral type from GameControllerSA.
 
 - **KeyMapping**
 
+  Handle the business logic related to input-to-touch key mapping.
     - Read the configuration from game_support_key_mapping.json to determine whether to enable the input-to-touch
       functionality.
-    - Read the corresponding game peripheral type's touch conversion configuration from the game_controller_service.
     - Based on the input events and categories of gaming peripherals, determine whether to send a notification for
       configuring the input-to-touch configuration. When pressing Q, W, and P simultaneously on the keyboard, it
       indicates the need to open the input to touch configuration interface of the keyboard.
 
     - Based on the input-to-touch configuration, the input events of gaming peripherals (such as key events, mouse
-      events,
-      etc.)
-      are converted into touchscreen events on the screen.
+      events, etc.) are converted into touchscreen events on the screen.
+- **SAClient**
 
-- **GameControllerService**
+  Definition of InnerAPI for GameControllerSA.
 
-  Provide the InnerAPI interface of the game_controller_service to terminal manufacturers for configuring game
-  peripheral information and input-to-touch conversion data.
-
-- **BundleInfo**
-
-  Obtain information about the current application for input-to-touch conversion features.
-
-### Service Layer
+### GameControllerSA
 
 - **DeviceManager**
     - Perform device category identification for gaming peripherals. Determine whether the device category is a
       keyboard, game pad, etc.
-    - Other system SA synchronize gaming peripheral information to the GameControllerService. Other system SA refers to
+    - Other system SA synchronize gaming peripheral information to the GameControllerSA. Other system SA refers to
       system service developed by terminal device manufacturers, such as Game Services Of Terminal Manufacturers
       in the system architecture diagram.
-- **Event**
-    - Send notifications to other system SA about the online status of gaming peripherals and the opening of the
-      configuration editing page for input-to-touch conversion.
-    - Notify the current game of the configuration update event for input-to-touch conversion and the switch change
-      event for
-      input-to-touch conversion.
-- **KeyMapping**
+
+- **KeyMappingManager**
     - Other system SA synchronize the list of games that support input-to-touch conversion with the
-      GameControllerService.
+      GameControllerSA.
     - Other system SA synchronize the default and custom configuration for input-to-touch conversion with the
-      GameControllerService.
+      GameControllerSA.
 
-## Launch of GameController(SA)
+## Launch of GameControllerSA
 
-GameController (SA) is an independent process and not a resident process. The following two scenarios will start SA.it
+GameControllerSA is an independent process and not a resident process. The following two scenarios will start SA.it
 will be initiated in the following two scenarios.
 
 - Scene 1: When the gaming peripherals are connected, the GameControllerFramework will initiate the SA through samgr (
@@ -129,7 +122,7 @@ the application process upon startup.
 │   │   └── src
 │   └── native                     # Native Code
 │       ├── bundle_info            # Bundle Information Inquiry
-│       ├── gamecontroller_service # Connects to the SA of the GameController.
+│       ├── sa_client              # Connects to the SA of the GameController.
 │       ├── key_mapping            # Implementation of Key Mapping 
 │       ├── multi_modal_input      # Interconnection with multi-mode input 
 │       └── window                 # Interconnection window to game devices's input
@@ -138,7 +131,7 @@ the application process upon startup.
 │   ├── device_manager             # Device Management
 │   ├── event                      # Provides the event processing capability
 │   ├── ipc                        # IPC interface implementation layer
-│   └── key_mapping                # Input-to-touch configuration management
+│   └── key_mapping_manager        # Input-to-touch configuration management
 ├── interfaces                     # Interface Storage Directory 
 │   └── kits                        
 │       └── c                      # Directory for storing the NAPI interface.
