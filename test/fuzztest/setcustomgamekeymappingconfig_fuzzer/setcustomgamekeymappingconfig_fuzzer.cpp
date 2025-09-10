@@ -15,10 +15,8 @@
 #include <cstdint>
 #include <gamecontroller_log.h>
 #include "setcustomgamekeymappingconfig_fuzzer.h"
-#include "gamecontroller_server_ability.h"
 #include "gamecontroller_constants.h"
-#include "igame_controller_server_interface.h"
-#include "../mock/sa_mock.h"
+#include "key_mapping_config_manager.h"
 
 namespace OHOS {
 namespace GameController {
@@ -31,58 +29,6 @@ const int32_t KEY_LEFT = 3;
 const int32_t KEY_RIGHT = 4;
 const int32_t COMBINATION_FIRST_KEY = 5;
 const int32_t COMBINATION_SECOND_KEY = 6;
-}
-void TestSetCustomGameKeyMappingConfig(sptr<GameControllerServerAbility> service,
-                                       const GameKeyMappingInfo &gameKeyMappingInfo)
-{
-    MessageParcel data;
-    MessageParcel reply;
-    MessageOption option(MessageOption::TF_SYNC);
-    data.WriteInterfaceToken(u"OHOS.GameController.IGameControllerServerInterface");
-    if (!data.WriteParcelable(&gameKeyMappingInfo)) {
-        return;
-    }
-
-    service->OnRemoteRequest(
-        static_cast<uint32_t>(IGameControllerServerInterfaceIpcCode::COMMAND_SET_CUSTOM_GAME_KEY_MAPPING_CONFIG),
-        data, reply, option);
-}
-
-void TestSetDefaultGameKeyMappingConfig(sptr<GameControllerServerAbility> service,
-                                        const GameKeyMappingInfo &gameKeyMappingInfo)
-{
-    MessageParcel data;
-    MessageParcel reply;
-    MessageOption option(MessageOption::TF_SYNC);
-    data.WriteInterfaceToken(u"OHOS.GameController.IGameControllerServerInterface");
-    if (!data.WriteParcelable(&gameKeyMappingInfo)) {
-        return;
-    }
-
-    service->OnRemoteRequest(
-        static_cast<uint32_t>(IGameControllerServerInterfaceIpcCode::COMMAND_SET_DEFAULT_GAME_KEY_MAPPING_CONFIG),
-        data, reply, option);
-}
-
-void TestGetGameKeyMappingConfig(sptr<GameControllerServerAbility> service,
-                                 const GameInfo &gameInfo,
-                                 const DeviceInfo &deviceInfo)
-{
-    MessageParcel data;
-    MessageParcel reply;
-    MessageOption option(MessageOption::TF_SYNC);
-    data.WriteInterfaceToken(u"OHOS.GameController.IGameControllerServerInterface");
-    if (!data.WriteParcelable(&gameInfo)) {
-        return;
-    }
-    if (!data.WriteParcelable(&deviceInfo)) {
-        return;
-    }
-
-    int32_t result = service->OnRemoteRequest(
-        static_cast<uint32_t>(IGameControllerServerInterfaceIpcCode::COMMAND_BROADCAST_DEVICE_INFO),
-        data, reply, option);
-    HILOGI("GetGameKeyMappingConfig the result is [%{public}d]", result);
 }
 
 void SetCustomGameKeyMappingConfig(const uint8_t* rawData, size_t size)
@@ -123,10 +69,13 @@ void SetCustomGameKeyMappingConfig(const uint8_t* rawData, size_t size)
     gameInfo.bundleName = gameKeyMappingInfo.bundleName;
     DeviceInfo deviceInfo;
     deviceInfo.deviceType = gameKeyMappingInfo.deviceType;
-    auto service_ = sptr<GameControllerServerAbilityEx>::MakeSptr(GAME_CONTROLLER_SA_ID);
-    TestSetCustomGameKeyMappingConfig(service_, gameKeyMappingInfo);
-    TestSetDefaultGameKeyMappingConfig(service_, gameKeyMappingInfo);
-    TestGetGameKeyMappingConfig(service_, gameInfo, deviceInfo);
+    DelayedSingleton<KeyMappingConfigManager>::GetInstance()->SetDefaultGameKeyMappingConfig(gameKeyMappingInfo);
+    DelayedSingleton<KeyMappingConfigManager>::GetInstance()->SetCustomGameKeyMappingConfig(gameKeyMappingInfo);
+    GameKeyMappingInfo result;
+    GetGameKeyMappingInfoParam param;
+    param.bundleName = gameKeyMappingInfo.bundleName;
+    param.deviceType = gameKeyMappingInfo.deviceType;
+    DelayedSingleton<KeyMappingConfigManager>::GetInstance()->GetGameKeyMappingConfig(param, result);
 }
 }
 }

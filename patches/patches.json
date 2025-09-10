@@ -1,24 +1,29 @@
 {
   "patches": [
     {
-      "project":"build",
-      "path":"build",
-      "pr_url":"https://gitee.com/openharmony/build/pulls/5680"
+      "project": "build",
+      "path": "build",
+      "pr_url": "https://gitee.com/openharmony/build/pulls/5680"
     },
     {
-      "project":"productdefine_common",
-      "path":"productdefine/common",
-      "pr_url":"https://gitee.com/openharmony/productdefine_common/pulls/1036"
+      "project": "productdefine_common",
+      "path": "productdefine/common",
+      "pr_url": "https://gitee.com/openharmony/productdefine_common/pulls/1036"
     },
     {
-      "project":"interface_sdk_c",
-      "path":"interface/sdk_c",
-      "pr_url":"https://gitee.com/openharmony/interface_sdk_c/pulls/3607"
+      "project": "interface_sdk_c",
+      "path": "interface/sdk_c",
+      "pr_url": "https://gitee.com/openharmony/interface_sdk_c/pulls/3607"
     },
     {
-      "project":"xts_tools",
-      "path":"test/xts/tools",
-      "pr_url":"https://gitee.com/openharmony/xts_tools/pulls/932"
+      "project": "interface_sdk-js",
+      "path": "interface/sdk-js",
+      "pr_url": "https://gitee.com/openharmony/interface_sdk-js/pulls/25764"
+    },
+    {
+      "project": "xts_tools",
+      "path": "test/xts/tools",
+      "pr_url": "https://gitee.com/openharmony/xts_tools/pulls/932"
     }
   ]
 }

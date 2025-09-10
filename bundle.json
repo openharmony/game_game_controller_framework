@@ -64,7 +64,7 @@
               "common/include/gamecontroller_client_model.h",
               "common/include/gamecontroller_keymapping_model.h",
               "multi_modal_input/include/game_device_client.h",
-              "gamecontroller_service/include/gamecontroller_server_client.h",
+              "sa_client/include/gamecontroller_server_client.h",
               "window/include/input_event_client.h"
             ]
           },

@@ -35,7 +35,7 @@ ohos_fuzztest("SetCustomGameKeyMappingConfigFuzzTest") {
   sources = fuzztest_sources + ["setcustomgamekeymappingconfig_fuzzer.cpp"]
 
   deps = [
-    "${game_controller_service_path}/service:gamecontroller_server",
+    "${game_controller_framework_innerkits_path}:gamecontroller_client",
   ]
 
   external_deps = fuzztest_external_deps

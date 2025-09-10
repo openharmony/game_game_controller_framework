@@ -18,9 +18,7 @@ import("//domains/game/game_controller_framework/game_controller_framework.gni")
 
 ohos_fuzztest("SyncSupportKeyMappingGamesFuzzTest") {
   module_out_path = "game_controller_framework/game_controller_framework"
-  include_dirs = fuzztest_include_dirs + [
-    "../mock/sa_mock.h",
-  ]
+  include_dirs = fuzztest_include_dirs
 
   fuzz_config_file = "."
 
@@ -35,7 +33,7 @@ ohos_fuzztest("SyncSupportKeyMappingGamesFuzzTest") {
   sources = fuzztest_sources + ["syncsupportkeymappinggames_fuzzer.cpp"]
 
   deps = [
-    "${game_controller_service_path}/service:gamecontroller_server",
+    "${game_controller_framework_innerkits_path}:gamecontroller_client"
   ]
 
   external_deps = fuzztest_external_deps

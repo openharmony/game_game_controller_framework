@@ -15,37 +15,17 @@
 #include <cstdint>
 #include "syncsupportkeymappinggames_fuzzer.h"
 #include "gamecontroller_constants.h"
-#include "igame_controller_server_interface.h"
 #include "gamecontroller_log.h"
-#include "gamecontroller_server_ability.h"
-#include "../mock/sa_mock.h"
+#include "game_support_key_mapping_manager.h"
+
 
 namespace OHOS {
 namespace GameController {
 namespace {
 const int32_t MAX_CONFIG_NUM = 200;
 }
-
-void TestSyncSupportKeyMappingGames(sptr<GameControllerServerAbility> service, bool isSyncAll,
-                                    const std::vector<GameInfo> &gameInfos)
-{
-    MessageParcel data;
-    MessageParcel reply;
-    MessageOption option(MessageOption::TF_SYNC);
-    data.WriteInterfaceToken(u"OHOS.GameController.IGameControllerServerInterface");
-    data.WriteInt32(isSyncAll ? 1 : 0);
-    data.WriteInt32(gameInfos.size());
-    for (auto it1 = gameInfos.begin(); it1 != gameInfos.end(); ++it1) {
-        data.WriteParcelable(&(*it1));
-    }
-    service->OnRemoteRequest(
-        static_cast<uint32_t>(IGameControllerServerInterfaceIpcCode::COMMAND_SYNC_SUPPORT_KEY_MAPPING_GAMES),
-        data, reply, option);
-}
-
 void SyncSupportKeyMappingGames(const uint8_t* rawData, size_t size)
 {
-    auto service_ = sptr<GameControllerServerAbilityEx>::MakeSptr(GAME_CONTROLLER_SA_ID);
     auto count = static_cast<int32_t>(*rawData);
     if (count > MAX_CONFIG_NUM || count <= 0) {
         count = MAX_CONFIG_NUM;
@@ -61,7 +41,8 @@ void SyncSupportKeyMappingGames(const uint8_t* rawData, size_t size)
         gameInfos.push_back(gameInfo);
     }
     bool isSyncAll = static_cast<bool>(*rawData);
-    TestSyncSupportKeyMappingGames(service_, isSyncAll, gameInfos);
+    DelayedSingleton<GameSupportKeyMappingManager>::GetInstance()->SyncSupportKeyMappingGames(isSyncAll,
+                                                                                              gameInfos);
 }
 }
 }

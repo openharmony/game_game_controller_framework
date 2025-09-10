@@ -22,7 +22,7 @@ module_output_path = "game_controller_framework/game_controller_framework"
 gamecontroller_framework_include_dirs = [
   "${game_controller_framework_innerkits_path}",
   "${game_controller_framework_innerkits_path}/bundle_info/include",
-  "${game_controller_framework_innerkits_path}/gamecontroller_service/include",
+  "${game_controller_framework_innerkits_path}/sa_client/include",
   "${game_controller_framework_innerkits_path}/common/include",
   "${game_controller_framework_innerkits_path}/key_mapping/include",
   "${game_controller_framework_innerkits_path}/multi_modal_input/include",
@@ -54,8 +54,8 @@ ohos_static_library("gamecontroller_framework_static_test") {
     "${game_controller_framework_innerkits_path}/bundle_info/src/bundle_manager.cpp",
     "${game_controller_framework_innerkits_path}/common/src/gamecontroller_keymapping_model.cpp",
     "${game_controller_framework_innerkits_path}/common/src/gamecontroller_utils.cpp",
-    "${game_controller_framework_innerkits_path}/gamecontroller_service/src/gamecontroller_server_client.cpp",
-    "${game_controller_framework_innerkits_path}/gamecontroller_service/src/gamecontroller_server_client_proxy.cpp",
+    "${game_controller_framework_innerkits_path}/sa_client/src/gamecontroller_server_client.cpp",
+    "${game_controller_framework_innerkits_path}/sa_client/src/gamecontroller_server_client_proxy.cpp",
     "${game_controller_framework_innerkits_path}/key_mapping/src/combination_key_to_touch_handler.cpp",
     "${game_controller_framework_innerkits_path}/key_mapping/src/crosshair_key_to_touch_handler.cpp",
     "${game_controller_framework_innerkits_path}/key_mapping/src/dpad_key_to_touch_handler.cpp",
@@ -157,10 +157,11 @@ ohos_unittest("GameControllerFrameworkTest") {
 }
 
 gamecontroller_service_include_dirs = [
+  "${game_controller_framework_innerkits_path}/common/include",
   "${game_controller_service_path}/service/common/include",
   "${game_controller_service_path}/service/event/include",
   "${game_controller_service_path}/service/device_manager/include",
-  "${game_controller_service_path}/service/key_mapping/include",
+  "${game_controller_service_path}/service/key_mapping_manager/include",
 ]
 
 config("gamecontroller_service_unittest_config") {
@@ -186,8 +187,8 @@ ohos_static_library("gamecontroller_service_static_test") {
     "${game_controller_service_path}/service/common/src/permission_utils.cpp",
     "${game_controller_service_path}/service/device_manager/src/device_manager.cpp",
     "${game_controller_service_path}/service/event/src/event_publisher.cpp",
-    "${game_controller_service_path}/service/key_mapping/src/game_support_key_mapping_manager.cpp",
-    "${game_controller_service_path}/service/key_mapping/src/key_mapping_config_manager.cpp",
+    "${game_controller_service_path}/service/key_mapping_manager/src/game_support_key_mapping_manager.cpp",
+    "${game_controller_service_path}/service/key_mapping_manager/src/key_mapping_config_manager.cpp",
   ]
   deps = [ "${game_controller_framework_innerkits_path}:gamecontroller_client" ]
   external_deps = [

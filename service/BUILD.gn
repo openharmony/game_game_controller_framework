@@ -25,7 +25,7 @@ config("gamecontroller_service_config") {
     "${game_controller_service_path}/service/event/include",
     "${game_controller_service_path}/service/device_manager/include",
     "${game_controller_service_path}/service/ipc/include",
-    "${game_controller_service_path}/service/key_mapping/include",
+    "${game_controller_service_path}/service/key_mapping_manager/include",
   ]
 
   cflags = [ "-w" ]
@@ -39,8 +39,8 @@ gamecontroller_server_sources = [
   "device_manager/src/device_manager.cpp",
   "ipc/src/ability_event_handler.cpp",
   "ipc/src/gamecontroller_server_ability.cpp",
-  "key_mapping/src/game_support_key_mapping_manager.cpp",
-  "key_mapping/src/key_mapping_config_manager.cpp",
+  "key_mapping_manager/src/game_support_key_mapping_manager.cpp",
+  "key_mapping_manager/src/key_mapping_config_manager.cpp",
 ]
 
 ohos_shared_library("gamecontroller_server") {

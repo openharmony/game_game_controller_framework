@@ -14,34 +14,14 @@
  */
 #include <cstdint>
 #include "broadcastopentemplateconfig_fuzzer.h"
-#include "gamecontroller_server_ability.h"
 #include "gamecontroller_constants.h"
-#include "igame_controller_server_interface.h"
-#include "../mock/sa_mock.h"
+#include "event_publisher.h"
 
 namespace OHOS {
 namespace GameController {
 namespace {
 const int32_t DEVICE_TYPE_NUM = 4;
-}
-void TestBroadcastOpenTemplateConfig(sptr<GameControllerServerAbility> service,
-                                     const GameInfo &gameInfo,
-                                     const DeviceInfo &deviceInfo)
-{
-    MessageParcel data;
-    MessageParcel reply;
-    MessageOption option(MessageOption::TF_SYNC);
-    data.WriteInterfaceToken(u"OHOS.GameController.IGameControllerServerInterface");
-    if (!data.WriteParcelable(&gameInfo)) {
-        return;
-    }
-    if (!data.WriteParcelable(&deviceInfo)) {
-        return;
-    }
-
-    service->OnRemoteRequest(
-        static_cast<uint32_t>(IGameControllerServerInterfaceIpcCode::COMMAND_BROADCAST_OPEN_TEMPLATE_CONFIG),
-        data, reply, option);
+const int32_t GAME_PID = 4;
 }
 
 void BroadcastOpenTemplateConfig(const uint8_t* rawData, size_t size)
@@ -60,8 +40,8 @@ void BroadcastOpenTemplateConfig(const uint8_t* rawData, size_t size)
     deviceInfo.vendor = static_cast<int32_t>(*rawData);
     deviceInfo.status = static_cast<int32_t>(*rawData);
     deviceInfo.deviceType = static_cast<DeviceTypeEnum>(static_cast<int32_t>(*rawData) % DEVICE_TYPE_NUM);
-    auto service_ = sptr<GameControllerServerAbilityEx>::MakeSptr(GAME_CONTROLLER_SA_ID);
-    TestBroadcastOpenTemplateConfig(service_, gameInfo, deviceInfo);
+    DelayedSingleton<EventPublisher>::GetInstance()->SendDeviceInfoNotify(gameInfo, deviceInfo, GAME_PID);
+    DelayedSingleton<EventPublisher>::GetInstance()->SendOpenTemplateConfigNotify(gameInfo, deviceInfo)
 }
 }
 }

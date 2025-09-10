@@ -14,10 +14,8 @@
  */
 #include <cstdint>
 #include "syncidentifieddeviceinfos_fuzzer.h"
-#include "gamecontroller_server_ability.h"
 #include "gamecontroller_constants.h"
-#include "igame_controller_server_interface.h"
-#include "../mock/sa_mock.h"
+#include "device_manager.h"
 
 namespace OHOS {
 namespace GameController {
@@ -27,37 +25,6 @@ const int32_t MAX_DEVICES = 100;
 const int32_t DEVICE_TYPE_NUM = 4;
 }
 
-void TestSyncIdentifiedDeviceInfos(sptr<GameControllerServerAbility> service,
-                                   const std::vector<IdentifiedDeviceInfo> &deviceInfos)
-{
-    MessageParcel data;
-    MessageParcel reply;
-    MessageOption option(MessageOption::TF_SYNC);
-    data.WriteInterfaceToken(u"OHOS.GameController.IGameControllerServerInterface");
-    data.WriteInt32(deviceInfos.size());
-    for (auto it3 = deviceInfos.begin(); it3 != deviceInfos.end(); ++it3) {
-        if (!data.WriteParcelable(&(*it3))) {
-            return;
-        }
-    }
-    service->OnRemoteRequest(
-        static_cast<uint32_t>(IGameControllerServerInterfaceIpcCode::COMMAND_SYNC_IDENTIFIED_DEVICE_INFOS),
-        data, reply, option);
-}
-
-void TestIdentifyDevice(sptr<GameControllerServerAbility> service, std::vector<DeviceInfo> deviceInfos)
-{
-    MessageParcel data;
-    MessageParcel reply;
-    MessageOption option(MessageOption::TF_SYNC);
-    data.WriteInterfaceToken(u"OHOS.GameController.IGameControllerServerInterface");
-    data.WriteInt32(deviceInfos.size());
-    for (auto it1 = deviceInfos.begin(); it1 != deviceInfos.end(); ++it1) {
-        data.WriteParcelable(&(*it1));
-    }
-    service->OnRemoteRequest(static_cast<uint32_t>(IGameControllerServerInterfaceIpcCode::COMMAND_IDENTIFY_DEVICE),
-                             data, reply, option);
-}
 
 void SyncIdentifiedDeviceInfos(const uint8_t* rawData, size_t size)
 {
@@ -87,9 +54,10 @@ void SyncIdentifiedDeviceInfos(const uint8_t* rawData, size_t size)
         }
     }
 
-    auto service_ = sptr<GameControllerServerAbilityEx>::MakeSptr(GAME_CONTROLLER_SA_ID);
-    TestSyncIdentifiedDeviceInfos(service_, identifiedDeviceInfos);
-    TestIdentifyDevice(service_, deviceInfos);
+    DelayedSingleton<DeviceManager>::GetInstance()->SyncIdentifiedDeviceInfos(identifiedDeviceInfos);
+
+    std::vector<DeviceInfo> identifyResult;
+    DelayedSingleton<DeviceManager>::GetInstance()->DeviceIdentify(deviceInfos, identifyResult);
 }
 }
 }

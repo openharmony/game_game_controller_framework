@@ -32,14 +32,70 @@ const int32_t TOW_BYTE_CHAR = 2;
 const int32_t THREE_BYTE_CHAR = 3;
 const int32_t FOUR_BYTE_CHAR = 4;
 const char UTF_ONE_BYTE_END = 0x7F;
-const char UTF_TOW_BYTE_START = 0xC2;
-const char UTF_TOW_BYTE_END = 0xDF;
+const char UTF_TWO_BYTE_START = 0xC2;
+const char UTF_TWO_BYTE_END = 0xDF;
 const char UTF_THREE_BYTE_START = 0xE0;
 const char UTF_THREE_BYTE_END = 0xEF;
+const char UTF_THREE_SECOND_BYTE_LOW_BOUND = 0xA0;
+const char UTF_THREE_ED_BYTE_START = 0xED;
+const char UTF_THREE_ED_SECOND_BYTE_UP_BOUND = 0x9F;
 const char UTF_FOUR_BYTE_START = 0xF0;
 const char UTF_FOUR_BYTE_END = 0xF4;
+const char UTF_FOUR_SECOND_BYTE_LOW_BOUND = 0x90;
+const char UTF_FOUR_F4_SECOND_BYTE_UP_BOUND = 0x8F;
 const char NON_ASCII_START = 0xC0;
 const char MULTI_BYTE_START = 0x80;
+
+bool TwoBytes(unsigned char c, std::string::const_iterator &it, std::string::const_iterator end)
+{
+    if (std::distance(it, end) < TOW_BYTE_CHAR) {
+        return false;
+    }
+    if ((*(it + ONE_BYTE_CHAR) & NON_ASCII_START) != MULTI_BYTE_START) {
+        return false;
+    }
+    it += TOW_BYTE_CHAR;
+    return true;
+}
+
+bool ThreeBytes(unsigned char c, std::string::const_iterator &it, std::string::const_iterator end)
+{
+    if (std::distance(it, end) < THREE_BYTE_CHAR) {
+        return false;
+    }
+    if ((*(it + ONE_BYTE_CHAR) & NON_ASCII_START) != MULTI_BYTE_START ||
+        (*(it + TOW_BYTE_CHAR) & NON_ASCII_START) != MULTI_BYTE_START) {
+        return false;
+    }
+    if (c == UTF_THREE_BYTE_START && *(it + ONE_BYTE_CHAR) < UTF_THREE_SECOND_BYTE_LOW_BOUND) {
+        return false;
+    }
+    if (c == UTF_THREE_ED_BYTE_START && *(it + ONE_BYTE_CHAR) > UTF_THREE_ED_SECOND_BYTE_UP_BOUND) {
+        return false;
+    }
+    it += THREE_BYTE_CHAR;
+    return true;
+}
+
+bool FourBytes(unsigned char c, std::string::const_iterator &it, std::string::const_iterator end)
+{
+    if (std::distance(it, end) < FOUR_BYTE_CHAR) {
+        return false;
+    }
+    if ((*(it + ONE_BYTE_CHAR) & NON_ASCII_START) != MULTI_BYTE_START ||
+        (*(it + TOW_BYTE_CHAR) & NON_ASCII_START) != MULTI_BYTE_START ||
+        (*(it + THREE_BYTE_CHAR) & NON_ASCII_START) != MULTI_BYTE_START) {
+        return false;
+    }
+    if (c == UTF_FOUR_BYTE_START && *(it + ONE_BYTE_CHAR) < UTF_FOUR_SECOND_BYTE_LOW_BOUND) {
+        return false;
+    }
+    if (c == UTF_FOUR_BYTE_END && *(it + ONE_BYTE_CHAR) > UTF_FOUR_F4_SECOND_BYTE_UP_BOUND) {
+        return false;
+    }
+    it += FOUR_BYTE_CHAR;
+    return true;
+}
 }
 
 bool JsonUtils::IsUtf8(const std::string &str)
@@ -51,30 +107,21 @@ bool JsonUtils::IsUtf8(const std::string &str)
         if (c <= UTF_ONE_BYTE_END) {
             // Single-byte character, proceed to the next byte.
             ++it;
-        } else if (c >= UTF_TOW_BYTE_START && c <= UTF_TOW_BYTE_END) {
+        } else if (c >= UTF_TWO_BYTE_START && c <= UTF_TWO_BYTE_END) {
             // Two-byte character, check the next byte
-            if (std::distance(it, end) < TOW_BYTE_CHAR)
+            if (!TwoBytes(c, it, end)) {
                 return false;
-            if ((*(it + ONE_BYTE_CHAR) & NON_ASCII_START) != MULTI_BYTE_START)
-                return false;
-            it += TOW_BYTE_CHAR;
+            }
         } else if (c >= UTF_THREE_BYTE_START && c <= UTF_THREE_BYTE_END) {
             // Three-byte character, check the next two bytes.
-            if (std::distance(it, end) < THREE_BYTE_CHAR)
+            if (!ThreeBytes(c, it, end)) {
                 return false;
-            if ((*(it + ONE_BYTE_CHAR) & NON_ASCII_START) != MULTI_BYTE_START ||
-                (*(it + TOW_BYTE_CHAR) & NON_ASCII_START) != MULTI_BYTE_START)
-                return false;
-            it += THREE_BYTE_CHAR;
+            }
         } else if (c >= UTF_FOUR_BYTE_START && c <= UTF_FOUR_BYTE_END) {
             // Four-byte character, check the next three bytes.
-            if (std::distance(it, end) < FOUR_BYTE_CHAR)
+            if (!FourBytes(c, it, end)) {
                 return false;
-            if ((*(it + ONE_BYTE_CHAR) & NON_ASCII_START) != MULTI_BYTE_START ||
-                (*(it + TOW_BYTE_CHAR) & NON_ASCII_START) != MULTI_BYTE_START ||
-                (*(it + THREE_BYTE_CHAR) & NON_ASCII_START) != MULTI_BYTE_START)
-                return false;
-            it += FOUR_BYTE_CHAR;
+            }
         } else {
             // Invalid UTF-8 bytes.
             return false;
