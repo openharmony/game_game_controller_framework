@@ -157,6 +157,7 @@ ohos_unittest("GameControllerFrameworkTest") {
 }
 
 gamecontroller_service_include_dirs = [
+  "${game_controller_framework_innerkits_path}/common/include",
   "${game_controller_service_path}/service/common/include",
   "${game_controller_service_path}/service/event/include",
   "${game_controller_service_path}/service/device_manager/include",

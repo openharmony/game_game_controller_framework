@@ -169,8 +169,13 @@ ohos_shared_library("gamecontroller_event") {
   public_configs = [ ":gamecontroller_event_config" ]
 
   external_deps = [
+    "c_utils:utils",
+    "ffrt:libffrt",
     "common_event_service:cesfwk_innerkits",
-    "hilog:libhilog"
+    "hilog:libhilog",
+    "eventhandler:libeventhandler",
+    "ipc:ipc_core",
+    "ipc:ipc_single",
   ]
   subsystem_name = "game"
   part_name = "game_controller_framework"
