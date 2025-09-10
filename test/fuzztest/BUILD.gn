@@ -16,7 +16,6 @@ group("fuzztest") {
   deps = []
 
   deps += [
-    "broadcastdeviceinfo_fuzzer:fuzztest",
     "broadcastopentemplateconfig_fuzzer:fuzztest",
     "enablegamekeymapping_fuzzer:fuzztest",
     "setcustomgamekeymappingconfig_fuzzer:fuzztest",

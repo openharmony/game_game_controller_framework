@@ -31,8 +31,6 @@ fuzztest_sources = [
   "${game_controller_service_path}/service/common/src/permission_utils.cpp",
   "${game_controller_service_path}/service/event/src/event_publisher.cpp",
   "${game_controller_service_path}/service/device_manager/src/device_manager.cpp",
-  "${game_controller_service_path}/service/ipc/src/ability_event_handler.cpp",
-  "${game_controller_service_path}/service/ipc/src/gamecontroller_server_ability.cpp",
   "${game_controller_service_path}/service/key_mapping_manager/src/game_support_key_mapping_manager.cpp",
   "${game_controller_service_path}/service/key_mapping_manager/src/key_mapping_config_manager.cpp",
 ]
