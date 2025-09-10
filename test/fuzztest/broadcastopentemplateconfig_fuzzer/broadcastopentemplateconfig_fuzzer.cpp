@@ -21,6 +21,7 @@ namespace OHOS {
 namespace GameController {
 namespace {
 const int32_t DEVICE_TYPE_NUM = 4;
+const int32_t GAME_PID = 4;
 }
 
 void BroadcastOpenTemplateConfig(const uint8_t* rawData, size_t size)
@@ -39,7 +40,7 @@ void BroadcastOpenTemplateConfig(const uint8_t* rawData, size_t size)
     deviceInfo.vendor = static_cast<int32_t>(*rawData);
     deviceInfo.status = static_cast<int32_t>(*rawData);
     deviceInfo.deviceType = static_cast<DeviceTypeEnum>(static_cast<int32_t>(*rawData) % DEVICE_TYPE_NUM);
-    DelayedSingleton<EventPublisher>::GetInstance()->SendDeviceInfoNotify(gameInfo, deviceInfo, 111);
+    DelayedSingleton<EventPublisher>::GetInstance()->SendDeviceInfoNotify(gameInfo, deviceInfo, GAME_PID);
     DelayedSingleton<EventPublisher>::GetInstance()->SendOpenTemplateConfigNotify(gameInfo, deviceInfo)
 }
 }

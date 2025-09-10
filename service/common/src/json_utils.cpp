@@ -190,7 +190,8 @@ bool JsonUtils::IsFileExist(const std::string &filePath)
 
 bool JsonUtils::CopyFile(const std::string &src, const std::string &dest, const bool isAllUserRead)
 {
-    auto srcRealPath = realpath(src.c_str(), nullptr);
+    char canonicalPath[PATH_MAX] = {};
+    auto srcRealPath = realpath(src.c_str(), canonicalPath);
     if (srcRealPath == nullptr) {
         HILOGE("get src realpath faild");
         return false;
