@@ -32,7 +32,7 @@ Note: Currently, only CAPI is available, and ArkTS interface will be planned for
 
 ## Core Modules of GameController:
 
-![Code Architecture Diagram](./figures/code_arch.PNG)
+![Code Architecture Diagram](./figures/code_arch_en.PNG)
 
 ### GameControllerFramework
 
