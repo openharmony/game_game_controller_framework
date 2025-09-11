@@ -32,7 +32,7 @@ Note: Currently, only CAPI is available, and ArkTS interface will be planned for
 
 ## Core Modules of GameController:
 
-![Code Architecture Diagram](./figures/code_arch_en.PNG)
+![Code Architecture Diagram](./figures/code_arch.PNG)
 
 ### GameControllerFramework
 
@@ -44,7 +44,7 @@ Note: Currently, only CAPI is available, and ArkTS interface will be planned for
 - **GamePad**
 
   Provide an API for game developers to receive input event notifications from game controllers.
-- **Window**
+- **InputMonitor**
 
   Connect to the window Framework and register the input events of the game peripherals that need to be intercepted and
   monitored to the window. Upon receiving the events, perform the following processing:
@@ -53,7 +53,7 @@ Note: Currently, only CAPI is available, and ArkTS interface will be planned for
     - If the game supports input conversion to touch, the intercepted game peripheral input events will be used for the
       input-to-touch feature.
 
-- **MultiModalInput**
+- **DeviceMonitor**
 
   Connect to multi-modal-input to monitor the online and offline events of gaming peripherals. Upon receiving an
   event, perform the following processing:
@@ -73,7 +73,7 @@ Note: Currently, only CAPI is available, and ArkTS interface will be planned for
 
     - Based on the input-to-touch configuration, the input events of gaming peripherals (such as key events, mouse
       events, etc.) are converted into touchscreen events on the screen.
-- **SAClient**
+- **GameControllerClient**
 
   Definition of InnerAPI for GameControllerSA.
 
