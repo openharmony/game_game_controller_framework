@@ -19,7 +19,7 @@
  *
  * @brief Provides APIs for game controller capability.
  *
- * @since 20
+ * @since 21
  */
 
 /**
@@ -28,7 +28,7 @@
  * @kit GameControllerKit
  * @library libohgame_controller.z.so
  * @syscap SystemCapability.Game.GameController
- * @since 20
+ * @since 21
  */
 
 #ifndef GAME_DEVICE_EVENT_H
@@ -43,7 +43,7 @@ extern "C" {
 
 /**
  * @brief Defines an enum for the device status change types.
- * @since 20
+ * @since 21
  */
 typedef enum GameDevice_StatusChangedType {
     /**
@@ -59,7 +59,7 @@ typedef enum GameDevice_StatusChangedType {
 
 /**
  * @brief Defines an enum for the device types.
- * @since 20
+ * @since 21
  */
 typedef enum GameDevice_DeviceType {
     /**
@@ -75,13 +75,13 @@ typedef enum GameDevice_DeviceType {
 
 /**
  * @brief Defines a struct for the device information.
- * @since 20
+ * @since 21
  */
 typedef struct GameDevice_DeviceInfo GameDevice_DeviceInfo;
 
 /**
  * @brief Defines a struct for the device event.
- * @since 20
+ * @since 21
  */
 typedef struct GameDevice_DeviceEvent GameDevice_DeviceEvent;
 
@@ -89,7 +89,7 @@ typedef struct GameDevice_DeviceEvent GameDevice_DeviceEvent;
  * @brief Defines a callback used in {@link OH_GameDevice_RegisterDeviceMonitor}.
  * This function is called when a device goes online or offline.
  * @param deviceEvent Pointer to the {@link GameDevice_DeviceEvent} instance.
- * @since 20
+ * @since 21
  */
 typedef void(* GameDevice_DeviceMonitorCallback)(const struct GameDevice_DeviceEvent* deviceEvent);
 
@@ -100,7 +100,7 @@ typedef void(* GameDevice_DeviceMonitorCallback)(const struct GameDevice_DeviceE
  * @param statusChangedType Pointer to the device event change type.
  * @return Returns {@link GAME_CONTROLLER_SUCCESS} if the operation is successful.
  * Returns {@link GAME_CONTROLLER_PARAM_ERROR} of the value of deviceEvent is null.
- * @since 20
+ * @since 21
  */
 GameController_ErrorCode OH_GameDevice_DeviceEvent_GetChangedType(
     const struct GameDevice_DeviceEvent* deviceEvent,
@@ -113,7 +113,7 @@ GameController_ErrorCode OH_GameDevice_DeviceEvent_GetChangedType(
  * @param deviceInfo Double pointer to the device information.
  * @return Returns {@link GAME_CONTROLLER_SUCCESS} if the operation is successful.
  * Returns {@link GAME_CONTROLLER_PARAM_ERROR} of the value of deviceEvent is null.
- * @since 20
+ * @since 21
  */
 GameController_ErrorCode OH_GameDevice_DeviceEvent_GetDeviceInfo(
     const struct GameDevice_DeviceEvent* deviceEvent,
@@ -125,7 +125,7 @@ GameController_ErrorCode OH_GameDevice_DeviceEvent_GetDeviceInfo(
  * The value cannot be null. Otherwise, an error code is returned.
  * @return Returns {@link GAME_CONTROLLER_SUCCESS} if the operation is successful.
  * Returns {@link GAME_CONTROLLER_PARAM_ERROR} if the value of deviceInfo is null.
- * @since 20
+ * @since 21
  */
 GameController_ErrorCode OH_GameDevice_DestroyDeviceInfo(GameDevice_DeviceInfo** deviceInfo);
 
@@ -137,7 +137,7 @@ GameController_ErrorCode OH_GameDevice_DestroyDeviceInfo(GameDevice_DeviceInfo**
  * @return Returns {@link GAME_CONTROLLER_SUCCESS} if the operation is successful.
  * Returns {@link GAME_CONTROLLER_PARAM_ERROR} if the value of deviceInfo or deviceId is null.
  * Returns {@link GAME_CONTROLLER_NO_MEMORY} if there is no sufficient memory.
- * @since 20
+ * @since 21
  */
 GameController_ErrorCode OH_GameDevice_DeviceInfo_GetDeviceId(const struct GameDevice_DeviceInfo* deviceInfo,
                                                               char** deviceId);
@@ -149,7 +149,7 @@ GameController_ErrorCode OH_GameDevice_DeviceInfo_GetDeviceId(const struct GameD
  * @return Returns {@link GAME_CONTROLLER_SUCCESS} if the operation is successful.
  * Returns {@link GAME_CONTROLLER_PARAM_ERROR} if the value of deviceInfo or name is null.
  * Returns {@link GAME_CONTROLLER_NO_MEMORY} if there is no sufficient memory.
- * @since 20
+ * @since 21
  */
 GameController_ErrorCode OH_GameDevice_DeviceInfo_GetName(const struct GameDevice_DeviceInfo* deviceInfo,
                                                           char** name);
@@ -160,7 +160,7 @@ GameController_ErrorCode OH_GameDevice_DeviceInfo_GetName(const struct GameDevic
  * @param product Pointer to the product information.
  * @return Returns {@link GAME_CONTROLLER_SUCCESS} if the operation is successful.
  * Returns {@link GAME_CONTROLLER_PARAM_ERROR} if the value of deviceInfo is null.
- * @since 20
+ * @since 21
  */
 GameController_ErrorCode OH_GameDevice_DeviceInfo_GetProduct(const struct GameDevice_DeviceInfo* deviceInfo,
                                                              int32_t* product);
@@ -172,7 +172,7 @@ GameController_ErrorCode OH_GameDevice_DeviceInfo_GetProduct(const struct GameDe
  * @param version Pointer to the version information.
  * @return Returns {@link GAME_CONTROLLER_SUCCESS} if the operation is successful.
  * Returns {@link GAME_CONTROLLER_PARAM_ERROR} if the value of deviceInfo is null.
- * @since 20
+ * @since 21
  */
 GameController_ErrorCode OH_GameDevice_DeviceInfo_GetVersion(const struct GameDevice_DeviceInfo* deviceInfo,
                                                              int32_t* version);
@@ -185,7 +185,7 @@ GameController_ErrorCode OH_GameDevice_DeviceInfo_GetVersion(const struct GameDe
  * @return Returns {@link GAME_CONTROLLER_SUCCESS} if the operation is successful.
  * Returns {@link GAME_CONTROLLER_PARAM_ERROR} if the value of deviceInfo or physicalAddress is null.
  * Returns {@link GAME_CONTROLLER_NO_MEMORY} if there is no sufficient memory.
- * @since 20
+ * @since 21
  */
 GameController_ErrorCode OH_GameDevice_DeviceInfo_GetPhysicalAddress(const struct GameDevice_DeviceInfo* deviceInfo,
                                                                      char** physicalAddress);
@@ -197,7 +197,7 @@ GameController_ErrorCode OH_GameDevice_DeviceInfo_GetPhysicalAddress(const struc
  * @param deviceType Pointer to the device type.
  * @return Returns {@link GAME_CONTROLLER_SUCCESS} if the operation is successful.
  * Returns {@link GAME_CONTROLLER_PARAM_ERROR} if the value of deviceInfo is null.
- * @since 20
+ * @since 21
  */
 GameController_ErrorCode OH_GameDevice_DeviceInfo_GetDeviceType(const struct GameDevice_DeviceInfo* deviceInfo,
                                                                 GameDevice_DeviceType* deviceType);

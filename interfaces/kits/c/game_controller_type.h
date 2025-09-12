@@ -19,7 +19,7 @@
  *
  * @brief Provides APIs for game controller capability.
  *
- * @since 20
+ * @since 21
  */
 
 /**
@@ -28,7 +28,7 @@
  * @kit GameControllerKit
  * @library libohgame_controller.z.so
  * @syscap SystemCapability.Game.GameController
- * @since 20
+ * @since 21
  */
 
 #ifndef GAME_CONTROLLER_TYPE_H
@@ -41,7 +41,7 @@ extern "C" {
 #endif
 /**
  * @brief Defines an enum for the error codes of GameController.
- * @since 20
+ * @since 21
  */
 typedef enum GameController_ErrorCode {
     /**

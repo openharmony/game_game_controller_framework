@@ -19,7 +19,7 @@
  *
  * @brief Provides APIs for game controller capability.
  *
- * @since 20
+ * @since 21
  */
 
 /**
@@ -28,7 +28,7 @@
  * @kit GameControllerKit
  * @library libohgame_controller.z.so
  * @syscap SystemCapability.Game.GameController
- * @since 20
+ * @since 21
  */
 
 #ifndef GAME_DEVICE_H
@@ -43,7 +43,7 @@ extern "C" {
 
 /**
  * @brief Defines a struct for the calling result of {@link OH_GameDevice_GetAllDeviceInfos}.
- * @since 20
+ * @since 21
  */
 typedef struct GameDevice_AllDeviceInfos GameDevice_AllDeviceInfos;
 
@@ -53,7 +53,7 @@ typedef struct GameDevice_AllDeviceInfos GameDevice_AllDeviceInfos;
  *  The value cannot be null. Otherwise, an error code is returned.
  * @return Returns {@link GAME_CONTROLLER_SUCCESS} if the operation is successful.
  * Returns {@link GAME_CONTROLLER_MULTIMODAL_INPUT_ERROR} if the multimodal input is abnormal.
- * @since 20
+ * @since 21
  */
 GameController_ErrorCode OH_GameDevice_GetAllDeviceInfos(GameDevice_AllDeviceInfos** allDeviceInfos);
 
@@ -63,7 +63,7 @@ GameController_ErrorCode OH_GameDevice_GetAllDeviceInfos(GameDevice_AllDeviceInf
  * The value cannot be null. Otherwise, an error code is returned.
  * @return Returns {@link GAME_CONTROLLER_SUCCESS} if the operation is successful.
  * Returns {@link GAME_CONTROLLER_PARAM_ERROR} if the value of deviceMonitorCallback is null.
- * @since 20
+ * @since 21
  */
 GameController_ErrorCode OH_GameDevice_RegisterDeviceMonitor(
     GameDevice_DeviceMonitorCallback deviceMonitorCallback);
@@ -71,7 +71,7 @@ GameController_ErrorCode OH_GameDevice_RegisterDeviceMonitor(
 /**
  * @brief Unregisters the monitor for the game device.
  * @return Returns {@link GAME_CONTROLLER_SUCCESS} if the operation is successful.
- * @since 20
+ * @since 21
  */
 GameController_ErrorCode OH_GameDevice_UnregisterDeviceMonitor(void);
 
@@ -81,7 +81,7 @@ GameController_ErrorCode OH_GameDevice_UnregisterDeviceMonitor(void);
  * The value cannot be null. Otherwise, an error code is returned.
  * @return Returns {@link GAME_CONTROLLER_SUCCESS} if the operation is successful.
  * Returns {@link GAME_CONTROLLER_PARAM_ERROR} if the value of allDeviceInfos is null.
- * @since 20
+ * @since 21
  */
 GameController_ErrorCode OH_GameDevice_DestroyAllDeviceInfos(GameDevice_AllDeviceInfos** allDeviceInfos);
 
@@ -92,7 +92,7 @@ GameController_ErrorCode OH_GameDevice_DestroyAllDeviceInfos(GameDevice_AllDevic
  * @param count Pointer to the number of devices.
  * @return Returns {@link GAME_CONTROLLER_SUCCESS} if the operation is successful.
  * Returns {@link GAME_CONTROLLER_PARAM_ERROR} if the value of allDeviceInfos is null.
- * @since 20
+ * @since 21
  */
 GameController_ErrorCode OH_GameDevice_AllDeviceInfos_GetCount(
     const struct GameDevice_AllDeviceInfos* allDeviceInfos,
@@ -107,7 +107,7 @@ GameController_ErrorCode OH_GameDevice_AllDeviceInfos_GetCount(
  * @return Returns {@link GAME_CONTROLLER_SUCCESS} if the operation is successful.
  * Returns {@link GAME_CONTROLLER_PARAM_ERROR} if the value of allDeviceInfos is null,
  * or the value of index is less than 0 or greater than or equal to the total number of devices.
- * @since 20
+ * @since 21
  */
 GameController_ErrorCode OH_GameDevice_AllDeviceInfos_GetDeviceInfo(
     const struct GameDevice_AllDeviceInfos* allDeviceInfos,
