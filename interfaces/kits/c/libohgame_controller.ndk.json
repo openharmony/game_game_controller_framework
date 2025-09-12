@@ -1,322 +1,322 @@
 [
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_ButtonEvent_GetDeviceId"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_ButtonEvent_GetButtonAction"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_ButtonEvent_GetButtonCode"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_ButtonEvent_GetButtonCodeName"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_PressedButtons_GetCount"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_PressedButtons_GetButtonInfo"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_DestroyPressedButton"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_PressedButton_GetButtonCode"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_PressedButton_GetButtonCodeName"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_ButtonEvent_GetActionTime"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_AxisEvent_GetDeviceId"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_AxisEvent_GetAxisSourceType"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_AxisEvent_GetXAxisValue"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_AxisEvent_GetYAxisValue"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_AxisEvent_GetZAxisValue"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_AxisEvent_GetRZAxisValue"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_AxisEvent_GetHatXAxisValue"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_AxisEvent_GetHatYAxisValue"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_AxisEvent_GetBrakeAxisValue"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_AxisEvent_GetGasAxisValue"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_AxisEvent_GetActionTime"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_LeftShoulder_RegisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_LeftShoulder_UnregisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_RightShoulder_RegisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_RightShoulder_UnregisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_LeftTrigger_RegisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_LeftTrigger_UnregisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_LeftTrigger_RegisterAxisInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_LeftTrigger_UnregisterAxisInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_RightTrigger_RegisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_RightTrigger_UnregisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_RightTrigger_RegisterAxisInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_RightTrigger_UnregisterAxisInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_ButtonMenu_RegisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_ButtonMenu_UnregisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_ButtonHome_RegisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_ButtonHome_UnregisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_ButtonA_RegisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_ButtonA_UnregisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_ButtonB_RegisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_ButtonB_UnregisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_ButtonC_RegisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_ButtonC_UnregisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_ButtonX_RegisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_ButtonX_UnregisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_ButtonY_RegisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_ButtonY_UnregisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_Dpad_LeftButton_RegisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_Dpad_LeftButton_UnregisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_Dpad_RightButton_RegisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_Dpad_RightButton_UnregisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_Dpad_UpButton_RegisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_Dpad_UpButton_UnregisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_Dpad_DownButton_RegisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_Dpad_DownButton_UnregisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_Dpad_RegisterAxisInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_Dpad_UnregisterAxisInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_LeftThumbstick_RegisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_LeftThumbstick_UnregisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_LeftThumbstick_RegisterAxisInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_LeftThumbstick_UnregisterAxisInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_RightThumbstick_RegisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_RightThumbstick_UnregisterButtonInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_RightThumbstick_RegisterAxisInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GamePad_RightThumbstick_UnregisterAxisInputMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GameDevice_GetAllDeviceInfos"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GameDevice_RegisterDeviceMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GameDevice_UnregisterDeviceMonitor"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GameDevice_DestroyAllDeviceInfos"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GameDevice_AllDeviceInfos_GetCount"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GameDevice_AllDeviceInfos_GetDeviceInfo"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GameDevice_DeviceEvent_GetChangedType"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GameDevice_DeviceEvent_GetDeviceInfo"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GameDevice_DestroyDeviceInfo"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GameDevice_DeviceInfo_GetDeviceId"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GameDevice_DeviceInfo_GetName"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GameDevice_DeviceInfo_GetProduct"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GameDevice_DeviceInfo_GetVersion"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GameDevice_DeviceInfo_GetPhysicalAddress"
   },
   {
-    "first_introduced": "20",
+    "first_introduced": "21",
     "name": "OH_GameDevice_DeviceInfo_GetDeviceType"
   }
 ]
