@@ -41,7 +41,7 @@ void BroadcastOpenTemplateConfig(const uint8_t* rawData, size_t size)
     deviceInfo.status = static_cast<int32_t>(*rawData);
     deviceInfo.deviceType = static_cast<DeviceTypeEnum>(static_cast<int32_t>(*rawData) % DEVICE_TYPE_NUM);
     DelayedSingleton<EventPublisher>::GetInstance()->SendDeviceInfoNotify(gameInfo, deviceInfo, GAME_PID);
-    DelayedSingleton<EventPublisher>::GetInstance()->SendOpenTemplateConfigNotify(gameInfo, deviceInfo)
+    DelayedSingleton<EventPublisher>::GetInstance()->SendOpenTemplateConfigNotify(gameInfo, deviceInfo);
 }
 }
 }
