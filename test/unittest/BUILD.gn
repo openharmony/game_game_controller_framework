@@ -14,8 +14,7 @@
 import("//build/config/features.gni")
 import("//build/ohos.gni")
 import("//build/test.gni")
-import(
-    "//domains/game/game_controller_framework/game_controller_framework.gni")
+import("//domains/game/game_controller_framework/game_controller_framework.gni")
 
 module_output_path = "game_controller_framework/game_controller_framework"
 
@@ -64,8 +63,8 @@ ohos_static_library("gamecontroller_framework_static_test") {
     "${game_controller_framework_innerkits_path}/key_mapping/src/key_mapping_service.cpp",
     "${game_controller_framework_innerkits_path}/key_mapping/src/key_to_touch_handler.cpp",
     "${game_controller_framework_innerkits_path}/key_mapping/src/key_to_touch_manager.cpp",
-    "${game_controller_framework_innerkits_path}/key_mapping/src/mouse_left_fire_to_touch_handler.cpp",
     "${game_controller_framework_innerkits_path}/key_mapping/src/keyboard_observation_to_touch_handler.cpp",
+    "${game_controller_framework_innerkits_path}/key_mapping/src/mouse_left_fire_to_touch_handler.cpp",
     "${game_controller_framework_innerkits_path}/key_mapping/src/mouse_observation_to_touch_handler.cpp",
     "${game_controller_framework_innerkits_path}/key_mapping/src/mouse_right_key_click_to_touch_handler.cpp",
     "${game_controller_framework_innerkits_path}/key_mapping/src/mouse_right_key_walking_to_touch_handler.cpp",
@@ -79,6 +78,8 @@ ohos_static_library("gamecontroller_framework_static_test") {
     "${game_controller_framework_innerkits_path}/multi_modal_input/src/input_device_listener.cpp",
     "${game_controller_framework_innerkits_path}/multi_modal_input/src/multi_modal_input_mgt_service.cpp",
     "${game_controller_framework_innerkits_path}/multi_modal_input/src/multi_modal_input_monitor.cpp",
+    "${game_controller_framework_innerkits_path}/sa_client/src/gamecontroller_server_client.cpp",
+    "${game_controller_framework_innerkits_path}/sa_client/src/gamecontroller_server_client_proxy.cpp",
     "${game_controller_framework_innerkits_path}/window/src/input_event_callback.cpp",
     "${game_controller_framework_innerkits_path}/window/src/input_event_client.cpp",
     "${game_controller_framework_innerkits_path}/window/src/window_info_manager.cpp",
@@ -88,8 +89,8 @@ ohos_static_library("gamecontroller_framework_static_test") {
   external_deps = [
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
-    "eventhandler:libeventhandler",
     "c_utils:utils",
+    "eventhandler:libeventhandler",
     "ffrt:libffrt",
     "hilog:libhilog",
     "init:libbegetutil",
@@ -122,15 +123,15 @@ ohos_unittest("GameControllerFrameworkTest") {
     "key_mapping/combination_key_to_touch_handler_test.cpp",
     "key_mapping/crosshaire_key_to_touch_handler_test.cpp",
     "key_mapping/dpad_key_to_touch_handler_test.cpp",
-    "key_mapping/mouse_left_fire_to_touch_handler_test.cpp",
+    "key_mapping/key_mapping_handle_test.cpp",
+    "key_mapping/key_to_touch_manager_test.cpp",
     "key_mapping/keyboard_observation_to_touch_handler_test.cpp",
+    "key_mapping/mouse_left_fire_to_touch_handler_test.cpp",
     "key_mapping/mouse_right_key_click_to_touch_handler_test.cpp",
     "key_mapping/mouse_right_key_walking_to_touch_handler_test.cpp",
     "key_mapping/observation_key_to_touch_handler_test.cpp",
     "key_mapping/single_key_to_touch_handler_test.cpp",
     "key_mapping/skill_key_to_touch_handler_test.cpp",
-    "key_mapping/key_to_touch_manager_test.cpp",
-    "key_mapping/key_mapping_handle_test.cpp",
     "multi_modal_input/device_event_callback_test.cpp",
     "multi_modal_input/device_identify_service_test.cpp",
     "multi_modal_input/game_device_client_test.cpp",
@@ -196,15 +197,15 @@ ohos_static_library("gamecontroller_service_static_test") {
   ]
   deps = [ "${game_controller_framework_innerkits_path}:gamecontroller_client" ]
   external_deps = [
+    "access_token:libaccesstoken_sdk",
+    "access_token:libtokenid_sdk",
+    "bundle_framework:appexecfwk_core",
     "eventhandler:libeventhandler",
     "hilog:libhilog",
     "ipc:ipc_core",
     "json:nlohmann_json_static",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
-    "access_token:libaccesstoken_sdk",
-    "access_token:libtokenid_sdk",
-    "bundle_framework:appexecfwk_core",
   ]
 
   deps = []
@@ -226,11 +227,15 @@ ohos_unittest("GameControllerServiceTest") {
     "service/key_mapping/game_support_key_mapping_manager_test.cpp",
     "service/key_mapping/key_mapping_config_manager_test.cpp"
   ]
-  deps = [ ":gamecontroller_service_static_test","${game_controller_framework_innerkits_path}:gamecontroller_client"]
+  deps = [
+    ":gamecontroller_service_static_test",
+    "${game_controller_framework_innerkits_path}:gamecontroller_client"
+  ]
   use_exceptions = true
 
   external_deps = [
     "ace_engine:ace_ndk",
+    "bundle_framework:appexecfwk_core",
     "c_utils:utils",
     "ffrt:libffrt",
     "googletest:gmock_main",
@@ -241,7 +246,6 @@ ohos_unittest("GameControllerServiceTest") {
     "ipc:ipc_single",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
-    "bundle_framework:appexecfwk_core",
   ]
   subsystem_name = "game"
   part_name = "game_controller_framework"
@@ -249,5 +253,8 @@ ohos_unittest("GameControllerServiceTest") {
 
 group("unittest") {
   testonly = true
-  deps = [ ":GameControllerFrameworkTest", ":GameControllerServiceTest" ]
+  deps = [
+    ":GameControllerFrameworkTest",
+    ":GameControllerServiceTest"
+  ]
 }
