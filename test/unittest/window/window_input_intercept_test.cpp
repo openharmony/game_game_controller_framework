@@ -192,7 +192,7 @@ void WindowInputInterceptConsumerTest::TestReceiverEvent(int32_t keyAction, int3
     EXPECT_CALL(*(multiModalInputMgtServiceMock_.get()), GetDeviceInfo(keyEvent->GetDeviceId())).WillOnce(
         Return(deviceInfo));
     consumer_->OnInputEvent(keyEvent);
-    ffrt::this_task::sleep_for(std::chrono::milliseconds(50));
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
     ASSERT_EQ(buttonCallback_->result_.id, keyEvent->GetDeviceId());
     ASSERT_EQ(buttonCallback_->result_.keyCode, keyEvent->GetKeyCode());
     ASSERT_EQ(buttonCallback_->result_.keyCodeName, "LeftShoulder");

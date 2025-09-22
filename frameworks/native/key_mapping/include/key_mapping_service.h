@@ -106,7 +106,6 @@ private:
     std::string bundleVersion_;
 
     std::unordered_map<DeviceTypeEnum, bool> loadTemplateCache_;
-
 };
 }
 }
