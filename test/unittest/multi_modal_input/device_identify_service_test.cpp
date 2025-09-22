@@ -62,7 +62,7 @@ public:
 };
 
 class DeviceInfoMock : public DeviceInfoService {
-public :
+public:
     std::pair<int32_t, int32_t> GetKeyBoardType(int32_t id) override
     {
         if (keyBoardTypeMap_.count(id)) {
@@ -127,6 +127,26 @@ DeviceInfo BuildDeviceInfo(int32_t deviceId, InputSourceTypeEnum sourceType)
     return deviceInfo;
 }
 
+void CheckResult(const std::vector<DeviceInfo> &deviceResult)
+{
+    int32_t idx = DEVICE_ID1;
+    for (const auto &device: deviceResult) {
+        ASSERT_EQ(1, device.ids.count(idx));
+        if (idx == DEVICE_ID1) {
+            ASSERT_EQ(DeviceTypeEnum::GAME_MOUSE, device.deviceType);
+        } else {
+            ASSERT_EQ(DeviceTypeEnum::UNKNOWN, device.deviceType);
+        }
+
+        if (idx == DEVICE_ID2) {
+            ASSERT_TRUE(device.hasFullKeyBoard);
+        } else {
+            ASSERT_FALSE(device.hasFullKeyBoard);
+        }
+        idx++;
+    }
+}
+
 HWTEST_F(DeviceIdentifyServiceTest, IdentifyDeviceType_002, TestSize.Level0)
 {
     std::vector<DeviceInfo> req;
@@ -173,22 +193,7 @@ HWTEST_F(DeviceIdentifyServiceTest, IdentifyDeviceType_002, TestSize.Level0)
     std::vector<DeviceInfo> deviceResult = DelayedSingleton<DeviceIdentifyService>::GetInstance()->IdentifyDeviceType(
         req);
     ASSERT_EQ(TOTAL_RESULT, deviceResult.size());
-    int32_t idx = DEVICE_ID1;
-    for (const auto &device: deviceResult) {
-        ASSERT_EQ(1, device.ids.count(idx));
-        if (idx == DEVICE_ID1) {
-            ASSERT_EQ(DeviceTypeEnum::GAME_MOUSE, device.deviceType);
-        } else {
-            ASSERT_EQ(DeviceTypeEnum::UNKNOWN, device.deviceType);
-        }
-
-        if (idx == DEVICE_ID2) {
-            ASSERT_TRUE(device.hasFullKeyBoard);
-        } else {
-            ASSERT_FALSE(device.hasFullKeyBoard);
-        }
-        idx++;
-    }
+    CheckResult(deviceResult);
 }
 }
 }

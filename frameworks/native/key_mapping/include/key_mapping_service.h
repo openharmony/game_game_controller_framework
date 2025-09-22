@@ -110,5 +110,4 @@ private:
 };
 }
 }
-
 #endif //GAME_CONTROLLER_FRAMEWORK_KEY_MAPPING_SERVICE_H

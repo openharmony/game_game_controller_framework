@@ -395,7 +395,8 @@ void MultiModalInputMgtService::ClearAllDeviceIdUniqMap()
     DelayedSingleton<WindowInputIntercept>::GetInstance()->UnRegisterAllWindowInputIntercept();
 }
 
-void MultiModalInputMgtService::ClearOfflineDeviceAndBroadcast(const int32_t deviceId){
+void MultiModalInputMgtService::ClearOfflineDeviceAndBroadcast(const int32_t deviceId)
+{
     std::string uniq = deviceIdUniqMap_[deviceId];
     ClearDeviceIdUniqMapByDeviceId(deviceId);
     if (deviceInfoByUniqMap_.find(uniq) == deviceInfoByUniqMap_.end()) {

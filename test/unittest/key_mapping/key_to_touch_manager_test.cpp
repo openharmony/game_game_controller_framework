@@ -46,7 +46,7 @@ const int32_t KEY_CODE_UP = 2301;
 const int32_t KEY_CODE_DOWN = 2302;
 const int32_t KEY_CODE_LEFT = 2303;
 const int32_t KEY_CODE_RIGHT = 2304;
-
+const int32_t SINGLE_KEYMAPPING_RESULT_SIZE = 4;
 const size_t MAX_SINGLE_KEY_SIZE_FOR_HOVER_TOUCH_PAD = 2;
 }
 
@@ -206,7 +206,7 @@ void KeyToTouchManagerTest::CheckDpadKeyAndKeyBoardObservation(const DeviceTypeE
         deviceType == DeviceTypeEnum::GAME_KEY_BOARD ? handler_->gcKeyboardContext_ : handler_->hoverTouchPadContext_;
 
     ASSERT_FALSE(context == nullptr);
-    ASSERT_EQ(context->singleKeyMappings.size(), 4);
+    ASSERT_EQ(context->singleKeyMappings.size(), SINGLE_KEYMAPPING_RESULT_SIZE);
     ASSERT_TRUE(context->singleKeyMappings.find(KEY_CODE_UP) != context->singleKeyMappings.end());
     ASSERT_EQ(context->singleKeyMappings[KEY_CODE_UP].mappingType, type);
     ASSERT_TRUE(context->singleKeyMappings.find(KEY_CODE_DOWN) != context->singleKeyMappings.end());

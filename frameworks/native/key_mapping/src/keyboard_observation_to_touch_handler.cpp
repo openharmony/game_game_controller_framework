@@ -28,7 +28,6 @@ const int64_t FFRT_TASK_DELAY_TIME = 50000; // 50ms
 
 KeyboardObservationToTouchHandler::KeyboardObservationToTouchHandler()
 {
-
 }
 
 void KeyboardObservationToTouchHandler::HandleKeyDown(std::shared_ptr<InputToTouchContext> &context,
@@ -135,7 +134,6 @@ void KeyboardObservationToTouchHandler::UpdateTaskInfo(std::shared_ptr<InputToTo
                                                                                            context,
                                                                                            currentKeyType,
                                                                                            dpadKeys);
-
 }
 
 KeyboardObservationToTouchHandlerTask::KeyboardObservationToTouchHandlerTask()

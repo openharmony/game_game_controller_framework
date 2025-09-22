@@ -43,6 +43,7 @@ namespace GameController {
 namespace {
 const int64_t ACTION_TIME = 1111;
 const int32_t DEVICE_ID = 12;
+const int32_t SLEEP_TIME = 50;
 }
 
 class WindowInputInterceptTest : public testing::Test {
@@ -246,7 +247,7 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_003, TestSize.Level0)
     MultiModalInputMgtService::instance_ = multiModalInputMgtServiceMock_;
     EXPECT_CALL(*(multiModalInputMgtServiceMock_.get()), GetDeviceInfo(keyEvent->GetDeviceId())).Times(0);
     consumer_->OnInputEvent(keyEvent);
-    ffrt::this_task::sleep_for(std::chrono::milliseconds(50));
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
     ASSERT_NE(buttonCallback_->result_.keyCode, keyEvent->GetKeyCode());
     EXPECT_TRUE(::testing::Mock::VerifyAndClearExpectations(multiModalInputMgtServiceMock_.get()));
 }
