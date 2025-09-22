@@ -38,7 +38,7 @@ void DeviceEventCallback::RegisterGameDeviceEventCallback(const ApiTypeEnum apiT
 {
     bool isCallQueryDevice = false;
     {
-        std::lock_guard<std::mutex> lock(deviceEventCallbackMute_);
+        std::lock_guard<ffrt::mutex> lock(deviceEventCallbackMute_);
         if (callback == nullptr) {
             return;
         }
@@ -65,7 +65,7 @@ void DeviceEventCallback::RegisterGameDeviceEventCallback(const ApiTypeEnum apiT
 
 void DeviceEventCallback::UnRegisterGameDeviceEventCallback(const ApiTypeEnum apiTypeEnum)
 {
-    std::lock_guard<std::mutex> lock(deviceEventCallbackMute_);
+    std::lock_guard<ffrt::mutex> lock(deviceEventCallbackMute_);
     HILOGI("[DeviceEventCallback]UnRegisterGameDeviceEventCallback ApiTypeEnum is %{public}d", apiTypeEnum);
     deviceEventCallback_ = nullptr;
 
@@ -76,7 +76,7 @@ void DeviceEventCallback::OnDeviceEventCallback(const DeviceEvent &deviceEvent)
 {
     std::shared_ptr<DeviceEventCallbackBase> callbackBase = nullptr;
     {
-        std::lock_guard<std::mutex> lock(deviceEventCallbackMute_);
+        std::lock_guard<ffrt::mutex> lock(deviceEventCallbackMute_);
         if (deviceEventCallback_ == nullptr) {
             HILOGW("[DeviceEventCallback]OnDeviceEventCallback failed. no register deviceEventCallback");
             return;

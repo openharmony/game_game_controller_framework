@@ -21,7 +21,8 @@
 #define private public
 
 #include "device_identify_service.h"
-#include "gamecontroller_server_client_mock.h"
+#include "gamecontroller_server_client.h"
+#include "device_info_service.h"
 
 #undef private
 
@@ -29,11 +30,52 @@
 #include <gmock/gmock.h>
 #include <string>
 #include "refbase.h"
+#include "gamecontroller_errors.h"
 
 using ::testing::Return;
 using namespace testing::ext;
 namespace OHOS {
 namespace GameController {
+namespace {
+const int32_t DEVICE_ID1 = 1;
+const int32_t DEVICE_ID2 = 2;
+const int32_t DEVICE_ID3 = 3;
+const int32_t DEVICE_ID4 = 4;
+const int32_t DEVICE_ID5 = 5;
+const int32_t ALPHABETIC_KEYBOARD_TYPE = 2; // Full keyboard
+const int32_t INVALID_KEYBOARD_TYPE = 3;
+const int32_t TOTAL_RESULT = 4;
+}
+class ServerClientMock : public GameControllerServerClient {
+public:
+    int32_t IdentifyDevice(const std::vector<DeviceInfo> &deviceInfos, std::vector<DeviceInfo> &identifyResult) override
+    {
+        for (const DeviceInfo &deviceInfo: identifyResult_) {
+            identifyResult.push_back(deviceInfo);
+        }
+        return 0;
+    }
+
+public:
+    int32_t result_;
+    std::vector<DeviceInfo> identifyResult_;
+};
+
+class DeviceInfoMock : public DeviceInfoService {
+public :
+    std::pair<int32_t, int32_t> GetKeyBoardType(int32_t id) override
+    {
+        if (keyBoardTypeMap_.count(id)) {
+            return keyBoardTypeMap_[id];
+        }
+        return std::pair<int32_t, int32_t>(GAME_ERR_CALL_MULTI_INPUT_FAIL,
+                                           ALPHABETIC_KEYBOARD_TYPE);
+    }
+
+public:
+    std::unordered_map<int32_t, std::pair<int32_t, int32_t>> keyBoardTypeMap_;
+};
+
 class DeviceIdentifyServiceTest : public testing::Test {
 public:
     void SetUp() override;
@@ -41,21 +83,24 @@ public:
     void TearDown() override;
 
 public:
-    std::shared_ptr<GameControllerServerClientMock> gameControllerServerClientMock_;
+    std::shared_ptr<ServerClientMock> serverClientMock_;
+    std::shared_ptr<DeviceInfoMock> deviceInfoServiceMock_;
 };
 
 void DeviceIdentifyServiceTest::SetUp()
 {
-    gameControllerServerClientMock_ = std::make_shared<GameControllerServerClientMock>();
-    GameControllerServerClient::instance_ = gameControllerServerClientMock_;
-    DelayedSingleton<DeviceIdentifyService>::GetInstance()->identifyResultMap_.clear();
+    serverClientMock_ = std::make_shared<ServerClientMock>();
+    GameControllerServerClient::instance_ = serverClientMock_;
+    deviceInfoServiceMock_ = std::make_shared<DeviceInfoMock>();
+    DeviceInfoService::instance_ = deviceInfoServiceMock_;
 }
 
 void DeviceIdentifyServiceTest::TearDown()
 {
-    gameControllerServerClientMock_.reset();
+    serverClientMock_.reset();
     GameControllerServerClient::instance_ = nullptr;
-    DelayedSingleton<DeviceIdentifyService>::GetInstance()->identifyResultMap_.clear();
+    deviceInfoServiceMock_.reset();
+    DeviceInfoService::instance_ = nullptr;
 }
 
 /**
@@ -71,31 +116,79 @@ HWTEST_F(DeviceIdentifyServiceTest, IdentifyDeviceType_001, TestSize.Level0)
     ASSERT_EQ(0, result.size());
 }
 
-/**
-* @tc.name: GetAllDeviceInfos_002
-* @tc.desc: If the IdentifyDevice interface returns a failure message,
- * the system obtains the device type from the local cache.
-* @tc.type: FUNC
-* @tc.require: issueNumber
-*/
+DeviceInfo BuildDeviceInfo(int32_t deviceId, InputSourceTypeEnum sourceType)
+{
+    DeviceInfo deviceInfo;
+    deviceInfo.uniq = "uniq_" + std::to_string(deviceId);
+    deviceInfo.deviceType = DeviceTypeEnum::UNKNOWN;
+    deviceInfo.ids.insert(deviceId);
+    deviceInfo.sourceTypeSet.insert(sourceType);
+    deviceInfo.idSourceTypeMap[deviceId] = deviceInfo.sourceTypeSet;
+    return deviceInfo;
+}
+
 HWTEST_F(DeviceIdentifyServiceTest, IdentifyDeviceType_002, TestSize.Level0)
 {
-    DelayedSingleton<DeviceIdentifyService>::GetInstance()->identifyResultMap_["uniq1"] = DeviceTypeEnum::GAME_PAD;
     std::vector<DeviceInfo> req;
-    DeviceInfo deviceInfo1;
-    deviceInfo1.uniq = "uniq1";
-    deviceInfo1.deviceType = DeviceTypeEnum::UNKNOWN;
+    std::vector<DeviceInfo> result;
+    DeviceInfo deviceInfo1 = BuildDeviceInfo(DEVICE_ID1, InputSourceTypeEnum::MOUSE);
     req.push_back(deviceInfo1);
-    DeviceInfo deviceInfo2;
-    deviceInfo2.uniq = "uniq2";
-    deviceInfo2.deviceType = DeviceTypeEnum::UNKNOWN;
+    DeviceInfo result1 = deviceInfo1;
+    result1.deviceType = DeviceTypeEnum::GAME_MOUSE;
+    result.push_back(result1);
+
+    // keyboard type is full keyboard
+    DeviceInfo deviceInfo2 = BuildDeviceInfo(DEVICE_ID2, InputSourceTypeEnum::KEYBOARD);
     req.push_back(deviceInfo2);
-    EXPECT_CALL(*(gameControllerServerClientMock_.get()), IdentifyDevice(testing::_, testing::_)).WillOnce(Return(1));
+    DeviceInfo result2 = deviceInfo2;
+    result2.deviceType = DeviceTypeEnum::UNKNOWN;
+    result.push_back(result2);
+    deviceInfoServiceMock_->keyBoardTypeMap_[DEVICE_ID2] = std::pair<int32_t, int32_t>(GAME_CONTROLLER_SUCCESS,
+                                                                                       ALPHABETIC_KEYBOARD_TYPE);
 
-    std::vector<DeviceInfo> result = DelayedSingleton<DeviceIdentifyService>::GetInstance()->IdentifyDeviceType(req);
+    // keyboard type is not full keyboard
+    DeviceInfo deviceInfo3 = BuildDeviceInfo(DEVICE_ID3, InputSourceTypeEnum::KEYBOARD);
+    req.push_back(deviceInfo3);
+    DeviceInfo result3 = deviceInfo3;
+    result3.deviceType = DeviceTypeEnum::UNKNOWN;
+    result.push_back(result3);
+    deviceInfoServiceMock_->keyBoardTypeMap_[DEVICE_ID3] = std::pair<int32_t, int32_t>(GAME_CONTROLLER_SUCCESS,
+                                                                                       INVALID_KEYBOARD_TYPE);
 
-    ASSERT_EQ(DeviceTypeEnum::GAME_PAD, result.at(0).deviceType);
-    ASSERT_EQ(DeviceTypeEnum::UNKNOWN, result.at(1).deviceType);
+    // get keyboard type failed
+    DeviceInfo deviceInfo4 = BuildDeviceInfo(DEVICE_ID4, InputSourceTypeEnum::KEYBOARD);
+    req.push_back(deviceInfo4);
+    DeviceInfo result4 = deviceInfo4;
+    result4.deviceType = DeviceTypeEnum::UNKNOWN;
+    result.push_back(result4);
+    deviceInfoServiceMock_->keyBoardTypeMap_[DEVICE_ID4] = std::pair<int32_t, int32_t>(GAME_ERR_CALL_MULTI_INPUT_FAIL,
+                                                                                       ALPHABETIC_KEYBOARD_TYPE);
+
+    DeviceInfo deviceInfo5 = BuildDeviceInfo(DEVICE_ID5, InputSourceTypeEnum::JOYSTICK);
+    req.push_back(deviceInfo5);
+
+    serverClientMock_->result_ = 0;
+    serverClientMock_->identifyResult_ = result;
+
+    std::vector<DeviceInfo> deviceResult = DelayedSingleton<DeviceIdentifyService>::GetInstance()->IdentifyDeviceType(
+        req);
+    ASSERT_EQ(TOTAL_RESULT, deviceResult.size());
+    int32_t idx = DEVICE_ID1;
+    for (const auto &device: deviceResult) {
+        ASSERT_EQ(1, device.ids.count(idx));
+        if (idx == DEVICE_ID1) {
+            ASSERT_EQ(DeviceTypeEnum::GAME_MOUSE, device.deviceType);
+        } else {
+            ASSERT_EQ(DeviceTypeEnum::UNKNOWN, device.deviceType);
+        }
+
+        if (idx == DEVICE_ID2) {
+            ASSERT_TRUE(device.hasFullKeyBoard);
+        } else {
+            ASSERT_FALSE(device.hasFullKeyBoard);
+        }
+        idx++;
+    }
 }
 }
 }

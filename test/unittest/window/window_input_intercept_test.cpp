@@ -70,6 +70,8 @@ public:
 
     void TearDown() override;
 
+    void TestReceiverEvent(int32_t keyAction, int32_t exceptKeyAction);
+
 public:
     std::shared_ptr<MultiModalInputMgtServiceMock> multiModalInputMgtServiceMock_;
     std::shared_ptr<GamePadButtonEventCallback> buttonCallback_;
@@ -179,15 +181,10 @@ static std::shared_ptr<MMI::KeyEvent> CreateNormalKeyEvent()
     return keyEvent;
 }
 
-/**
-* @tc.name: OnInputEvent_001
-* @tc.desc: KeyEvent event: The LeftShoulder key lift event is received.
-* @tc.type: FUNC
-* @tc.require: issueNumber
-*/
-HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_001, TestSize.Level0)
+void WindowInputInterceptConsumerTest::TestReceiverEvent(int32_t keyAction, int32_t exceptKeyAction)
 {
     std::shared_ptr<MMI::KeyEvent> keyEvent = CreateNormalKeyEvent();
+    keyEvent->SetKeyAction(keyAction);
     MultiModalInputMgtService::instance_ = multiModalInputMgtServiceMock_;
     DeviceInfo deviceInfo;
     deviceInfo.uniq = "test";
@@ -198,11 +195,22 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_001, TestSize.Level0)
     ASSERT_EQ(buttonCallback_->result_.id, keyEvent->GetDeviceId());
     ASSERT_EQ(buttonCallback_->result_.keyCode, keyEvent->GetKeyCode());
     ASSERT_EQ(buttonCallback_->result_.keyCodeName, "LeftShoulder");
-    ASSERT_EQ(buttonCallback_->result_.keyAction, 1);
+    ASSERT_EQ(buttonCallback_->result_.keyAction, exceptKeyAction);
     ASSERT_EQ(buttonCallback_->result_.uniq, deviceInfo.uniq);
     ASSERT_EQ(buttonCallback_->result_.keys.size(), 1);
     ASSERT_EQ(buttonCallback_->result_.keys[0].keyCode, GamePadButtonTypeEnum::RightShoulder);
     ASSERT_EQ(buttonCallback_->result_.keys[0].keyCodeName, "RightShoulder");
+}
+
+/**
+* @tc.name: OnInputEvent_001
+* @tc.desc: KeyEvent event: The LeftShoulder key up event is received.
+* @tc.type: FUNC
+* @tc.require: issueNumber
+*/
+HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_001, TestSize.Level0)
+{
+    TestReceiverEvent(MMI::KeyEvent::KEY_ACTION_UP, 1);
 }
 
 /**
@@ -214,7 +222,7 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_001, TestSize.Level0)
 HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_002, TestSize.Level0)
 {
     std::shared_ptr<MMI::KeyEvent> keyEvent = CreateNormalKeyEvent();
-    keyEvent->SetKeyAction(MMI::KeyEvent::KEY_ACTION_CANCEL);
+    keyEvent->SetKeyAction(4);
 
     MultiModalInputMgtService::instance_ = multiModalInputMgtServiceMock_;
     EXPECT_CALL(*(multiModalInputMgtServiceMock_.get()), GetDeviceInfo(keyEvent->GetDeviceId())).Times(0);
@@ -509,6 +517,28 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_013, TestSize.Level0)
     ASSERT_EQ(buttonCallback_->result_.keyAction, 1);
     ASSERT_EQ(buttonCallback_->result_.uniq, deviceInfo.uniq);
     ASSERT_EQ(buttonCallback_->result_.keys.size(), 0);
+}
+
+/**
+* @tc.name: OnInputEvent_014
+* @tc.desc: KeyEvent event: The LeftShoulder key down event is received.
+* @tc.type: FUNC
+* @tc.require: issueNumber
+*/
+HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_014, TestSize.Level0)
+{
+    TestReceiverEvent(MMI::KeyEvent::KEY_ACTION_DOWN, 0);
+}
+
+/**
+* @tc.name: OnInputEvent_014
+* @tc.desc: KeyEvent event: The LeftShoulder key down event is received.
+* @tc.type: FUNC
+* @tc.require: issueNumber
+*/
+HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_015, TestSize.Level0)
+{
+    TestReceiverEvent(MMI::KeyEvent::KEY_ACTION_CANCEL, 1);
 }
 
 }

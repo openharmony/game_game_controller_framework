@@ -17,9 +17,14 @@
 #include "gamecontroller_server_client.h"
 #include "gamecontroller_errors.h"
 #include "gamecontroller_log.h"
+#include "device_info_service.h"
 
 namespace OHOS {
 namespace GameController {
+namespace {
+const int32_t ALPHABETIC_KEYBOARD_TYPE = 2; // Full keyboard
+}
+
 DeviceIdentifyService::DeviceIdentifyService()
 {
 }
@@ -34,30 +39,58 @@ std::vector<DeviceInfo> DeviceIdentifyService::IdentifyDeviceType(const std::vec
     if (deviceInfos.size() == 0) {
         return result;
     }
+    std::unordered_map<std::string, DeviceInfo> deviceMap;
+    for (const auto &deviceInfo: deviceInfos) {
+        deviceMap[deviceInfo.uniq] = deviceInfo;
+    }
     std::vector<DeviceInfo> req;
     int32_t ret = DelayedSingleton<GameControllerServerClient>::GetInstance()->IdentifyDevice(deviceInfos, result);
     if (ret == GAME_CONTROLLER_SUCCESS) {
-        for (const auto &deviceInfo: result) {
-            identifyResultMap_[deviceInfo.uniq] = deviceInfo.deviceType;
+        for (auto &deviceInfo: result) {
+            if (deviceMap.count(deviceInfo.uniq) != 0) {
+                deviceInfo.idSourceTypeMap = deviceMap[deviceInfo.uniq].idSourceTypeMap;
+            }
+
+            if (deviceInfo.deviceType != DeviceTypeEnum::UNKNOWN) {
+                continue;
+            }
+
+            /**
+             * When the device type is unknown and keyboard exists in the sourceType,
+             * obtain the keyboard type. If the keyboard type is ALPHABETIC_KEYBOARD,
+             * it's full keyboard. hasFullKeyBoard is used for key_to_touch
+             */
+            deviceInfo.hasFullKeyBoard = HasFullKeyboard(deviceInfo);
         }
         return result;
     }
-    HILOGE("[GameController]IdentifyDeviceType failed. the error is %{public}d", ret);
-
-    // When the SA is abnormal, the local query is guaranteed.
+    HILOGE("IdentifyDeviceType failed. the error is %{public}d", ret);
     for (auto deviceInfo: deviceInfos) {
-        deviceInfo.deviceType = IdentifyDeviceTypeByLocal(deviceInfo);
         result.push_back(deviceInfo);
     }
     return result;
 }
 
-DeviceTypeEnum DeviceIdentifyService::IdentifyDeviceTypeByLocal(const DeviceInfo &deviceInfo)
+bool DeviceIdentifyService::HasFullKeyboard(const DeviceInfo &deviceInfo)
 {
-    if (identifyResultMap_.find(deviceInfo.uniq) != identifyResultMap_.end()) {
-        return identifyResultMap_[deviceInfo.uniq];
+    if (deviceInfo.sourceTypeSet.count(InputSourceTypeEnum::KEYBOARD) == 0) {
+        return false;
     }
-    return DeviceTypeEnum::UNKNOWN;
+    std::pair<int32_t, int32_t> result;
+    for (const auto &pair: deviceInfo.idSourceTypeMap) {
+        if (pair.second.count(InputSourceTypeEnum::KEYBOARD) == 0) {
+            continue;
+        }
+        result = DelayedSingleton<DeviceInfoService>::GetInstance()->GetKeyBoardType(pair.first);
+        if (result.first != GAME_CONTROLLER_SUCCESS) {
+            continue;
+        }
+        HILOGI("The keyboard type of the deviceId[%{public}d] is [%{public}d]", pair.first, result.second);
+        if (result.second == ALPHABETIC_KEYBOARD_TYPE) {
+            return true;
+        }
+    }
+    return false;
 }
 
 }

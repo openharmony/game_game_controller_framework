@@ -60,8 +60,6 @@ private:
 
     static void StartPublicEventMonitor();
 
-    static void SimulateKeyboardOnlineByPC();
-
 private:
     static std::shared_ptr<GameCommonEventListener> subscriber_;
 };

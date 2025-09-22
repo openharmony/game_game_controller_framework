@@ -161,6 +161,9 @@ bool GameKeyMappingInfo::CheckSkillKey(KeyToTouchMappingInfo &currentKeyMapping,
 
 bool GameKeyMappingInfo::CheckObservationKey(KeyToTouchMappingInfo &currentKeyMapping, ParameterByCheck &parameter)
 {
+    if (!IsStepValid(currentKeyMapping)) {
+        return false;
+    }
     if (++parameter.keyMappingNumber[MappingTypeEnum::OBSERVATION_KEY_TO_TOUCH] > 1) {
         HILOGE("numbers of OBSERVATION_KEY_TO_TOUCH have exceeded its limit[1]");
         return false;
@@ -179,6 +182,9 @@ bool GameKeyMappingInfo::CheckObservationKey(KeyToTouchMappingInfo &currentKeyMa
 
 bool GameKeyMappingInfo::CheckMouseObservation(KeyToTouchMappingInfo &currentKeyMapping, ParameterByCheck &parameter)
 {
+    if (!IsStepValid(currentKeyMapping)) {
+        return false;
+    }
     if (++parameter.keyMappingNumber[MappingTypeEnum::MOUSE_OBSERVATION_TO_TOUCH] > 1) {
         HILOGE("numbers of MOUSE_OBSERVATION_TO_TOUCH have exceeded its limit[1]");
         return false;
@@ -199,6 +205,9 @@ bool GameKeyMappingInfo::CheckMouseObservation(KeyToTouchMappingInfo &currentKey
 
 bool GameKeyMappingInfo::CheckKeyBoardObservation(KeyToTouchMappingInfo &currentKeyMapping, ParameterByCheck &parameter)
 {
+    if (!IsStepValid(currentKeyMapping)) {
+        return false;
+    }
     if (++parameter.keyMappingNumber[MappingTypeEnum::KEY_BOARD_OBSERVATION_TO_TOUCH] > 1) {
         HILOGE("numbers of KEY_BOARD_OBSERVATION_TO_TOUCH have exceeded its limit[1]");
         return false;
@@ -215,6 +224,9 @@ bool GameKeyMappingInfo::CheckKeyBoardObservation(KeyToTouchMappingInfo &current
 
 bool GameKeyMappingInfo::CheckCrosshairKey(KeyToTouchMappingInfo &currentKeyMapping, ParameterByCheck &parameter)
 {
+    if (!IsStepValid(currentKeyMapping)) {
+        return false;
+    }
     if (++parameter.keyMappingNumber[MappingTypeEnum::CROSSHAIR_KEY_TO_TOUCH] > 1) {
         HILOGE("numbers of CROSSHAIR_KEY_TO_TOUCH have exceeded its limit[1]");
         return false;
@@ -289,22 +301,34 @@ bool GameKeyMappingInfo::IsDpadKeyCodeUniq(KeyToTouchMappingInfo &currentKeyMapp
         HILOGE("dpad up has been used.");
         return false;
     }
+    parameter.uniqKeyCodeMap[currentKeyMapping.dpadKeyCodeEntity.up] = currentKeyMapping.mappingType;
+
     if (parameter.uniqKeyCodeMap.find(currentKeyMapping.dpadKeyCodeEntity.down) != parameter.uniqKeyCodeMap.end()) {
         HILOGE("dpad down has been used.");
         return false;
     }
+    parameter.uniqKeyCodeMap[currentKeyMapping.dpadKeyCodeEntity.down] = currentKeyMapping.mappingType;
+
     if (parameter.uniqKeyCodeMap.find(currentKeyMapping.dpadKeyCodeEntity.left) != parameter.uniqKeyCodeMap.end()) {
         HILOGE("dpad left has been used.");
         return false;
     }
+    parameter.uniqKeyCodeMap[currentKeyMapping.dpadKeyCodeEntity.left] = currentKeyMapping.mappingType;
+
     if (parameter.uniqKeyCodeMap.find(currentKeyMapping.dpadKeyCodeEntity.right) != parameter.uniqKeyCodeMap.end()) {
         HILOGE("dpad right has been used.");
         return false;
     }
-    parameter.uniqKeyCodeMap[currentKeyMapping.dpadKeyCodeEntity.up] = currentKeyMapping.mappingType;
-    parameter.uniqKeyCodeMap[currentKeyMapping.dpadKeyCodeEntity.down] = currentKeyMapping.mappingType;
-    parameter.uniqKeyCodeMap[currentKeyMapping.dpadKeyCodeEntity.left] = currentKeyMapping.mappingType;
     parameter.uniqKeyCodeMap[currentKeyMapping.dpadKeyCodeEntity.right] = currentKeyMapping.mappingType;
+    return true;
+}
+
+bool GameKeyMappingInfo::IsStepValid(const KeyToTouchMappingInfo &currentKeyMapping)
+{
+    if (currentKeyMapping.xStep < 0 || currentKeyMapping.yStep < 0) {
+        HILOGE("xStep or yStep cannot be smaller than 0");
+        return false;
+    }
     return true;
 }
 

@@ -140,7 +140,7 @@ private:
      */
     void ClearAllDeviceIdUniqMap();
 
-    int64_t GetSysClockTime();
+    void ClearOfflineDeviceAndBroadcast(const int32_t deviceId);
 
 private:
 
@@ -161,7 +161,7 @@ private:
     /**
      * Device change event lock
      */
-    std::mutex deviceChangeEventMutex_;
+    ffrt::mutex deviceChangeEventMutex_;
 
     /**
      * Cached device change events

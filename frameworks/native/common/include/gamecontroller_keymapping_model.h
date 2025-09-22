@@ -638,6 +638,8 @@ struct GameKeyMappingInfo : public Parcelable {
 
     bool CheckKeyMappingForHoverTouchPad(std::vector<KeyToTouchMappingInfo> &KeyToTouchMappings);
 
+    bool IsStepValid(const KeyToTouchMappingInfo &currentKeyMapping);
+
     /**
      * Indicates whether to delete the default configuration based on the bundle name.
      * @return true means delete the default configuration based on the bundle name.

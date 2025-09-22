@@ -18,8 +18,17 @@
 #include <gmock/gmock-actions.h>
 #include <gmock/gmock-spec-builders.h>
 #include <gtest/gtest.h>
-#include "refbase.h"
+
+#define private public
+#define protected public
+
 #include "keyboard_observation_to_touch_handler.h"
+#include "key_to_touch_handler.h"
+
+#define protected public
+#undef private
+
+#include "refbase.h"
 
 using ::testing::Return;
 using namespace testing::ext;
@@ -38,6 +47,7 @@ const int32_t KEY_CODE_DOWN = 2302;
 const int32_t KEY_CODE_LEFT = 2303;
 const int32_t KEY_CODE_RIGHT = 2304;
 }
+
 class KeyboardObservationToTouchHandlerExt : public KeyboardObservationToTouchHandler {
 public:
     void BuildAndSendPointerEvent(std::shared_ptr<InputToTouchContext> &context_,
@@ -68,6 +78,7 @@ class KeyboardObservationToTouchHandlerTest : public testing::Test {
 public:
     void SetUp()
     {
+        DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->StopTask();
         handler_ = std::make_shared<KeyboardObservationToTouchHandlerExt>();
         context_ = std::make_shared<InputToTouchContext>();
         context_->windowInfoEntity.maxWidth = MAX_WIDTH;
@@ -104,6 +115,11 @@ public:
         return keyItem;
     }
 
+    void TearDown()
+    {
+        DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->StopTask();
+    }
+
 public:
     std::shared_ptr<KeyboardObservationToTouchHandlerExt> handler_;
     std::shared_ptr<InputToTouchContext> context_;
@@ -121,6 +137,7 @@ public:
 HWTEST_F(KeyboardObservationToTouchHandlerTest, HandleKeyDown_001, TestSize.Level0)
 {
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
+    keyEvent_->AddKeyItem(BuildKeyItem(KEY_CODE_UP, true));
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
 
     ASSERT_TRUE(context_->isPerspectiveObserving);
@@ -133,6 +150,14 @@ HWTEST_F(KeyboardObservationToTouchHandlerTest, HandleKeyDown_001, TestSize.Leve
     ASSERT_EQ(handler_->touchEntity_.yValue, Y_VALUE);
     ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_DOWN);
     ASSERT_EQ(handler_->touchEntity_.pointerId, OBSERVATION_POINT_ID);
+
+    ASSERT_TRUE(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->taskIsStarting_);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentKeyCode_, KEY_CODE_UP);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->context_, context_);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentDpadKeyType_, DPAD_UP);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_.size(), 1);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[0].keyCode,
+              KEY_CODE_UP);
 }
 
 /**
@@ -150,23 +175,14 @@ HWTEST_F(KeyboardObservationToTouchHandlerTest, HandleKeyDown_002, TestSize.Leve
     keyEvent_->SetKeyCode(KEY_CODE_UP);
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_CODE_UP, true));
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[OBSERVATION_POINT_ID];
-    ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE);
-    ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE - Y_STEP);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, OBSERVATION_POINT_ID);
 
-    // move the edge of up
-    pointerItem.SetWindowY(0);
-    context_->pointerItems[OBSERVATION_POINT_ID] = pointerItem;
-    handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
-    pointerItem = context_->pointerItems[OBSERVATION_POINT_ID];
-    ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE);
-    ASSERT_EQ(pointerItem.GetWindowY(), 0);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
+    // move to the edge of up
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentKeyCode_, KEY_CODE_UP);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->context_, context_);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentDpadKeyType_, DPAD_UP);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_.size(), 1);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[0].keyCode,
+              KEY_CODE_UP);
 }
 
 /**
@@ -184,23 +200,14 @@ HWTEST_F(KeyboardObservationToTouchHandlerTest, HandleKeyDown_003, TestSize.Leve
     keyEvent_->SetKeyCode(KEY_CODE_DOWN);
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_CODE_DOWN, true));
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[OBSERVATION_POINT_ID];
-    ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE);
-    ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE + Y_STEP);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, OBSERVATION_POINT_ID);
 
-    // move the edge of down
-    pointerItem.SetWindowY(MAX_HEIGHT);
-    context_->pointerItems[OBSERVATION_POINT_ID] = pointerItem;
-    handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
-    pointerItem = context_->pointerItems[OBSERVATION_POINT_ID];
-    ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE);
-    ASSERT_EQ(pointerItem.GetWindowY(), MAX_HEIGHT);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
+    // move to the edge of down
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentKeyCode_, KEY_CODE_DOWN);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->context_, context_);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentDpadKeyType_, DPAD_DOWN);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_.size(), 1);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[0].keyCode,
+              KEY_CODE_DOWN);
 }
 
 /**
@@ -218,23 +225,14 @@ HWTEST_F(KeyboardObservationToTouchHandlerTest, HandleKeyDown_004, TestSize.Leve
     keyEvent_->SetKeyCode(KEY_CODE_LEFT);
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_CODE_LEFT, true));
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[OBSERVATION_POINT_ID];
-    ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE - X_STEP);
-    ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, OBSERVATION_POINT_ID);
 
-    // move the edge of left
-    pointerItem.SetWindowX(0);
-    context_->pointerItems[OBSERVATION_POINT_ID] = pointerItem;
-    handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
-    pointerItem = context_->pointerItems[OBSERVATION_POINT_ID];
-    ASSERT_EQ(pointerItem.GetWindowX(), 0);
-    ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
+    // move to the edge of left
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentKeyCode_, KEY_CODE_LEFT);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->context_, context_);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentDpadKeyType_, DPAD_LEFT);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_.size(), 1);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[0].keyCode,
+              KEY_CODE_LEFT);
 }
 
 /**
@@ -252,23 +250,14 @@ HWTEST_F(KeyboardObservationToTouchHandlerTest, HandleKeyDown_005, TestSize.Leve
     keyEvent_->SetKeyCode(KEY_CODE_RIGHT);
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_CODE_RIGHT, true));
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[OBSERVATION_POINT_ID];
-    ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE + X_STEP);
-    ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, OBSERVATION_POINT_ID);
 
-    // move the edge of right
-    pointerItem.SetWindowX(MAX_WIDTH);
-    context_->pointerItems[OBSERVATION_POINT_ID] = pointerItem;
-    handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
-    pointerItem = context_->pointerItems[OBSERVATION_POINT_ID];
-    ASSERT_EQ(pointerItem.GetWindowX(), MAX_WIDTH);
-    ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
+    // move to the edge of right
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentKeyCode_, KEY_CODE_RIGHT);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->context_, context_);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentDpadKeyType_, DPAD_RIGHT);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_.size(), 1);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[0].keyCode,
+              KEY_CODE_RIGHT);
 }
 
 /**
@@ -291,13 +280,17 @@ HWTEST_F(KeyboardObservationToTouchHandlerTest, HandleKeyDown_006, TestSize.Leve
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_CODE_RIGHT, false));
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_CODE_UP, true));
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[OBSERVATION_POINT_ID];
-    ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE - X_STEP);
-    ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE - Y_STEP);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, OBSERVATION_POINT_ID);
+
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentKeyCode_, KEY_CODE_LEFT);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->context_, context_);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentDpadKeyType_, DPAD_LEFT);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_.size(), 3);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[0].keyCode,
+              KEY_CODE_UP);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[1].keyCode,
+              KEY_CODE_DOWN);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[2].keyCode,
+              KEY_CODE_LEFT);
 }
 
 /**
@@ -322,13 +315,19 @@ HWTEST_F(KeyboardObservationToTouchHandlerTest, HandleKeyDown_007, TestSize.Leve
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_CODE_RIGHT, true));
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_CODE_UP, true));
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[OBSERVATION_POINT_ID];
-    ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE - X_STEP);
-    ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE + Y_STEP);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, OBSERVATION_POINT_ID);
+
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentKeyCode_, KEY_CODE_LEFT);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->context_, context_);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentDpadKeyType_, DPAD_LEFT);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_.size(), 4);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[0].keyCode,
+              KEY_CODE_DOWN);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[1].keyCode,
+              KEY_CODE_UP);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[2].keyCode,
+              KEY_CODE_LEFT);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[3].keyCode,
+              KEY_CODE_RIGHT);
 }
 
 /**
@@ -351,13 +350,19 @@ HWTEST_F(KeyboardObservationToTouchHandlerTest, HandleKeyDown_008, TestSize.Leve
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_CODE_RIGHT, true));
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_CODE_UP, true));
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[OBSERVATION_POINT_ID];
-    ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE + X_STEP);
-    ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE - Y_STEP);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, OBSERVATION_POINT_ID);
+
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentKeyCode_, KEY_CODE_RIGHT);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->context_, context_);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentDpadKeyType_, DPAD_RIGHT);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_.size(), 4);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[0].keyCode,
+              KEY_CODE_UP);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[1].keyCode,
+              KEY_CODE_DOWN);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[2].keyCode,
+              KEY_CODE_LEFT);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[3].keyCode,
+              KEY_CODE_RIGHT);
 }
 
 /**
@@ -383,12 +388,19 @@ HWTEST_F(KeyboardObservationToTouchHandlerTest, HandleKeyDown_009, TestSize.Leve
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_CODE_UP, true));
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
     PointerEvent::PointerItem pointerItem = context_->pointerItems[OBSERVATION_POINT_ID];
-    ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE + X_STEP);
-    ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE + Y_STEP);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, OBSERVATION_POINT_ID);
+
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentKeyCode_, KEY_CODE_RIGHT);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->context_, context_);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentDpadKeyType_, DPAD_RIGHT);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_.size(), 4);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[0].keyCode,
+              KEY_CODE_DOWN);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[1].keyCode,
+              KEY_CODE_UP);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[2].keyCode,
+              KEY_CODE_LEFT);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[3].keyCode,
+              KEY_CODE_RIGHT);
 }
 
 /**
@@ -411,13 +423,19 @@ HWTEST_F(KeyboardObservationToTouchHandlerTest, HandleKeyDown_010, TestSize.Leve
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_CODE_RIGHT, true));
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_CODE_UP, true));
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[OBSERVATION_POINT_ID];
-    ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE - X_STEP);
-    ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE - Y_STEP);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, OBSERVATION_POINT_ID);
+
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentKeyCode_, KEY_CODE_UP);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->context_, context_);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentDpadKeyType_, DPAD_UP);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_.size(), 4);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[0].keyCode,
+              KEY_CODE_UP);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[1].keyCode,
+              KEY_CODE_DOWN);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[2].keyCode,
+              KEY_CODE_LEFT);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[3].keyCode,
+              KEY_CODE_RIGHT);
 }
 
 /**
@@ -442,13 +460,19 @@ HWTEST_F(KeyboardObservationToTouchHandlerTest, HandleKeyDown_011, TestSize.Leve
     keyEvent_->AddKeyItem(keyItem);
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_CODE_UP, true));
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[OBSERVATION_POINT_ID];
-    ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE + X_STEP);
-    ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE - Y_STEP);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, OBSERVATION_POINT_ID);
+
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentKeyCode_, KEY_CODE_UP);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->context_, context_);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentDpadKeyType_, DPAD_UP);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_.size(), 4);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[0].keyCode,
+              KEY_CODE_RIGHT);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[1].keyCode,
+              KEY_CODE_UP);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[2].keyCode,
+              KEY_CODE_DOWN);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[3].keyCode,
+              KEY_CODE_LEFT);
 }
 
 /**
@@ -471,13 +495,19 @@ HWTEST_F(KeyboardObservationToTouchHandlerTest, HandleKeyDown_012, TestSize.Leve
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_CODE_RIGHT, true));
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_CODE_UP, true));
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[OBSERVATION_POINT_ID];
-    ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE - X_STEP);
-    ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE + Y_STEP);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, OBSERVATION_POINT_ID);
+
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentKeyCode_, KEY_CODE_DOWN);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->context_, context_);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentDpadKeyType_, DPAD_DOWN);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_.size(), 4);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[0].keyCode,
+              KEY_CODE_UP);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[1].keyCode,
+              KEY_CODE_DOWN);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[2].keyCode,
+              KEY_CODE_LEFT);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[3].keyCode,
+              KEY_CODE_RIGHT);
 }
 
 /**
@@ -502,13 +532,19 @@ HWTEST_F(KeyboardObservationToTouchHandlerTest, HandleKeyDown_013, TestSize.Leve
     keyEvent_->AddKeyItem(keyItem);
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_CODE_UP, true));
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[OBSERVATION_POINT_ID];
-    ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE + X_STEP);
-    ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE + Y_STEP);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, OBSERVATION_POINT_ID);
+
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentKeyCode_, KEY_CODE_DOWN);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->context_, context_);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentDpadKeyType_, DPAD_DOWN);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_.size(), 4);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[0].keyCode,
+              KEY_CODE_RIGHT);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[1].keyCode,
+              KEY_CODE_UP);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[2].keyCode,
+              KEY_CODE_DOWN);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[3].keyCode,
+              KEY_CODE_LEFT);
 }
 
 /**
@@ -533,6 +569,11 @@ HWTEST_F(KeyboardObservationToTouchHandlerTest, HandleKeyUp_001, TestSize.Level0
     ASSERT_EQ(handler_->touchEntity_.yValue, Y_VALUE);
     ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_UP);
     ASSERT_EQ(handler_->touchEntity_.pointerId, OBSERVATION_POINT_ID);
+    ASSERT_FALSE(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->taskIsStarting_);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentKeyCode_, 0);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentDpadKeyType_,
+              DPAD_KEYTYPE_UNKNOWN);
+    ASSERT_TRUE(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_.empty());
 }
 
 /**
@@ -549,8 +590,7 @@ HWTEST_F(KeyboardObservationToTouchHandlerTest, HandleKeyUp_002, TestSize.Level1
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
     handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(OBSERVATION_POINT_ID) != context_->pointerItems.end());
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_DOWN);
+    ASSERT_TRUE(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->taskIsStarting_);
 }
 
 /**
@@ -571,11 +611,12 @@ HWTEST_F(KeyboardObservationToTouchHandlerTest, HandleKeyUp_003, TestSize.Level1
 
     ASSERT_TRUE(context_->pointerItems.find(OBSERVATION_POINT_ID) != context_->pointerItems.end());
     ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_DOWN);
+    ASSERT_TRUE(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->taskIsStarting_);
 }
 
 /**
  * @tc.name: HandleKeyUp_004
- * @tc.desc:  when key is up and keycode is left and context_->isPerspectiveObserving is true
+ * @tc.desc: when key is up and keycode is left and context_->isPerspectiveObserving is true
  * and other dpad's key in keyItems,
  * and have the pressed keycodes of up and down and right,
  * and the downTime of the right is largest and the the downTime of up is less than the downTime of down
@@ -596,14 +637,258 @@ HWTEST_F(KeyboardObservationToTouchHandlerTest, HandleKeyUp_004, TestSize.Level0
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_CODE_RIGHT, true));
     handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
 
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[OBSERVATION_POINT_ID];
-    ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE + X_STEP);
-    ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE - Y_STEP);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, OBSERVATION_POINT_ID);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentKeyCode_, KEY_CODE_RIGHT);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->context_, context_);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentDpadKeyType_, DPAD_RIGHT);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_.size(), 3);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[0].keyCode,
+              KEY_CODE_UP);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[1].keyCode,
+              KEY_CODE_DOWN);
+    ASSERT_EQ(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_[2].keyCode,
+              KEY_CODE_RIGHT);
+    ASSERT_TRUE(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->taskIsStarting_);
 }
 
+static DpadKeyItem BuildDpadKeyItem(int32_t keyCode, DpadKeyTypeEnum keyTypeEnum)
+{
+    DpadKeyItem dpadKeyItem;
+    dpadKeyItem.keyCode = keyCode;
+    dpadKeyItem.keyTypeEnum = keyTypeEnum;
+    return dpadKeyItem;
+}
+
+/**
+ * @tc.name: ComputeAndSendMovePointer_001
+ * @tc.desc: param is invalid, no send pointer
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(KeyboardObservationToTouchHandlerTest, ComputeAndSendMovePointer_001, TestSize.Level0)
+{
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->ComputeAndSendMovePointer();
+    ASSERT_TRUE(context_->pointerItems.find(OBSERVATION_POINT_ID) == context_->pointerItems.end());
+
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->context_ = context_;
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->ComputeAndSendMovePointer();
+    ASSERT_TRUE(context_->pointerItems.find(OBSERVATION_POINT_ID) == context_->pointerItems.end());
+
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_.push_back(
+        BuildDpadKeyItem(KEY_CODE_DOWN, DPAD_DOWN));
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->ComputeAndSendMovePointer();
+    ASSERT_TRUE(context_->pointerItems.find(OBSERVATION_POINT_ID) == context_->pointerItems.end());
+
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentKeyCode_ = KEY_CODE_DOWN;
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->ComputeAndSendMovePointer();
+    ASSERT_TRUE(context_->pointerItems.find(OBSERVATION_POINT_ID) == context_->pointerItems.end());
+
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentDpadKeyType_ = DPAD_DOWN;
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->ComputeAndSendMovePointer();
+    ASSERT_TRUE(context_->pointerItems.find(OBSERVATION_POINT_ID) == context_->pointerItems.end());
+}
+
+static PointerEvent::PointerItem BuildPointerItem()
+{
+    PointerEvent::PointerItem pointerItem;
+    pointerItem.SetWindowX(X_VALUE);
+    pointerItem.SetWindowY(Y_VALUE);
+    return pointerItem;
+}
+
+/**
+ * @tc.name: ComputeAndSendMovePointer_002
+ * @tc.desc: when keycode is down, move to the down
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(KeyboardObservationToTouchHandlerTest, ComputeAndSendMovePointer_002, TestSize.Level0)
+{
+    context_->currentPerspectiveObserving = mappingInfo_;
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->context_ = context_;
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_.push_back(
+        BuildDpadKeyItem(KEY_CODE_DOWN, DPAD_DOWN));
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->ComputeAndSendMovePointer();
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentKeyCode_ = KEY_CODE_DOWN;
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentDpadKeyType_ = DPAD_DOWN;
+    context_->pointerItems[OBSERVATION_POINT_ID] = BuildPointerItem();
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->ComputeAndSendMovePointer();
+
+    PointerEvent::PointerItem pointerItem = context_->pointerItems[OBSERVATION_POINT_ID];
+    ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE);
+    ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE + Y_STEP);
+}
+
+/**
+ * @tc.name: ComputeAndSendMovePointer_003
+ * @tc.desc: when keycode is up, move to the up
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(KeyboardObservationToTouchHandlerTest, ComputeAndSendMovePointer_003, TestSize.Level0)
+{
+    context_->currentPerspectiveObserving = mappingInfo_;
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->context_ = context_;
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_.push_back(
+        BuildDpadKeyItem(KEY_CODE_UP, DPAD_UP));
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->ComputeAndSendMovePointer();
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentKeyCode_ = KEY_CODE_UP;
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentDpadKeyType_ = DPAD_UP;
+    context_->pointerItems[OBSERVATION_POINT_ID] = BuildPointerItem();
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->ComputeAndSendMovePointer();
+
+    PointerEvent::PointerItem pointerItem = context_->pointerItems[OBSERVATION_POINT_ID];
+    ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE);
+    ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE - Y_STEP);
+}
+
+/**
+ * @tc.name: ComputeAndSendMovePointer_004
+ * @tc.desc: when keycode is left, move to the left
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(KeyboardObservationToTouchHandlerTest, ComputeAndSendMovePointer_004, TestSize.Level0)
+{
+    context_->currentPerspectiveObserving = mappingInfo_;
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->context_ = context_;
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_.push_back(
+        BuildDpadKeyItem(KEY_CODE_LEFT, DPAD_LEFT));
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->ComputeAndSendMovePointer();
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentKeyCode_ = KEY_CODE_LEFT;
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentDpadKeyType_ = DPAD_LEFT;
+    context_->pointerItems[OBSERVATION_POINT_ID] = BuildPointerItem();
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->ComputeAndSendMovePointer();
+
+    PointerEvent::PointerItem pointerItem = context_->pointerItems[OBSERVATION_POINT_ID];
+    ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE - X_STEP);
+    ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE);
+}
+
+/**
+ * @tc.name: ComputeAndSendMovePointer_005
+ * @tc.desc: when keycode is right, move to the right
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(KeyboardObservationToTouchHandlerTest, ComputeAndSendMovePointer_005, TestSize.Level0)
+{
+    context_->currentPerspectiveObserving = mappingInfo_;
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->context_ = context_;
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_.push_back(
+        BuildDpadKeyItem(KEY_CODE_RIGHT, DPAD_RIGHT));
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->ComputeAndSendMovePointer();
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentKeyCode_ = KEY_CODE_RIGHT;
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentDpadKeyType_ = DPAD_RIGHT;
+    context_->pointerItems[OBSERVATION_POINT_ID] = BuildPointerItem();
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->ComputeAndSendMovePointer();
+
+    PointerEvent::PointerItem pointerItem = context_->pointerItems[OBSERVATION_POINT_ID];
+    ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE + X_STEP);
+    ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE);
+}
+
+/**
+ * @tc.name: ComputeAndSendMovePointer_006
+ * @tc.desc: when keycode is down and right, move to the down and right
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(KeyboardObservationToTouchHandlerTest, ComputeAndSendMovePointer_006, TestSize.Level0)
+{
+    context_->currentPerspectiveObserving = mappingInfo_;
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->context_ = context_;
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_.push_back(
+        BuildDpadKeyItem(KEY_CODE_RIGHT, DPAD_RIGHT));
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_.push_back(
+        BuildDpadKeyItem(KEY_CODE_DOWN, DPAD_DOWN));
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->ComputeAndSendMovePointer();
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentKeyCode_ = KEY_CODE_RIGHT;
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentDpadKeyType_ = DPAD_RIGHT;
+    context_->pointerItems[OBSERVATION_POINT_ID] = BuildPointerItem();
+    context_->pointerItems[OBSERVATION_POINT_ID].SetWindowX(MAX_WIDTH);
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->ComputeAndSendMovePointer();
+
+    PointerEvent::PointerItem pointerItem = context_->pointerItems[OBSERVATION_POINT_ID];
+    ASSERT_EQ(pointerItem.GetWindowX(), MAX_WIDTH);
+    ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE + Y_STEP);
+}
+
+/**
+ * @tc.name: ComputeAndSendMovePointer_007
+ * @tc.desc: when keycode is up and right, move to the up and right
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(KeyboardObservationToTouchHandlerTest, ComputeAndSendMovePointer_007, TestSize.Level0)
+{
+    context_->currentPerspectiveObserving = mappingInfo_;
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->context_ = context_;
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_.push_back(
+        BuildDpadKeyItem(KEY_CODE_RIGHT, DPAD_RIGHT));
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_.push_back(
+        BuildDpadKeyItem(KEY_CODE_UP, DPAD_UP));
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->ComputeAndSendMovePointer();
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentKeyCode_ = KEY_CODE_RIGHT;
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentDpadKeyType_ = DPAD_RIGHT;
+    context_->pointerItems[OBSERVATION_POINT_ID] = BuildPointerItem();
+    context_->pointerItems[OBSERVATION_POINT_ID].SetWindowY(0);
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->ComputeAndSendMovePointer();
+
+    PointerEvent::PointerItem pointerItem = context_->pointerItems[OBSERVATION_POINT_ID];
+    ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE + X_STEP);
+    ASSERT_EQ(pointerItem.GetWindowY(), 0);
+}
+
+/**
+ * @tc.name: ComputeAndSendMovePointer_008
+ * @tc.desc: when keycode is down and left, move to the down and left
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(KeyboardObservationToTouchHandlerTest, ComputeAndSendMovePointer_008, TestSize.Level0)
+{
+    context_->currentPerspectiveObserving = mappingInfo_;
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->context_ = context_;
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_.push_back(
+        BuildDpadKeyItem(KEY_CODE_LEFT, DPAD_LEFT));
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_.push_back(
+        BuildDpadKeyItem(KEY_CODE_DOWN, DPAD_DOWN));
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->ComputeAndSendMovePointer();
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentKeyCode_ = KEY_CODE_LEFT;
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentDpadKeyType_ = DPAD_LEFT;
+    context_->pointerItems[OBSERVATION_POINT_ID] = BuildPointerItem();
+    context_->pointerItems[OBSERVATION_POINT_ID].SetWindowX(0);
+    context_->pointerItems[OBSERVATION_POINT_ID].SetWindowY(MAX_HEIGHT);
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->ComputeAndSendMovePointer();
+
+    PointerEvent::PointerItem pointerItem = context_->pointerItems[OBSERVATION_POINT_ID];
+    ASSERT_EQ(pointerItem.GetWindowX(), 0);
+    ASSERT_EQ(pointerItem.GetWindowY(), MAX_HEIGHT);
+}
+
+/**
+ * @tc.name: ComputeAndSendMovePointer_009
+ * @tc.desc: when keycode is up and left, move to the up and left
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(KeyboardObservationToTouchHandlerTest, ComputeAndSendMovePointer_009, TestSize.Level0)
+{
+    context_->currentPerspectiveObserving = mappingInfo_;
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->context_ = context_;
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_.push_back(
+        BuildDpadKeyItem(KEY_CODE_LEFT, DPAD_LEFT));
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->dpadKeys_.push_back(
+        BuildDpadKeyItem(KEY_CODE_UP, DPAD_UP));
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->ComputeAndSendMovePointer();
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentKeyCode_ = KEY_CODE_LEFT;
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->currentDpadKeyType_ = DPAD_LEFT;
+    context_->pointerItems[OBSERVATION_POINT_ID] = BuildPointerItem();
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->ComputeAndSendMovePointer();
+
+    PointerEvent::PointerItem pointerItem = context_->pointerItems[OBSERVATION_POINT_ID];
+    ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE - X_STEP);
+    ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE - Y_STEP);
+}
 }
 }

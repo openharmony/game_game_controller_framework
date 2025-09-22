@@ -42,8 +42,17 @@ public:
     void BuildAndSendPointerEvent(std::shared_ptr<InputToTouchContext> &context_,
                                   const TouchEntity &touchEntity) override
     {
+        hasTouchEvent_ = true;
         BaseKeyToTouchHandler::BuildAndSendPointerEvent(context_, touchEntity);
-        touchEntity_ = touchEntity;
+        if (touchEntity.pointerAction == PointerEvent::POINTER_ACTION_DOWN) {
+            touchDownEntity_ = touchEntity;
+        }
+        if (touchEntity.pointerAction == PointerEvent::POINTER_ACTION_MOVE) {
+            touchMoveEntity_ = touchEntity;
+        }
+        if (touchEntity.pointerAction == PointerEvent::POINTER_ACTION_UP) {
+            touchUpEntity_ = touchEntity;
+        }
     }
 
     void HandleKeyDown(std::shared_ptr<InputToTouchContext> &context,
@@ -60,7 +69,10 @@ public:
     }
 
 public:
-    TouchEntity touchEntity_;
+    TouchEntity touchDownEntity_;
+    TouchEntity touchMoveEntity_;
+    TouchEntity touchUpEntity_;
+    bool hasTouchEvent_{false};
 };
 
 class DpadKeyToTouchHandlerTest : public testing::Test {
@@ -100,6 +112,14 @@ public:
         return keyItem;
     }
 
+    void CheckTouchMoveEntity(PointerEvent::PointerItem pointerItem)
+    {
+        ASSERT_EQ(handler_->touchMoveEntity_.xValue, pointerItem.GetWindowX());
+        ASSERT_EQ(handler_->touchMoveEntity_.yValue, pointerItem.GetWindowY());
+        ASSERT_EQ(handler_->touchMoveEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
+        ASSERT_EQ(handler_->touchMoveEntity_.pointerId, WALK_POINT_ID);
+    }
+
 public:
     std::shared_ptr<DpadKeyToTouchHandlerEx> handler_;
     std::shared_ptr<InputToTouchContext> context_;
@@ -117,18 +137,22 @@ public:
 HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_001, TestSize.Level0)
 {
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
+    keyEvent_->SetKeyCode(KEY_UP_CODE);
+    keyEvent_->AddKeyItem(BuildKeyItem(KEY_UP_CODE, true));
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
 
     ASSERT_TRUE(context_->isWalking);
+    ASSERT_EQ(context_->currentWalking.mappingType, mappingInfo_.mappingType);
+    ASSERT_EQ(handler_->touchDownEntity_.xValue, X_VALUE);
+    ASSERT_EQ(handler_->touchDownEntity_.yValue, Y_VALUE);
+    ASSERT_EQ(handler_->touchDownEntity_.pointerAction, PointerEvent::POINTER_ACTION_DOWN);
+    ASSERT_EQ(handler_->touchDownEntity_.pointerId, WALK_POINT_ID);
+
     ASSERT_TRUE(context_->pointerItems.find(WALK_POINT_ID) != context_->pointerItems.end());
     PointerEvent::PointerItem pointerItem = context_->pointerItems[WALK_POINT_ID];
     ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE);
-    ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE);
-    ASSERT_EQ(context_->currentWalking.mappingType, mappingInfo_.mappingType);
-    ASSERT_EQ(handler_->touchEntity_.xValue, X_VALUE);
-    ASSERT_EQ(handler_->touchEntity_.yValue, Y_VALUE);
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_DOWN);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, WALK_POINT_ID);
+    ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE - RADIUS);
+    CheckTouchMoveEntity(pointerItem);
 }
 
 /**
@@ -146,6 +170,7 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_002, TestSize.Level1)
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
 
     ASSERT_TRUE(context_->pointerItems.find(WALK_POINT_ID) == context_->pointerItems.end());
+    ASSERT_FALSE(handler_->hasTouchEvent_);
 }
 
 /**
@@ -168,10 +193,7 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_003, TestSize.Level0)
     PointerEvent::PointerItem pointerItem = context_->pointerItems[WALK_POINT_ID];
     ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE);
     ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE - RADIUS);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, WALK_POINT_ID);
+    CheckTouchMoveEntity(pointerItem);
 }
 
 /**
@@ -194,10 +216,7 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_004, TestSize.Level0)
     PointerEvent::PointerItem pointerItem = context_->pointerItems[WALK_POINT_ID];
     ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE);
     ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE + RADIUS);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, WALK_POINT_ID);
+    CheckTouchMoveEntity(pointerItem);
 }
 
 /**
@@ -220,10 +239,7 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_005, TestSize.Level0)
     PointerEvent::PointerItem pointerItem = context_->pointerItems[WALK_POINT_ID];
     ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE - RADIUS);
     ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, WALK_POINT_ID);
+    CheckTouchMoveEntity(pointerItem);
 }
 
 /**
@@ -246,10 +262,7 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_006, TestSize.Level0)
     PointerEvent::PointerItem pointerItem = context_->pointerItems[WALK_POINT_ID];
     ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE + RADIUS);
     ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, WALK_POINT_ID);
+    CheckTouchMoveEntity(pointerItem);
 }
 
 /**
@@ -277,10 +290,7 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_007, TestSize.Level0)
     PointerEvent::PointerItem pointerItem = context_->pointerItems[WALK_POINT_ID];
     ASSERT_EQ(pointerItem.GetWindowX(), 376);
     ASSERT_EQ(pointerItem.GetWindowY(), 838);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, WALK_POINT_ID);
+    CheckTouchMoveEntity(pointerItem);
 }
 
 /**
@@ -310,10 +320,7 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_008, TestSize.Level0)
     PointerEvent::PointerItem pointerItem = context_->pointerItems[WALK_POINT_ID];
     ASSERT_EQ(pointerItem.GetWindowX(), 376);
     ASSERT_EQ(pointerItem.GetWindowY(), 1163);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, WALK_POINT_ID);
+    CheckTouchMoveEntity(pointerItem);
 }
 
 /**
@@ -343,10 +350,7 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_009, TestSize.Level0)
     PointerEvent::PointerItem pointerItem = context_->pointerItems[WALK_POINT_ID];
     ASSERT_EQ(pointerItem.GetWindowX(), 701);
     ASSERT_EQ(pointerItem.GetWindowY(), 838);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, WALK_POINT_ID);
+    CheckTouchMoveEntity(pointerItem);
 }
 
 /**
@@ -376,10 +380,7 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_010, TestSize.Level0)
     PointerEvent::PointerItem pointerItem = context_->pointerItems[WALK_POINT_ID];
     ASSERT_EQ(pointerItem.GetWindowX(), 701);
     ASSERT_EQ(pointerItem.GetWindowY(), 1163);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, WALK_POINT_ID);
+    CheckTouchMoveEntity(pointerItem);
 }
 
 /**
@@ -407,10 +408,7 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_011, TestSize.Level0)
     PointerEvent::PointerItem pointerItem = context_->pointerItems[WALK_POINT_ID];
     ASSERT_EQ(pointerItem.GetWindowX(), 376);
     ASSERT_EQ(pointerItem.GetWindowY(), 838);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, WALK_POINT_ID);
+    CheckTouchMoveEntity(pointerItem);
 }
 
 /**
@@ -440,10 +438,7 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_012, TestSize.Level0)
     PointerEvent::PointerItem pointerItem = context_->pointerItems[WALK_POINT_ID];
     ASSERT_EQ(pointerItem.GetWindowX(), 701);
     ASSERT_EQ(pointerItem.GetWindowY(), 838);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, WALK_POINT_ID);
+    CheckTouchMoveEntity(pointerItem);
 }
 
 /**
@@ -471,10 +466,7 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_013, TestSize.Level0)
     PointerEvent::PointerItem pointerItem = context_->pointerItems[WALK_POINT_ID];
     ASSERT_EQ(pointerItem.GetWindowX(), 376);
     ASSERT_EQ(pointerItem.GetWindowY(), 1163);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, WALK_POINT_ID);
+    CheckTouchMoveEntity(pointerItem);
 }
 
 /**
@@ -504,10 +496,7 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_014, TestSize.Level0)
     PointerEvent::PointerItem pointerItem = context_->pointerItems[WALK_POINT_ID];
     ASSERT_EQ(pointerItem.GetWindowX(), 701);
     ASSERT_EQ(pointerItem.GetWindowY(), 1163);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, WALK_POINT_ID);
+    CheckTouchMoveEntity(pointerItem);
 }
 
 /**
@@ -534,8 +523,8 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyUp_001, TestSize.Level0)
     ASSERT_EQ(context_->currentWalking.xValue, 0);
     ASSERT_EQ(context_->currentWalking.yValue, 0);
     ASSERT_TRUE(context_->pointerItems.find(WALK_POINT_ID) == context_->pointerItems.end());
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_UP);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, WALK_POINT_ID);
+    ASSERT_EQ(handler_->touchUpEntity_.pointerAction, PointerEvent::POINTER_ACTION_UP);
+    ASSERT_EQ(handler_->touchUpEntity_.pointerId, WALK_POINT_ID);
 }
 
 /**
@@ -603,10 +592,7 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyUp_004, TestSize.Level0)
     PointerEvent::PointerItem pointerItem = context_->pointerItems[WALK_POINT_ID];
     ASSERT_EQ(pointerItem.GetWindowX(), 701);
     ASSERT_EQ(pointerItem.GetWindowY(), 838);
-    ASSERT_EQ(handler_->touchEntity_.xValue, pointerItem.GetWindowX());
-    ASSERT_EQ(handler_->touchEntity_.yValue, pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, WALK_POINT_ID);
+    CheckTouchMoveEntity(pointerItem);
 }
 }
 }

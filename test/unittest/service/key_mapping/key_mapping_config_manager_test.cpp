@@ -133,11 +133,11 @@ static KeyToTouchMappingInfo BuildKeyboardObservation(int32_t xValue, int32_t yV
     keyMapping.yValue = xValue;
     keyMapping.xValue = yValue;
     DpadKeyCodeEntity dpadKeyCodeEntity;
-    keyMapping.dpadKeyCodeEntity = dpadKeyCodeEntity;
     dpadKeyCodeEntity.up = UP;
     dpadKeyCodeEntity.down = DOWN;
     dpadKeyCodeEntity.right = RIGHT;
     dpadKeyCodeEntity.left = LEFT;
+    keyMapping.dpadKeyCodeEntity = dpadKeyCodeEntity;
     keyMapping.xStep = X_STEP;
     keyMapping.yStep = Y_STEP;
     return keyMapping;

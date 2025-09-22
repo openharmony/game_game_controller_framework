@@ -54,7 +54,7 @@ std::pair<int32_t, InputDeviceInfo> DeviceInfoService::GetInputDeviceInfo(int32_
     inputDevice_ = nullptr;
     taskFinish_ = false;
     int result = InputManager::GetInstance()->GetDevice(deviceId, [&](std::shared_ptr<InputDevice> inputDevice) {
-        DelayedSingleton<DeviceInfoService>::GetInstance()->GetInputDeviceInfoCallback(inputDevice);
+        DelayedSingleton<DeviceInfoService>::GetInstance()->HandleInputDeviceInfoCallback(inputDevice);
     });
     std::pair<int32_t, InputDeviceInfo> pair;
     if (result == GAME_CONTROLLER_SUCCESS) {
@@ -95,7 +95,7 @@ InputDeviceInfo DeviceInfoService::BuildInputDeviceInfo()
     return inputDeviceInfo;
 }
 
-void DeviceInfoService::GetInputDeviceInfoCallback(std::shared_ptr<InputDevice> inputDevice)
+void DeviceInfoService::HandleInputDeviceInfoCallback(std::shared_ptr<InputDevice> inputDevice)
 {
     inputDevice_ = inputDevice;
     taskFinish_ = true;
@@ -158,7 +158,7 @@ bool DeviceInfoService::GetUniqOnGetAllDeviceInfos(std::vector<InputDeviceInfo> 
     return true;
 }
 
-void DeviceInfoService::GetAllDeviceInfosCallback(std::vector<int32_t> &deviceIds)
+void DeviceInfoService::HandleAllDeviceIdsCallback(std::vector<int32_t> &deviceIds)
 {
     deviceIds_ = deviceIds;
     taskFinish_ = true;
@@ -171,7 +171,7 @@ std::pair<int32_t, std::vector<int32_t>> DeviceInfoService::GetAllDeviceIds()
     deviceIds_.clear();
     taskFinish_ = false;
     int result = InputManager::GetInstance()->GetDeviceIds([&](std::vector<int32_t> &ids) {
-        DelayedSingleton<DeviceInfoService>::GetInstance()->GetAllDeviceInfosCallback(ids);
+        DelayedSingleton<DeviceInfoService>::GetInstance()->HandleAllDeviceIdsCallback(ids);
     });
     std::pair<int32_t, std::vector<int32_t>> pair;
     if (result == GAME_CONTROLLER_SUCCESS) {
@@ -190,6 +190,38 @@ std::pair<int32_t, std::vector<int32_t>> DeviceInfoService::GetAllDeviceIds()
         pair.first = GAME_ERR_CALL_MULTI_INPUT_FAIL;
     }
     return pair;
+}
+
+std::pair<int32_t, int32_t> DeviceInfoService::GetKeyBoardType(int32_t id)
+{
+    std::unique_lock<std::mutex> lock(taskMutex_);
+    keyboardType_ = 0;
+    int result = InputManager::GetInstance()->GetKeyboardType(id, [](int32_t keyboardType) {
+        DelayedSingleton<DeviceInfoService>::GetInstance()->HandleKeyBoardTypeCallback(keyboardType);
+    });
+    std::pair<int32_t, int32_t> pair;
+    if (result == GAME_CONTROLLER_SUCCESS) {
+        taskConditionVar_.wait_for(lock, std::chrono::milliseconds(QUERY_DEVICE_TIMEOUT_MS),
+                                   [this]() { return taskFinish_; });
+        if (taskFinish_) {
+            pair.first = GAME_CONTROLLER_SUCCESS;
+            pair.second = keyboardType_;
+        } else {
+            HILOGE("[GameController]DeviceInfoService GetDeviceIds timeout.");
+            pair.first = GAME_ERR_TIMEOUT;
+        }
+    } else {
+        HILOGE("[GameController]DeviceInfoService GetKeyBoardType failed. The error is  %{public}d",
+               result);
+        pair.first = GAME_ERR_CALL_MULTI_INPUT_FAIL;
+    }
+    return pair;
+}
+
+void DeviceInfoService::HandleKeyBoardTypeCallback(int32_t keyboardType)
+{
+    keyboardType_ = keyboardType;
+    taskConditionVar_.notify_all();
 }
 
 }

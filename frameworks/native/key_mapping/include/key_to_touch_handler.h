@@ -56,12 +56,12 @@ struct DpadKeyItem {
 };
 
 enum TouchPointId {
-    SINGLE_POINT_ID = 2,
-    WALK_POINT_ID = 3,
-    SKILL_POINT_ID = 4,
-    OBSERVATION_POINT_ID = 5,
-    CROSSHAIR_POINT_ID = 6,
-    COMBINATION_POINT_ID = 7,
+    SINGLE_POINT_ID = 3,
+    WALK_POINT_ID = 4,
+    SKILL_POINT_ID = 5,
+    OBSERVATION_POINT_ID = 6,
+    CROSSHAIR_POINT_ID = 7,
+    COMBINATION_POINT_ID = 8,
 };
 
 /**
@@ -110,7 +110,7 @@ struct WindowInfoEntity {
  */
 struct InputToTouchContext {
     DeviceTypeEnum deviceType = UNKNOWN;
-    bool isMonitorMouseMove = false;
+    bool isMonitorMouse = false;
     std::unordered_map<int32_t, KeyToTouchMappingInfo> singleKeyMappings;
     std::unordered_map<int32_t, std::unordered_map<int32_t, KeyToTouchMappingInfo>> combinationKeyMappings;
     std::unordered_map<int32_t, KeyToTouchMappingInfo> mouseBtnKeyMappings;
@@ -227,6 +227,33 @@ struct Point {
     double y;
 };
 
+struct MouseMoveReq {
+    /**
+     * x position or y position of the current mouse  move point
+     */
+    int32_t currentMousePosition;
+
+    /**
+     * x position or y position of the last mouse move point
+     */
+    int32_t lastMousePosition;
+
+    /**
+     * x position or y position of the last touch
+     */
+    int32_t lastMovePosition;
+
+    /**
+     * maxWidth of window or maxHeight of window
+     */
+    int32_t maxEdge;
+
+    /**
+     * The step length of the mouse movement each time
+     */
+    int32_t step;
+};
+
 class BaseKeyToTouchHandler {
 public:
     virtual ~BaseKeyToTouchHandler()
@@ -238,6 +265,8 @@ public:
     static bool IsMouseRightButtonEvent(const std::shared_ptr<MMI::PointerEvent> &pointerEvent);
 
     static bool IsMouseMoveEvent(const std::shared_ptr<MMI::PointerEvent> &pointerEvent);
+
+    static bool IsKeyUpEvent(const std::shared_ptr<MMI::KeyEvent> &keyEvent);
 
 public:
     virtual void HandleKeyEvent(std::shared_ptr<InputToTouchContext> &context,
@@ -251,7 +280,7 @@ public:
         }
         if (keyEvent->GetKeyAction() == KeyEvent::KEY_ACTION_DOWN) {
             HandleKeyDown(context, keyEvent, mappingInfo, deviceInfo);
-        } else if (keyEvent->GetKeyAction() == KeyEvent::KEY_ACTION_UP) {
+        } else if (BaseKeyToTouchHandler::IsKeyUpEvent(keyEvent)) {
             HandleKeyUp(context, keyEvent, deviceInfo);
         } else {
             HILOGW("unknown [%{private}d]'s keyAction[%{public}d]", keyEvent->GetKeyCode(), keyEvent->GetKeyAction());
@@ -261,6 +290,10 @@ public:
     virtual void HandlePointerEvent(std::shared_ptr<InputToTouchContext> &context,
                                     const std::shared_ptr<MMI::PointerEvent> &pointerEvent,
                                     const KeyToTouchMappingInfo &mappingInfo)
+    {
+    };
+
+    virtual void ExitCrosshairKeyStatus()
     {
     };
 
@@ -342,17 +375,22 @@ private:
 
     void SortDpadKeys(std::vector<DpadKeyItem> &dpadKeys);
 
+    int32_t ComputeMovePositionForX(std::shared_ptr<InputToTouchContext> &context,
+                                    const PointerEvent::PointerItem &currentPointItem,
+                                    const PointerEvent::PointerItem &lastMovePoint,
+                                    const KeyToTouchMappingInfo &mappingInfo);
+
+    int32_t ComputeMovePositionForY(std::shared_ptr<InputToTouchContext> &context,
+                                    const PointerEvent::PointerItem &currentPointItem,
+                                    const PointerEvent::PointerItem &lastMovePoint,
+                                    const KeyToTouchMappingInfo &mappingInfo);
+
     /**
      * compute x position or y position for move touch
-     * @param currentMousePosition x position or y position of the current mouse
-     * @param lastMousePosition  x position or y position of the last mouse
-     * @param lastMovePosition x position or y position of the last touch
-     * @param maxEdge maxWidth of window or maxHeight of window
-     * @param step The step length of the mouse movement each time
+     * @param mouseMoveReq MouseMoveReq
      * @return return x position or y position for move touch
      */
-    int32_t ComputeMovePosition(int32_t currentMousePosition, int32_t lastMousePosition, int32_t lastMovePosition,
-                                int32_t maxEdge, int32_t step);
+    int32_t ComputeMovePosition(MouseMoveReq mouseMoveReq);
 
     PointerEvent::PointerItem BuildPointerItem(std::shared_ptr<InputToTouchContext> &context,
                                                const TouchEntity &touchEntity);

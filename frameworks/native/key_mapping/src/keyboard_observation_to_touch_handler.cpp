@@ -16,28 +16,19 @@
 #include <cstdint>
 #include "keyboard_observation_to_touch_handler.h"
 #include "gamecontroller_log.h"
+#include "gamecontroller_utils.h"
 
 namespace OHOS {
 namespace GameController {
 namespace {
 const std::string JOINER = "_";
 const int32_t INVALID_VALUE = -1;
+const int64_t FFRT_TASK_DELAY_TIME = 50000; // 50ms
 }
 
 KeyboardObservationToTouchHandler::KeyboardObservationToTouchHandler()
 {
-    validCombinationKeys_.insert(std::to_string(DPAD_UP));
-    validCombinationKeys_.insert(std::to_string(DPAD_UP) + JOINER + std::to_string(DPAD_LEFT));
-    validCombinationKeys_.insert(std::to_string(DPAD_LEFT) + JOINER + std::to_string(DPAD_UP));
-    validCombinationKeys_.insert(std::to_string(DPAD_UP) + JOINER + std::to_string(DPAD_RIGHT));
-    validCombinationKeys_.insert(std::to_string(DPAD_RIGHT) + JOINER + std::to_string(DPAD_UP));
-    validCombinationKeys_.insert(std::to_string(DPAD_DOWN));
-    validCombinationKeys_.insert(std::to_string(DPAD_DOWN) + JOINER + std::to_string(DPAD_LEFT));
-    validCombinationKeys_.insert(std::to_string(DPAD_LEFT) + JOINER + std::to_string(DPAD_DOWN));
-    validCombinationKeys_.insert(std::to_string(DPAD_DOWN) + JOINER + std::to_string(DPAD_RIGHT));
-    validCombinationKeys_.insert(std::to_string(DPAD_RIGHT) + JOINER + std::to_string(DPAD_DOWN));
-    validCombinationKeys_.insert(std::to_string(DPAD_LEFT));
-    validCombinationKeys_.insert(std::to_string(DPAD_RIGHT));
+
 }
 
 void KeyboardObservationToTouchHandler::HandleKeyDown(std::shared_ptr<InputToTouchContext> &context,
@@ -64,6 +55,9 @@ void KeyboardObservationToTouchHandler::HandleKeyDown(std::shared_ptr<InputToTou
     TouchEntity touchEntity = BuildTouchEntity(context->currentPerspectiveObserving, OBSERVATION_POINT_ID,
                                                PointerEvent::POINTER_ACTION_DOWN, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
+
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->StartTaskByInterval();
+    MoveByKeyDown(context, keyEvent, mappingInfo, deviceInfo);
 }
 
 void KeyboardObservationToTouchHandler::HandleKeyUp(std::shared_ptr<InputToTouchContext> &context,
@@ -85,6 +79,7 @@ void KeyboardObservationToTouchHandler::HandleKeyUp(std::shared_ptr<InputToTouch
     std::vector<DpadKeyItem> dpadKeys = CollectValidDpadKeys(keyEvent, deviceInfo, mapping);
     if (dpadKeys.empty()) {
         HILOGI("keyCode[%{private}d] convert to up event of keyboard_observation_to_touch", keyCode);
+        DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->StopTask();
         int64_t actionTime = keyEvent->GetActionTime();
         TouchEntity touchEntity = BuildTouchEntity(mapping, OBSERVATION_POINT_ID,
                                                    PointerEvent::POINTER_ACTION_UP, actionTime);
@@ -113,7 +108,7 @@ void KeyboardObservationToTouchHandler::MoveByKeyDown(std::shared_ptr<InputToTou
         HILOGW("the current keycode[%{private}d]. no valid dpad keys.", currentKeyCode);
         return;
     }
-    ContinueObserving(context, keyEvent, currentKeyCode, currentDpadKeyType, dpadKeys);
+    UpdateTaskInfo(context, currentKeyCode, currentDpadKeyType, dpadKeys);
 }
 
 void KeyboardObservationToTouchHandler::MoveByKeyUp(const std::shared_ptr<MMI::KeyEvent> &keyEvent,
@@ -124,13 +119,156 @@ void KeyboardObservationToTouchHandler::MoveByKeyUp(const std::shared_ptr<MMI::K
     DpadKeyItem lastItem = dpadKeys.back();
     int32_t currentKeyCode = lastItem.keyCode;
     DpadKeyTypeEnum currentDpadKeyType = lastItem.keyTypeEnum;
-    ContinueObserving(context, keyEvent, currentKeyCode, currentDpadKeyType, dpadKeys);
+    UpdateTaskInfo(context, currentKeyCode, currentDpadKeyType, dpadKeys);
 }
 
-void KeyboardObservationToTouchHandler::ComputeTargetPoint(std::shared_ptr<InputToTouchContext> &context,
-                                                           const PointerEvent::PointerItem &lastMovePoint,
+void KeyboardObservationToTouchHandler::UpdateTaskInfo(std::shared_ptr<InputToTouchContext> &context,
+                                                       int32_t currentKeyCode,
+                                                       DpadKeyTypeEnum currentKeyType,
+                                                       std::vector<DpadKeyItem> &dpadKeys)
+{
+    if (context->pointerItems.find(OBSERVATION_POINT_ID) == context->pointerItems.end()) {
+        HILOGW("discard mouse move event, because cannot find the last move event");
+        return;
+    }
+    DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->UpdateTaskInfo(currentKeyCode,
+                                                                                           context,
+                                                                                           currentKeyType,
+                                                                                           dpadKeys);
+
+}
+
+KeyboardObservationToTouchHandlerTask::KeyboardObservationToTouchHandlerTask()
+{
+    taskQueue_ = std::make_unique<ffrt::queue>("keyboard-observation-thread",
+                                               ffrt::queue_attr().qos(ffrt::qos_background));
+
+    validCombinationKeys_.insert(std::to_string(DPAD_UP));
+    validCombinationKeys_.insert(std::to_string(DPAD_UP) + JOINER + std::to_string(DPAD_LEFT));
+    validCombinationKeys_.insert(std::to_string(DPAD_LEFT) + JOINER + std::to_string(DPAD_UP));
+    validCombinationKeys_.insert(std::to_string(DPAD_UP) + JOINER + std::to_string(DPAD_RIGHT));
+    validCombinationKeys_.insert(std::to_string(DPAD_RIGHT) + JOINER + std::to_string(DPAD_UP));
+    validCombinationKeys_.insert(std::to_string(DPAD_DOWN));
+    validCombinationKeys_.insert(std::to_string(DPAD_DOWN) + JOINER + std::to_string(DPAD_LEFT));
+    validCombinationKeys_.insert(std::to_string(DPAD_LEFT) + JOINER + std::to_string(DPAD_DOWN));
+    validCombinationKeys_.insert(std::to_string(DPAD_DOWN) + JOINER + std::to_string(DPAD_RIGHT));
+    validCombinationKeys_.insert(std::to_string(DPAD_RIGHT) + JOINER + std::to_string(DPAD_DOWN));
+    validCombinationKeys_.insert(std::to_string(DPAD_LEFT));
+    validCombinationKeys_.insert(std::to_string(DPAD_RIGHT));
+}
+
+KeyboardObservationToTouchHandlerTask::~KeyboardObservationToTouchHandlerTask()
+{
+    HILOGI("KeyboardObservationToTouchHandlerTask::~KeyboardObservationToTouchHandlerTask success");
+    StopTask();
+}
+
+void KeyboardObservationToTouchHandlerTask::StartTaskByInterval()
+{
+    std::lock_guard<ffrt::mutex> lock(taskLock_);
+    if (taskIsStarting_) {
+        HILOGE("start task failed. the task is running");
+        return;
+    }
+    HILOGI("start KeyboardObservationToTouchHandlerTask success.");
+    taskIsStarting_ = true;
+    PutTaskToDelayQueue();
+}
+
+void KeyboardObservationToTouchHandlerTask::PutTaskToDelayQueue()
+{
+    curTaskHandler_ = taskQueue_->submit_h([this] {
+        RunTask();
+    }, ffrt::task_attr().name("keyboard-observation-task").delay(FFRT_TASK_DELAY_TIME));
+}
+
+void KeyboardObservationToTouchHandlerTask::StopTask()
+{
+    std::lock_guard<ffrt::mutex> lock(taskLock_);
+    HILOGI("stop KeyboardObservationToTouchHandlerTask success.");
+    taskIsStarting_ = false;
+    context_ = nullptr;
+    currentDpadKeyType_ = DPAD_KEYTYPE_UNKNOWN;
+    currentKeyCode_ = 0;
+    dpadKeys_.clear();
+    taskQueue_->cancel(curTaskHandler_);
+}
+
+void KeyboardObservationToTouchHandlerTask::UpdateTaskInfo(int32_t currentKeyCode,
+                                                           std::shared_ptr<InputToTouchContext> &context,
                                                            const DpadKeyTypeEnum currentKeyType,
-                                                           Point &targetPoint)
+                                                           std::vector<DpadKeyItem> &dpadKeys)
+{
+    if (context == nullptr || dpadKeys.empty() || currentKeyType == DPAD_KEYTYPE_UNKNOWN ||
+        currentKeyCode == 0) {
+        return;
+    }
+    std::lock_guard<ffrt::mutex> lock(taskLock_);
+    currentKeyCode_ = currentKeyCode;
+    context_ = context;
+    currentDpadKeyType_ = currentKeyType;
+    dpadKeys_ = dpadKeys;
+}
+
+void KeyboardObservationToTouchHandlerTask::RunTask()
+{
+    std::lock_guard<ffrt::mutex> lock(taskLock_);
+    if (!taskIsStarting_) {
+        HILOGE("the taskIsStarting_ is false, so not run the task.");
+        return;
+    }
+
+    ComputeAndSendMovePointer();
+    PutTaskToDelayQueue();
+}
+
+void KeyboardObservationToTouchHandlerTask::ComputeAndSendMovePointer()
+{
+    if (context_ == nullptr || dpadKeys_.empty()
+        || currentDpadKeyType_ == DPAD_KEYTYPE_UNKNOWN || currentKeyCode_ == 0) {
+        HILOGW("discard the compute event, because task info is invalid.");
+        return;
+    }
+    if (context_->pointerItems.find(OBSERVATION_POINT_ID) == context_->pointerItems.end()) {
+        HILOGW("discard the compute event, because cannot find the last move event");
+        return;
+    }
+
+    /**
+     * When a combination key exists,
+     * calculate the movement point using the current key and the first combination key.
+     */
+    std::string key;
+    DpadKeyItem firstKeyItem;
+    bool hasCombinationKeys = false;
+    for (const auto &dpadKeyItem: dpadKeys_) {
+        if (dpadKeyItem.keyCode == currentKeyCode_) {
+            continue;
+        }
+        key = std::to_string(currentDpadKeyType_) + JOINER + std::to_string(dpadKeyItem.keyTypeEnum);
+        if (validCombinationKeys_.find(key) != validCombinationKeys_.end()) {
+            firstKeyItem = dpadKeyItem;
+            hasCombinationKeys = true;
+            break;
+        }
+    }
+    PointerEvent::PointerItem lastMovePoint = context_->pointerItems[OBSERVATION_POINT_ID];
+    Point targetPoint;
+    targetPoint.x = lastMovePoint.GetWindowX();
+    targetPoint.y = lastMovePoint.GetWindowY();
+    if (hasCombinationKeys) {
+        ComputeTargetPoint(context_, lastMovePoint, firstKeyItem.keyTypeEnum, targetPoint);
+    }
+    ComputeTargetPoint(context_, lastMovePoint, currentDpadKeyType_, targetPoint);
+    int64_t actionTime = StringUtils::GetSysClockTime();
+    TouchEntity touchEntity = BuildMoveTouchEntity(OBSERVATION_POINT_ID, targetPoint, actionTime);
+    BuildAndSendPointerEvent(context_, touchEntity);
+}
+
+void KeyboardObservationToTouchHandlerTask::ComputeTargetPoint(std::shared_ptr<InputToTouchContext> &context,
+                                                               const PointerEvent::PointerItem &lastMovePoint,
+                                                               const DpadKeyTypeEnum currentKeyType,
+                                                               Point &targetPoint)
 {
     auto xStep = context->currentPerspectiveObserving.xStep;
     auto yStep = context->currentPerspectiveObserving.yStep;
@@ -145,42 +283,5 @@ void KeyboardObservationToTouchHandler::ComputeTargetPoint(std::shared_ptr<Input
     }
 }
 
-void KeyboardObservationToTouchHandler::ContinueObserving(std::shared_ptr<InputToTouchContext> &context,
-                                                          const std::shared_ptr<MMI::KeyEvent> &keyEvent,
-                                                          const int32_t currentKeyCode,
-                                                          const DpadKeyTypeEnum currentKeyType,
-                                                          std::vector<DpadKeyItem> &dpadKeys)
-{
-    if (context->pointerItems.find(OBSERVATION_POINT_ID) == context->pointerItems.end()) {
-        HILOGW("discard mouse move event, because cannot find the last move event");
-        return;
-    }
-
-    std::string key;
-    DpadKeyItem firstKeyItem;
-    bool hasCombinationKeys = false;
-    for (const auto &dpadKeyItem: dpadKeys) {
-        if (dpadKeyItem.keyCode == currentKeyCode) {
-            continue;
-        }
-        key = std::to_string(currentKeyType) + JOINER + std::to_string(dpadKeyItem.keyTypeEnum);
-        if (validCombinationKeys_.find(key) != validCombinationKeys_.end()) {
-            firstKeyItem = dpadKeyItem;
-            hasCombinationKeys = true;
-            break;
-        }
-    }
-    PointerEvent::PointerItem lastMovePoint = context->pointerItems[OBSERVATION_POINT_ID];
-    Point targetPoint;
-    targetPoint.x = lastMovePoint.GetWindowX();
-    targetPoint.y = lastMovePoint.GetWindowY();
-    if (hasCombinationKeys) {
-        ComputeTargetPoint(context, lastMovePoint, firstKeyItem.keyTypeEnum, targetPoint);
-    }
-    ComputeTargetPoint(context, lastMovePoint, currentKeyType, targetPoint);
-    int64_t actionTime = keyEvent->GetActionTime();
-    TouchEntity touchEntity = BuildMoveTouchEntity(OBSERVATION_POINT_ID, targetPoint, actionTime);
-    BuildAndSendPointerEvent(context, touchEntity);
-}
 }
 }

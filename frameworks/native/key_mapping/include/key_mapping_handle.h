@@ -40,6 +40,8 @@ public:
      */
     bool IsNotifyOpenTemplateConfigPage(const std::shared_ptr<MMI::KeyEvent> &keyEvent);
 
+    void SetIsPC(bool isPCDevice);
+
 private:
     /**
      * Send Notification of Opening Template Configuration Page
@@ -54,9 +56,12 @@ private:
 
     bool OpenTemplateByKeyBoard(const std::shared_ptr<MMI::KeyEvent> &keyEvent, const DeviceInfo &deviceInfo);
 
+    bool IsFullKeyboard(const DeviceInfo &deviceInfo);
+
 private:
 
     bool isSupportKeyMapping_{false};
+    bool isPc_{false};
     std::unordered_map<DeviceTypeEnum, IsOpenTemplateValidHandler> isOpenTemplateValidHandlerMap_;
 };
 }

@@ -149,6 +149,66 @@ static void CheckKeyMappingNumbers(GameKeyMappingInfo &config, MappingTypeEnum m
     ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
 }
 
+static void CheckDpadKeyCannotRepeat(GameKeyMappingInfo &config,
+                                     std::vector<KeyToTouchMappingInfo> &testKeyMappingInfos,
+                                     KeyToTouchMappingInfo &keyToTouchMappingInfo)
+{
+    // set each keycode in dpadKeyCodeEntity to be 0
+    keyToTouchMappingInfo.dpadKeyCodeEntity.up = 0;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.up = DPAD_UP;
+    keyToTouchMappingInfo.dpadKeyCodeEntity.down = 0;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.down = DPAD_DOWN;
+    keyToTouchMappingInfo.dpadKeyCodeEntity.left = 0;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.left = DPAD_LEFT;
+    keyToTouchMappingInfo.dpadKeyCodeEntity.right = 0;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.right = DPAD_RIGHT;
+
+    // set keycode in dpadKeyCodeEntity repeat
+    keyToTouchMappingInfo.dpadKeyCodeEntity.down = DPAD_UP;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.down = DPAD_DOWN;
+    keyToTouchMappingInfo.dpadKeyCodeEntity.left = DPAD_UP;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.left = DPAD_LEFT;
+    keyToTouchMappingInfo.dpadKeyCodeEntity.right = DPAD_UP;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.right = DPAD_RIGHT;
+}
+
+static void CheckKeyboardCannotRepeat(GameKeyMappingInfo &config,
+                                      std::vector<KeyToTouchMappingInfo> &testKeyMappingInfos,
+                                      KeyToTouchMappingInfo &keyToTouchMappingInfo)
+{
+    // set each keycode in dpadKeyCodeEntity to be 0
+    keyToTouchMappingInfo.dpadKeyCodeEntity.up = 0;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.up = KEYBOARD_OBSERVATION_UP;
+    keyToTouchMappingInfo.dpadKeyCodeEntity.down = 0;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.down = KEYBOARD_OBSERVATION_DOWN;
+    keyToTouchMappingInfo.dpadKeyCodeEntity.left = 0;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.left = KEYBOARD_OBSERVATION_LEFT;
+    keyToTouchMappingInfo.dpadKeyCodeEntity.right = 0;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.right = KEYBOARD_OBSERVATION_RIGHT;
+
+    // set keycode in dpadKeyCodeEntity repeat
+    keyToTouchMappingInfo.dpadKeyCodeEntity.down = KEYBOARD_OBSERVATION_UP;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.down = DPAD_DOWN;
+    keyToTouchMappingInfo.dpadKeyCodeEntity.left = KEYBOARD_OBSERVATION_UP;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.left = DPAD_LEFT;
+    keyToTouchMappingInfo.dpadKeyCodeEntity.right = KEYBOARD_OBSERVATION_UP;
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+    keyToTouchMappingInfo.dpadKeyCodeEntity.right = DPAD_RIGHT;
+}
+
 /**
 * @tc.name: GetGameKeyMappingInfoParam_CheckParamValid_001
 * @tc.desc: GetGameKeyMappingInfoParam_CheckParamValid_001
@@ -367,42 +427,6 @@ HWTEST_F(GameControllerKeymappingModeTest, GameKeyMappingInfo_CheckKeyMapping_00
     ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
 }
 
-static void CheckDpadKeyCannotRepeat(GameKeyMappingInfo &config,
-                                     std::vector<KeyToTouchMappingInfo> &testKeyMappingInfos,
-                                     KeyToTouchMappingInfo &keyToTouchMappingInfo)
-{
-    keyToTouchMappingInfo.dpadKeyCodeEntity.up = 0;
-    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
-    keyToTouchMappingInfo.dpadKeyCodeEntity.up = DPAD_UP;
-    keyToTouchMappingInfo.dpadKeyCodeEntity.down = 0;
-    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
-    keyToTouchMappingInfo.dpadKeyCodeEntity.down = DPAD_DOWN;
-    keyToTouchMappingInfo.dpadKeyCodeEntity.left = 0;
-    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
-    keyToTouchMappingInfo.dpadKeyCodeEntity.left = DPAD_LEFT;
-    keyToTouchMappingInfo.dpadKeyCodeEntity.right = 0;
-    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
-    keyToTouchMappingInfo.dpadKeyCodeEntity.right = DPAD_RIGHT;
-}
-
-static void CheckKeyboardCannotRepeat(GameKeyMappingInfo &config,
-                                      std::vector<KeyToTouchMappingInfo> &testKeyMappingInfos,
-                                      KeyToTouchMappingInfo &keyToTouchMappingInfo)
-{
-    keyToTouchMappingInfo.dpadKeyCodeEntity.up = 0;
-    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
-    keyToTouchMappingInfo.dpadKeyCodeEntity.up = KEYBOARD_OBSERVATION_UP;
-    keyToTouchMappingInfo.dpadKeyCodeEntity.down = 0;
-    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
-    keyToTouchMappingInfo.dpadKeyCodeEntity.down = KEYBOARD_OBSERVATION_DOWN;
-    keyToTouchMappingInfo.dpadKeyCodeEntity.left = 0;
-    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
-    keyToTouchMappingInfo.dpadKeyCodeEntity.left = KEYBOARD_OBSERVATION_LEFT;
-    keyToTouchMappingInfo.dpadKeyCodeEntity.right = 0;
-    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
-    keyToTouchMappingInfo.dpadKeyCodeEntity.right = KEYBOARD_OBSERVATION_RIGHT;
-}
-
 /**
 * @tc.name: GameKeyMappingInfo_CheckKeyMapping_004
 * @tc.desc: Keycode for mapping type 0、2、4、5、7、8 cannot repeat
@@ -465,6 +489,41 @@ HWTEST_F(GameControllerKeymappingModeTest, GameKeyMappingInfo_CheckKeyMapping_00
             testKeyMappingInfos.push_back(BuildKeyMapping(other));
             ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
         }
+    }
+}
+
+/**
+* @tc.name: GameKeyMappingInfo_CheckKeyMapping_006
+* @tc.desc: xStep or yStep cannot be smaller than 0
+* @tc.type: FUNC
+* @tc.require: issueNumber
+*/
+HWTEST_F(GameControllerKeymappingModeTest, GameKeyMappingInfo_CheckKeyMapping_006, TestSize.Level0)
+{
+    GameKeyMappingInfo config = BuildDefaultKeyMappingConfig();
+    std::vector<KeyToTouchMappingInfo> testKeyMappingInfos;
+    std::vector<MappingTypeEnum> types = {
+        OBSERVATION_KEY_TO_TOUCH,
+        MOUSE_OBSERVATION_TO_TOUCH,
+        KEY_BOARD_OBSERVATION_TO_TOUCH,
+        CROSSHAIR_KEY_TO_TOUCH
+    };
+    for (const auto &type: types) {
+        KeyToTouchMappingInfo info = BuildKeyMapping(type);
+        info.xValue = 1;
+        info.yValue = 1;
+        testKeyMappingInfos.push_back(info);
+        ASSERT_TRUE(config.CheckKeyMapping(testKeyMappingInfos));
+        testKeyMappingInfos.clear();
+        info.xStep = -1;
+        testKeyMappingInfos.push_back(info);
+        ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+        testKeyMappingInfos.clear();
+        info.xStep = 0;
+        info.yStep = -1;
+        testKeyMappingInfos.push_back(info);
+        ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+        testKeyMappingInfos.clear();
     }
 }
 

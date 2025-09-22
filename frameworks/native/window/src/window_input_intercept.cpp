@@ -80,6 +80,7 @@ const int64_t ONE_SECOND_BY_NS = 1000000000LL;
 
 const int32_t KEY_ACTION_DOWN = 0;
 const int32_t KEY_ACTION_UP = 1;
+const int64_t US_TO_NS = 1000LL;
 }
 
 WindowInputInterceptConsumer::WindowInputInterceptConsumer() noexcept
@@ -93,6 +94,7 @@ WindowInputInterceptConsumer::WindowInputInterceptConsumer() noexcept
     clock_gettime(CLOCK_REALTIME, &t2);
     int64_t realTime = int64_t(t2.tv_sec) * ONE_SECOND_BY_NS + t2.tv_nsec;
     deltaTime_ = realTime - monoTime;
+    HILOGI("deltaTime_ is %{public}ld", deltaTime_);
 }
 
 void WindowInputInterceptConsumer::OnInputEvent(const std::shared_ptr<MMI::KeyEvent> &keyEvent)
@@ -123,7 +125,8 @@ void WindowInputInterceptConsumer::ConsumeKeyInputEvent(const std::shared_ptr<MM
     GamePadButtonEvent buttonEvent;
     if (keyEvent->GetKeyAction() == KeyEvent::KEY_ACTION_DOWN) {
         buttonEvent.keyAction = KEY_ACTION_DOWN;
-    } else if (keyEvent->GetKeyAction() == KeyEvent::KEY_ACTION_UP) {
+    } else if (keyEvent->GetKeyAction() == KeyEvent::KEY_ACTION_UP ||
+        keyEvent->GetKeyAction() == KeyEvent::KEY_ACTION_CANCEL) {
         buttonEvent.keyAction = KEY_ACTION_UP;
     } else {
         HILOGW("OnKeyEvent Unknown KeyAction is %{public}d",
@@ -143,7 +146,7 @@ void WindowInputInterceptConsumer::ConsumeKeyInputEvent(const std::shared_ptr<MM
         return;
     }
     buttonEvent.uniq = deviceInfo.uniq;
-    buttonEvent.actionTime = (deltaTime_ + keyEvent->GetActionTime()) / NS_TO_MS; // 将距离开机启动时长转为系统时间
+    buttonEvent.actionTime = (deltaTime_ + keyEvent->GetActionTime() * US_TO_NS) / NS_TO_MS; // 将距离开机启动时长转为系统时间
     std::vector<int32_t> pressedKeys = keyEvent->GetPressedKeys();
     for (auto keyCode: pressedKeys) {
         if (!PressedKeyIsValid(keyEvent, keyCode, deviceInfo)) {
@@ -218,7 +221,7 @@ void WindowInputInterceptConsumer::ConsumeGamePadAxisInputEvent(const std::share
         HILOGW("OnAxisEvent Unknown device Id is %{public}d", id);
         return;
     }
-    int64_t actionTime = (deltaTime_ + pointerEvent->GetActionTime()) / NS_TO_MS;
+    int64_t actionTime = (deltaTime_ + pointerEvent->GetActionTime() * US_TO_NS) / NS_TO_MS;
     CallLeftThumbstickAxisEvent(id, deviceInfo, actionTime, pointerEvent);
     CallRightThumbstickAxisEvent(id, deviceInfo, actionTime, pointerEvent);
     CallLeftTriggerAxisEvent(id, deviceInfo, actionTime, pointerEvent);

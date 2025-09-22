@@ -88,12 +88,14 @@ ohos_static_library("gamecontroller_framework_static_test") {
   external_deps = [
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
+    "eventhandler:libeventhandler",
     "c_utils:utils",
     "ffrt:libffrt",
     "hilog:libhilog",
     "init:libbegetutil",
     "input:libmmi-client",
     "ipc:ipc_core",
+    "ipc:ipc_single",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
     "window_manager:libwm",
@@ -127,6 +129,8 @@ ohos_unittest("GameControllerFrameworkTest") {
     "key_mapping/observation_key_to_touch_handler_test.cpp",
     "key_mapping/single_key_to_touch_handler_test.cpp",
     "key_mapping/skill_key_to_touch_handler_test.cpp",
+    "key_mapping/key_to_touch_manager_test.cpp",
+    "key_mapping/key_mapping_handle_test.cpp",
     "multi_modal_input/device_event_callback_test.cpp",
     "multi_modal_input/device_identify_service_test.cpp",
     "multi_modal_input/game_device_client_test.cpp",
@@ -217,6 +221,7 @@ ohos_unittest("GameControllerServiceTest") {
 
   configs = [ ":gamecontroller_service_unittest_config" ]
   sources = [
+    "service/common/json_utils_test.cpp",
     "service/device_manager/device_manager_test.cpp",
     "service/key_mapping/game_support_key_mapping_manager_test.cpp",
     "service/key_mapping/key_mapping_config_manager_test.cpp"
