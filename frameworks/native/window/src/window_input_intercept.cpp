@@ -94,7 +94,7 @@ WindowInputInterceptConsumer::WindowInputInterceptConsumer() noexcept
     clock_gettime(CLOCK_REALTIME, &t2);
     int64_t realTime = int64_t(t2.tv_sec) * ONE_SECOND_BY_NS + t2.tv_nsec;
     deltaTime_ = realTime - monoTime;
-    HILOGI("deltaTime_ is %{public}ld", deltaTime_);
+    HILOGI("deltaTime_ is %{public}lld", deltaTime_);
 }
 
 void WindowInputInterceptConsumer::OnInputEvent(const std::shared_ptr<MMI::KeyEvent> &keyEvent)

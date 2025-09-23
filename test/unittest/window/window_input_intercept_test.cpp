@@ -228,7 +228,7 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_002, TestSize.Level0)
     MultiModalInputMgtService::instance_ = multiModalInputMgtServiceMock_;
     EXPECT_CALL(*(multiModalInputMgtServiceMock_.get()), GetDeviceInfo(keyEvent->GetDeviceId())).Times(0);
     consumer_->OnInputEvent(keyEvent);
-    ffrt::this_task::sleep_for(std::chrono::milliseconds(50));
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
     ASSERT_NE(buttonCallback_->result_.keyCode, keyEvent->GetKeyCode());
     EXPECT_TRUE(::testing::Mock::VerifyAndClearExpectations(multiModalInputMgtServiceMock_.get()));
 }
@@ -268,7 +268,7 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_004, TestSize.Level0)
     EXPECT_CALL(*(multiModalInputMgtServiceMock_.get()), GetDeviceInfo(keyEvent->GetDeviceId())).WillOnce(
         Return(deviceInfo));
     consumer_->OnInputEvent(keyEvent);
-    ffrt::this_task::sleep_for(std::chrono::milliseconds(50));
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
     ASSERT_NE(buttonCallback_->result_.keyCode, keyEvent->GetKeyCode());
 }
 
@@ -302,7 +302,7 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_005, TestSize.Level0)
     EXPECT_CALL(*(multiModalInputMgtServiceMock_.get()), GetDeviceInfo(pointerEvent->GetDeviceId())).WillOnce(
         Return(deviceInfo));
     consumer_->OnInputEvent(pointerEvent);
-    ffrt::this_task::sleep_for(std::chrono::milliseconds(50));
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
     ASSERT_EQ(axisCallback_->result_.id, pointerEvent->GetDeviceId());
     ASSERT_EQ(axisCallback_->result_.uniq, deviceInfo.uniq);
     ASSERT_EQ(axisCallback_->result_.axisSourceType, GamePadAxisSourceTypeEnum::LeftThumbstick);
@@ -331,7 +331,7 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_006, TestSize.Level0)
     EXPECT_CALL(*(multiModalInputMgtServiceMock_.get()), GetDeviceInfo(pointerEvent->GetDeviceId())).WillOnce(
         Return(deviceInfo));
     consumer_->OnInputEvent(pointerEvent);
-    ffrt::this_task::sleep_for(std::chrono::milliseconds(50));
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
     ASSERT_EQ(axisCallback_->result_.id, pointerEvent->GetDeviceId());
     ASSERT_EQ(axisCallback_->result_.uniq, deviceInfo.uniq);
     ASSERT_EQ(axisCallback_->result_.axisSourceType, GamePadAxisSourceTypeEnum::RightThumbstick);
@@ -359,7 +359,7 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_007, TestSize.Level0)
     EXPECT_CALL(*(multiModalInputMgtServiceMock_.get()), GetDeviceInfo(pointerEvent->GetDeviceId())).WillOnce(
         Return(deviceInfo));
     consumer_->OnInputEvent(pointerEvent);
-    ffrt::this_task::sleep_for(std::chrono::milliseconds(50));
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
     ASSERT_EQ(axisCallback_->result_.id, pointerEvent->GetDeviceId());
     ASSERT_EQ(axisCallback_->result_.uniq, deviceInfo.uniq);
     ASSERT_EQ(axisCallback_->result_.axisSourceType, GamePadAxisSourceTypeEnum::LeftTriggerAxis);
@@ -385,7 +385,7 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_008, TestSize.Level0)
     EXPECT_CALL(*(multiModalInputMgtServiceMock_.get()), GetDeviceInfo(pointerEvent->GetDeviceId())).WillOnce(
         Return(deviceInfo));
     consumer_->OnInputEvent(pointerEvent);
-    ffrt::this_task::sleep_for(std::chrono::milliseconds(50));
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
     ASSERT_EQ(axisCallback_->result_.id, pointerEvent->GetDeviceId());
     ASSERT_EQ(axisCallback_->result_.uniq, deviceInfo.uniq);
     ASSERT_EQ(axisCallback_->result_.axisSourceType, GamePadAxisSourceTypeEnum::RightTriggerAxis);
@@ -412,7 +412,7 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_009, TestSize.Level0)
     EXPECT_CALL(*(multiModalInputMgtServiceMock_.get()), GetDeviceInfo(pointerEvent->GetDeviceId())).WillOnce(
         Return(deviceInfo));
     consumer_->OnInputEvent(pointerEvent);
-    ffrt::this_task::sleep_for(std::chrono::milliseconds(50));
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
     ASSERT_EQ(axisCallback_->result_.id, pointerEvent->GetDeviceId());
     ASSERT_EQ(axisCallback_->result_.uniq, deviceInfo.uniq);
     ASSERT_EQ(axisCallback_->result_.axisSourceType, GamePadAxisSourceTypeEnum::Dpad);
@@ -440,7 +440,7 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_010, TestSize.Level0)
     deviceInfo.uniq = "test";
     EXPECT_CALL(*(multiModalInputMgtServiceMock_.get()), GetDeviceInfo(pointerEvent->GetDeviceId())).Times(0);
     consumer_->OnInputEvent(pointerEvent);
-    ffrt::this_task::sleep_for(std::chrono::milliseconds(50));
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
     ASSERT_EQ(axisCallback_->result_.id, 0);
     EXPECT_TRUE(::testing::Mock::VerifyAndClearExpectations(multiModalInputMgtServiceMock_.get()));
 }
@@ -465,7 +465,7 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_011, TestSize.Level0)
     deviceInfo.uniq = "test";
     EXPECT_CALL(*(multiModalInputMgtServiceMock_.get()), GetDeviceInfo(pointerEvent->GetDeviceId())).Times(0);
     consumer_->OnInputEvent(pointerEvent);
-    ffrt::this_task::sleep_for(std::chrono::milliseconds(50));
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
     ASSERT_EQ(axisCallback_->result_.id, 0);
     EXPECT_TRUE(::testing::Mock::VerifyAndClearExpectations(multiModalInputMgtServiceMock_.get()));
 }
@@ -490,7 +490,7 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_012, TestSize.Level0)
     EXPECT_CALL(*(multiModalInputMgtServiceMock_.get()), GetDeviceInfo(pointerEvent->GetDeviceId())).WillOnce(
         Return(deviceInfo));
     consumer_->OnInputEvent(pointerEvent);
-    ffrt::this_task::sleep_for(std::chrono::milliseconds(50));
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
     ASSERT_EQ(axisCallback_->result_.id, 0);
 }
 
@@ -511,7 +511,7 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_013, TestSize.Level0)
     EXPECT_CALL(*(multiModalInputMgtServiceMock_.get()), GetDeviceInfo(keyEvent->GetDeviceId())).WillOnce(
         Return(deviceInfo));
     consumer_->OnInputEvent(keyEvent);
-    ffrt::this_task::sleep_for(std::chrono::milliseconds(50));
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
     ASSERT_EQ(buttonCallback_->result_.id, keyEvent->GetDeviceId());
     ASSERT_EQ(buttonCallback_->result_.keyCode, keyEvent->GetKeyCode());
     ASSERT_EQ(buttonCallback_->result_.keyCodeName, "LeftShoulder");
