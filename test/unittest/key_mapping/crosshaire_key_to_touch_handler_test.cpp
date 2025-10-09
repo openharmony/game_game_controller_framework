@@ -18,7 +18,12 @@
 #include <gmock/gmock-spec-builders.h>
 #include <gtest/gtest.h>
 #include "refbase.h"
+
+#define private public
+
 #include "crosshair_key_to_touch_handler.h"
+
+#undef private
 
 using ::testing::Return;
 using namespace testing::ext;
@@ -145,6 +150,7 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandleKeyDown_001, TestSize.Level0)
     ASSERT_EQ(handler_->touchDownEntity_.pointerAction, PointerEvent::POINTER_ACTION_DOWN);
     ASSERT_EQ(handler_->touchDownEntity_.xValue, X_VALUE);
     ASSERT_EQ(handler_->touchDownEntity_.yValue, Y_VALUE);
+    ASSERT_EQ(handler_->currentIdx_, 1);
 }
 
 /**
@@ -190,12 +196,14 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandleKeyUp_001, TestSize.Level0)
  */
 HWTEST_F(CrosshairKeyToTouchHandlerTest, HandleKeyUp_002, TestSize.Level0)
 {
+    // first key up, it will into crosshair status
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
 
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
     handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
 
+    // second key up, it will into crosshair status
     context_->pointerItems[CROSSHAIR_POINT_ID] = BuildPointerItem(X_VALUE, Y_VALUE);
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
     handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
@@ -207,6 +215,7 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandleKeyUp_002, TestSize.Level0)
     ASSERT_EQ(handler_->touchUpEntity_.pointerAction, PointerEvent::POINTER_ACTION_UP);
     ASSERT_EQ(handler_->touchUpEntity_.xValue, X_VALUE);
     ASSERT_EQ(handler_->touchUpEntity_.yValue, Y_VALUE);
+    ASSERT_EQ(handler_->currentIdx_, 0);
 }
 
 /**
@@ -323,7 +332,7 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_003, TestSize.Level0
 /**
  * @tc.name: HandlePointerEvent_004
  * @tc.desc: when it's mouse move event and context->isEnterCrosshairInfo is true,
- * and move to x's max edge, it will send move event and up and down event;
+ * and move to x's max edge, it will send move event;
  * @tc.type: FUNC
  * @tc.require: issueNumber
  */
@@ -331,6 +340,7 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_004, TestSize.Level0
 {
     context_->isEnterCrosshairInfo = true;
     context_->currentCrosshairInfo = mappingInfo_;
+    handler_->currentIdx_ = 1;
     PointerEvent::PointerItem lastMovePoint = context_->pointerItems[OBSERVATION_POINT_ID];
     lastMovePoint.SetWindowX(MAX_WIDTH);
     lastMovePoint.SetWindowY(MAX_HEIGHT);
@@ -348,22 +358,12 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_004, TestSize.Level0
     ASSERT_EQ(handler_->touchMoveEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
     ASSERT_EQ(handler_->touchMoveEntity_.xValue, MAX_WIDTH);
     ASSERT_EQ(handler_->touchMoveEntity_.yValue, MAX_HEIGHT);
-
-    ASSERT_EQ(handler_->touchUpEntity_.pointerId, CROSSHAIR_POINT_ID);
-    ASSERT_EQ(handler_->touchUpEntity_.pointerAction, PointerEvent::POINTER_ACTION_UP);
-    ASSERT_EQ(handler_->touchUpEntity_.xValue, MAX_WIDTH);
-    ASSERT_EQ(handler_->touchUpEntity_.yValue, MAX_HEIGHT);
-
-    ASSERT_EQ(handler_->touchDownEntity_.pointerId, CROSSHAIR_POINT_ID);
-    ASSERT_EQ(handler_->touchDownEntity_.pointerAction, PointerEvent::POINTER_ACTION_DOWN);
-    ASSERT_EQ(handler_->touchDownEntity_.xValue, X_VALUE);
-    ASSERT_EQ(handler_->touchDownEntity_.yValue, Y_VALUE);
 }
 
 /**
  * @tc.name: HandlePointerEvent_005
  * @tc.desc: when it's mouse move event and context->isEnterCrosshairInfo is true,
- * and move to x's min edge, it will send move event and up and down event;
+ * and move to x's min edge, it will send move event;
  * @tc.type: FUNC
  * @tc.require: issueNumber
  */
@@ -371,6 +371,7 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_005, TestSize.Level0
 {
     context_->isEnterCrosshairInfo = true;
     context_->currentCrosshairInfo = mappingInfo_;
+    handler_->currentIdx_ = 1;
     PointerEvent::PointerItem lastMovePoint = context_->pointerItems[OBSERVATION_POINT_ID];
     lastMovePoint.SetWindowX(0);
     lastMovePoint.SetWindowY(0);
@@ -387,16 +388,127 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_005, TestSize.Level0
     ASSERT_EQ(handler_->touchMoveEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
     ASSERT_EQ(handler_->touchMoveEntity_.xValue, 1);
     ASSERT_EQ(handler_->touchMoveEntity_.yValue, 1);
+}
 
-    ASSERT_EQ(handler_->touchUpEntity_.pointerId, CROSSHAIR_POINT_ID);
-    ASSERT_EQ(handler_->touchUpEntity_.pointerAction, PointerEvent::POINTER_ACTION_UP);
-    ASSERT_EQ(handler_->touchUpEntity_.xValue, 1);
-    ASSERT_EQ(handler_->touchUpEntity_.yValue, 1);
+/**
+ * @tc.name: HandlePointerEvent_006
+ * @tc.desc: when it's mouse move event and context->isEnterCrosshairInfo is true,
+ * and the current position of mouse pointer is equal to the last position, mouse is not moving to the edge
+ * so send move event that xValue and yValue are same with last move point.
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_006, TestSize.Level0)
+{
+    context_->isEnterCrosshairInfo = true;
+    context_->currentCrosshairInfo = mappingInfo_;
+    handler_->currentIdx_ = 1;
+    int32_t nextIdx = handler_->currentIdx_ + 1;
+    PointerEvent::PointerItem lastMovePoint = context_->pointerItems[OBSERVATION_POINT_ID];
+    lastMovePoint.SetWindowX(X_VALUE - X_STEP);
+    lastMovePoint.SetWindowY(Y_VALUE - Y_STEP);
+    context_->pointerItems[CROSSHAIR_POINT_ID] = lastMovePoint;
+    context_->lastMousePointer = BuildPointerItem(X_VALUE, Y_VALUE);
+    pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_MOVE);
+    pointerEvent_->RemoveAllPointerItems();
+    PointerEvent::PointerItem pointerItem = BuildPointerItem(X_VALUE, Y_VALUE);
+    pointerEvent_->AddPointerItem(pointerItem);
+    handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
+
+    ASSERT_EQ(context_->lastMousePointer.GetWindowX(), X_VALUE);
+    ASSERT_EQ(context_->lastMousePointer.GetWindowY(), Y_VALUE);
+    ASSERT_EQ(handler_->touchMoveEntity_.pointerId, CROSSHAIR_POINT_ID);
+    ASSERT_EQ(handler_->touchMoveEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
+    ASSERT_EQ(handler_->touchMoveEntity_.xValue, X_VALUE - X_STEP);
+    ASSERT_EQ(handler_->touchMoveEntity_.yValue, Y_VALUE - Y_STEP);
+    ASSERT_EQ(handler_->currentIdx_, nextIdx);
+}
+
+/**
+ * @tc.name: HandlePointerEvent_007
+ * @tc.desc: when it's mouse move event and context->isEnterCrosshairInfo is true,
+ * and the current position of mouse pointer is equal to the last position, mouse is moving to the edge
+ * so send move event that xValue and yValue are same not with last move point.
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_007, TestSize.Level0)
+{
+    context_->isEnterCrosshairInfo = true;
+    context_->currentCrosshairInfo = mappingInfo_;
+    handler_->currentIdx_ = 1;
+    int32_t nextIdx = handler_->currentIdx_ + 1;
+    PointerEvent::PointerItem lastMovePoint = context_->pointerItems[OBSERVATION_POINT_ID];
+    lastMovePoint.SetWindowX(X_VALUE);
+    lastMovePoint.SetWindowY(Y_VALUE);
+    context_->pointerItems[CROSSHAIR_POINT_ID] = lastMovePoint;
+    context_->lastMousePointer = BuildPointerItem(MAX_WIDTH - 1, 1);
+    pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_MOVE);
+    pointerEvent_->RemoveAllPointerItems();
+    PointerEvent::PointerItem pointerItem = BuildPointerItem(MAX_WIDTH - 1, 1);
+    pointerEvent_->AddPointerItem(pointerItem);
+    handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
+    
+    ASSERT_EQ(handler_->touchMoveEntity_.pointerId, CROSSHAIR_POINT_ID);
+    ASSERT_EQ(handler_->touchMoveEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
+    ASSERT_EQ(handler_->touchMoveEntity_.xValue, X_VALUE + X_STEP);
+    ASSERT_EQ(handler_->touchMoveEntity_.yValue, Y_VALUE - Y_STEP);
+    ASSERT_EQ(handler_->currentIdx_, nextIdx);
+}
+
+/**
+ * @tc.name: HandlePointerEvent_008
+ * @tc.desc: when it's mouse move event and context->isEnterCrosshairInfo is true,
+ * and handler_->currentIdx_ is 0, then send down event
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_008, TestSize.Level0)
+{
+    context_->isEnterCrosshairInfo = true;
+    context_->currentCrosshairInfo = mappingInfo_;
+    handler_->currentIdx_ = 0;
+    int32_t nextIdx = handler_->currentIdx_ + 1;
+    pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_MOVE);
+    pointerEvent_->RemoveAllPointerItems();
+    PointerEvent::PointerItem pointerItem = BuildPointerItem(X_VALUE, Y_VALUE);
+    pointerEvent_->AddPointerItem(pointerItem);
+    handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
     ASSERT_EQ(handler_->touchDownEntity_.pointerId, CROSSHAIR_POINT_ID);
     ASSERT_EQ(handler_->touchDownEntity_.pointerAction, PointerEvent::POINTER_ACTION_DOWN);
     ASSERT_EQ(handler_->touchDownEntity_.xValue, X_VALUE);
     ASSERT_EQ(handler_->touchDownEntity_.yValue, Y_VALUE);
+    ASSERT_EQ(handler_->currentIdx_, nextIdx);
+}
+
+/**
+ * @tc.name: HandlePointerEvent_009
+ * @tc.desc: when it's mouse move event and context->isEnterCrosshairInfo is true,
+ * and handler_->currentIdx_ is 10, then send up event
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_009, TestSize.Level0)
+{
+    context_->isEnterCrosshairInfo = true;
+    context_->currentCrosshairInfo = mappingInfo_;
+    handler_->currentIdx_ = 10;
+    PointerEvent::PointerItem lastMovePoint = context_->pointerItems[OBSERVATION_POINT_ID];
+    lastMovePoint.SetWindowX(X_VALUE - X_STEP);
+    lastMovePoint.SetWindowY(Y_VALUE - Y_STEP);
+    context_->pointerItems[CROSSHAIR_POINT_ID] = lastMovePoint;
+    pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_MOVE);
+    pointerEvent_->RemoveAllPointerItems();
+    PointerEvent::PointerItem pointerItem = BuildPointerItem(X_VALUE, Y_VALUE);
+    pointerEvent_->AddPointerItem(pointerItem);
+    handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
+
+    ASSERT_EQ(handler_->touchUpEntity_.pointerId, CROSSHAIR_POINT_ID);
+    ASSERT_EQ(handler_->touchUpEntity_.pointerAction, PointerEvent::POINTER_ACTION_UP);
+    ASSERT_EQ(handler_->touchUpEntity_.xValue, lastMovePoint.GetWindowX());
+    ASSERT_EQ(handler_->touchUpEntity_.yValue, lastMovePoint.GetWindowY());
+    ASSERT_EQ(handler_->currentIdx_, 0);
 }
 }
 }

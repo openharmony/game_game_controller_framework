@@ -57,7 +57,7 @@ void BaseKeyToTouchHandler::BuildAndSendPointerEvent(std::shared_ptr<InputToTouc
     pointerEvent->SetPointerAction(touchEntity.pointerAction);
     pointerEvent->SetPointerId(touchEntity.pointerId);
     pointerEvent->SetSourceType(PointerEvent::SOURCE_TYPE_TOUCHSCREEN);
-    HILOGI("pointer is [%{public}s].", pointerEvent->ToString().c_str());
+    HILOGD("pointer is [%{public}s].", pointerEvent->ToString().c_str());
     Rosen::WindowInputInterceptClient::SendInputEvent(pointerEvent);
 }
 
@@ -162,33 +162,60 @@ void BaseKeyToTouchHandler::ComputeTouchPointByMouseMoveEvent(std::shared_ptr<In
     pointerEvent->GetPointerItem(pointerEvent->GetPointerId(), currentPointItem);
 
     Point targetPoint;
-    targetPoint.x = ComputeMovePosition(currentPointItem.GetWindowX(), context->lastMousePointer.GetWindowX(),
-                                        lastMovePoint.GetWindowX(), context->windowInfoEntity.maxWidth,
-                                        mappingInfo.xStep);
-    targetPoint.y = ComputeMovePosition(currentPointItem.GetWindowY(), context->lastMousePointer.GetWindowY(),
-                                        lastMovePoint.GetWindowY(), context->windowInfoEntity.maxHeight,
-                                        mappingInfo.yStep);
+    targetPoint.x = ComputeMovePositionForX(context, currentPointItem, lastMovePoint, mappingInfo);
+    targetPoint.y = ComputeMovePositionForY(context, currentPointItem, lastMovePoint, mappingInfo);
     int64_t actionTime = pointerEvent->GetActionTime();
     TouchEntity touchEntity = BuildMoveTouchEntity(touchPointId, targetPoint, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
     context->lastMousePointer = currentPointItem;
 }
 
-int32_t BaseKeyToTouchHandler::ComputeMovePosition(int32_t currentMousePosition, int32_t lastMousePosition,
-                                                   int32_t lastMovePosition,
-                                                   int32_t maxEdge, int32_t step)
+int32_t BaseKeyToTouchHandler::ComputeMovePositionForX(std::shared_ptr<InputToTouchContext> &context,
+                                                       const PointerEvent::PointerItem &currentPointItem,
+                                                       const PointerEvent::PointerItem &lastMovePoint,
+                                                       const KeyToTouchMappingInfo &mappingInfo)
+{
+    MouseMoveReq mouseMoveReqForX;
+    mouseMoveReqForX.currentMousePosition = currentPointItem.GetWindowX();
+    mouseMoveReqForX.lastMousePosition = context->lastMousePointer.GetWindowX();
+    mouseMoveReqForX.lastMovePosition = lastMovePoint.GetWindowX();
+    mouseMoveReqForX.maxEdge = context->windowInfoEntity.maxWidth;
+    mouseMoveReqForX.step = mappingInfo.xStep;
+    return ComputeMovePosition(mouseMoveReqForX);
+}
+
+int32_t BaseKeyToTouchHandler::ComputeMovePositionForY(std::shared_ptr<InputToTouchContext> &context,
+                                                       const PointerEvent::PointerItem &currentPointItem,
+                                                       const PointerEvent::PointerItem &lastMovePoint,
+                                                       const KeyToTouchMappingInfo &mappingInfo)
+{
+    MouseMoveReq mouseMoveReqForY;
+    mouseMoveReqForY.currentMousePosition = currentPointItem.GetWindowY();
+    mouseMoveReqForY.lastMousePosition = context->lastMousePointer.GetWindowY();
+    mouseMoveReqForY.lastMovePosition = lastMovePoint.GetWindowY();
+    mouseMoveReqForY.maxEdge = context->windowInfoEntity.maxHeight;
+    mouseMoveReqForY.step = mappingInfo.yStep;
+    return ComputeMovePosition(mouseMoveReqForY);
+}
+
+int32_t BaseKeyToTouchHandler::ComputeMovePosition(MouseMoveReq mouseMoveReq)
 {
     int32_t result;
-    if (currentMousePosition > lastMousePosition) {
-        result = std::min(lastMovePosition + step, maxEdge);
-    } else if (currentMousePosition < lastMousePosition) {
-        result = std::max(lastMovePosition - step, MIN_EDGE);
+    if (mouseMoveReq.currentMousePosition > mouseMoveReq.lastMousePosition) {
+        result = std::min(mouseMoveReq.lastMovePosition + mouseMoveReq.step, mouseMoveReq.maxEdge);
+    } else if (mouseMoveReq.currentMousePosition < mouseMoveReq.lastMousePosition) {
+        result = std::max(mouseMoveReq.lastMovePosition - mouseMoveReq.step, MIN_EDGE);
     } else {
-        if (currentMousePosition <= MIN_EDGE) {
+        if (mouseMoveReq.currentMousePosition > MIN_EDGE &&
+            mouseMoveReq.currentMousePosition < (mouseMoveReq.maxEdge - MIN_EDGE)) {
+            return mouseMoveReq.lastMovePosition;
+        }
+
+        if (mouseMoveReq.currentMousePosition <= MIN_EDGE) {
             // mouse has moved to left or top edge
-            result = std::max(lastMovePosition - step, MIN_EDGE);
+            result = std::max(mouseMoveReq.lastMovePosition - mouseMoveReq.step, MIN_EDGE);
         } else {
-            result = std::min(lastMovePosition + step, maxEdge);
+            result = std::min(mouseMoveReq.lastMovePosition + mouseMoveReq.step, mouseMoveReq.maxEdge);
         }
     }
     return result;
@@ -276,6 +303,16 @@ void BaseKeyToTouchHandler::SortDpadKeys(std::vector<DpadKeyItem> &dpadKeys)
               });
 }
 
+bool BaseKeyToTouchHandler::IsKeyUpEvent(const std::shared_ptr<MMI::KeyEvent> &keyEvent)
+{
+    /**
+     * 如果先按住shift，再按住ctrl,然后释放ctrl，不会收到KEY_ACTION_UP，而是KEY_ACTION_CANCEL事件
+     * 因此这个事件等同于KEY_ACTION_UP
+     */
+    return keyEvent->GetKeyAction() == KeyEvent::KEY_ACTION_UP ||
+        keyEvent->GetKeyAction() == KeyEvent::KEY_ACTION_CANCEL;
+}
+
 InputToTouchContext::InputToTouchContext(const DeviceTypeEnum &type,
                                          const WindowInfoEntity &windowInfo,
                                          const std::vector<KeyToTouchMappingInfo> &mappingInfos)
@@ -302,18 +339,18 @@ InputToTouchContext::InputToTouchContext(const DeviceTypeEnum &type,
             singleKeyMappings[mappingInfo.dpadKeyCodeEntity.left] = mappingInfo;
             singleKeyMappings[mappingInfo.dpadKeyCodeEntity.right] = mappingInfo;
         } else if (mappingInfo.mappingType == MOUSE_RIGHT_KEY_WALKING_TO_TOUCH
-            || mappingInfo.mappingType == MOUSE_OBSERVATION_TO_TOUCH) {
+            || mappingInfo.mappingType == MOUSE_OBSERVATION_TO_TOUCH
+            || mappingInfo.mappingType == MOUSE_RIGHT_KEY_CLICK_TO_TOUCH) {
             mouseBtnKeyMappings[MOUSE_RIGHT_BUTTON_KEYCODE] = mappingInfo;
-            isMonitorMouseMove = true;
-        } else if (mappingInfo.mappingType == MOUSE_RIGHT_KEY_CLICK_TO_TOUCH) {
-            mouseBtnKeyMappings[MOUSE_RIGHT_BUTTON_KEYCODE] = mappingInfo;
+            isMonitorMouse = true;
         } else if (mappingInfo.mappingType == MOUSE_LEFT_FIRE_TO_TOUCH) {
             mouseBtnKeyMappings[MOUSE_LEFT_BUTTON_KEYCODE] = mappingInfo;
+            isMonitorMouse = true;
         } else if (mappingInfo.mappingType == SKILL_KEY_TO_TOUCH
             || mappingInfo.mappingType == CROSSHAIR_KEY_TO_TOUCH
             || mappingInfo.mappingType == OBSERVATION_KEY_TO_TOUCH) {
             singleKeyMappings[mappingInfo.keyCode] = mappingInfo;
-            isMonitorMouseMove = true;
+            isMonitorMouse = true;
         } else if (mappingInfo.mappingType == SINGE_KEY_TO_TOUCH) {
             singleKeyMappings[mappingInfo.keyCode] = mappingInfo;
         } else {

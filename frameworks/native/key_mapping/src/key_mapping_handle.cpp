@@ -25,6 +25,7 @@ namespace OHOS {
 namespace GameController {
 namespace {
 const int32_t KEYCODE_OPEN_TEMP_FOR_HOVER_TOUCH_CONTROLLER = 3107;
+const int32_t KEY_NUMBER_OPEN_TEMPLATE_BY_KEYBOARD = 3;
 }
 
 KeyMappingHandle::KeyMappingHandle()
@@ -64,6 +65,11 @@ void KeyMappingHandle::SetSupportKeyMapping(bool isSupportKeyMapping)
     isSupportKeyMapping_ = isSupportKeyMapping;
 }
 
+void KeyMappingHandle::SetIsPC(bool isPCDevice)
+{
+    isPc_ = isPCDevice;
+}
+
 bool KeyMappingHandle::IsNotifyOpenTemplateConfigPage(const std::shared_ptr<MMI::KeyEvent> &keyEvent,
                                                       const DeviceInfo &deviceInfo)
 {
@@ -72,6 +78,9 @@ bool KeyMappingHandle::IsNotifyOpenTemplateConfigPage(const std::shared_ptr<MMI:
     if (isOpenTemplateValidHandlerMap_.find(deviceType) != isOpenTemplateValidHandlerMap_.end()) {
         return (this->*isOpenTemplateValidHandlerMap_[deviceType])(keyEvent, deviceInfo);
     } else {
+        if (IsFullKeyboard(deviceInfo)) {
+            return (this->*isOpenTemplateValidHandlerMap_[GAME_KEY_BOARD])(keyEvent, deviceInfo);
+        }
         return false;
     }
 }
@@ -80,7 +89,7 @@ bool KeyMappingHandle::OpenTemplateByHoverTouchPad(const std::shared_ptr<MMI::Ke
                                                    const DeviceInfo &deviceInfo)
 {
     if (keyEvent->GetKeyCode() == KEYCODE_OPEN_TEMP_FOR_HOVER_TOUCH_CONTROLLER) {
-        HILOGI("Open template config page by HoverTouchPad is valid.");
+        HILOGI("Open template config page by HoverTouchPad.");
         DelayedSingleton<KeyMappingService>::GetInstance()->BroadcastOpenTemplateConfig(deviceInfo);
         return true;
     } else {
@@ -91,10 +100,6 @@ bool KeyMappingHandle::OpenTemplateByHoverTouchPad(const std::shared_ptr<MMI::Ke
 bool KeyMappingHandle::OpenTemplateByKeyBoard(const std::shared_ptr<MMI::KeyEvent> &keyEvent,
                                               const DeviceInfo &deviceInfo)
 {
-    if (keyEvent->GetKeyCode() != MMI::KeyEvent::KEYCODE_P) {
-        return false;
-    }
-
     std::unordered_map<int32_t, MMI::KeyEvent::KeyItem> currentItemsMap;
 
     std::vector<MMI::KeyEvent::KeyItem> keyItems = keyEvent->GetKeyItems();
@@ -107,19 +112,23 @@ bool KeyMappingHandle::OpenTemplateByKeyBoard(const std::shared_ptr<MMI::KeyEven
         currentItemsMap.insert({keyItem.GetKeyCode(), keyItem});
     }
 
-    // Return true only when Q,W,P each occur sequentially.
-    if (currentItemsMap.find(MMI::KeyEvent::KEYCODE_Q) != currentItemsMap.end() &&
-        currentItemsMap.find(MMI::KeyEvent::KEYCODE_W) != currentItemsMap.end() &&
-        currentItemsMap.find(MMI::KeyEvent::KEYCODE_P) != currentItemsMap.end()) {
-        if (currentItemsMap[MMI::KeyEvent::KEYCODE_Q].GetDownTime() <=
-            currentItemsMap[MMI::KeyEvent::KEYCODE_W].GetDownTime() <=
-            currentItemsMap[MMI::KeyEvent::KEYCODE_P].GetDownTime()) {
-            HILOGI("Open template config page by KeyBoard is valid.");
-            DelayedSingleton<KeyMappingService>::GetInstance()->BroadcastOpenTemplateConfig(deviceInfo);
-            return true;
-        }
+    // Return true only when CTRL+SHIFT+I are pressed.
+    if (currentItemsMap.size() == KEY_NUMBER_OPEN_TEMPLATE_BY_KEYBOARD &&
+        (currentItemsMap.find(MMI::KeyEvent::KEYCODE_CTRL_LEFT) != currentItemsMap.end() ||
+            currentItemsMap.find(MMI::KeyEvent::KEYCODE_CTRL_RIGHT) != currentItemsMap.end()) &&
+        (currentItemsMap.find(MMI::KeyEvent::KEYCODE_SHIFT_LEFT) != currentItemsMap.end() ||
+            currentItemsMap.find(MMI::KeyEvent::KEYCODE_SHIFT_RIGHT) != currentItemsMap.end()) &&
+        currentItemsMap.find(MMI::KeyEvent::KEYCODE_I) != currentItemsMap.end()) {
+        HILOGI("Open template config page by KeyBoard is valid.");
+        DelayedSingleton<KeyMappingService>::GetInstance()->BroadcastOpenTemplateConfig(deviceInfo);
+        return true;
     }
     return false;
+}
+
+bool KeyMappingHandle::IsFullKeyboard(const DeviceInfo &deviceInfo)
+{
+    return deviceInfo.deviceType == DeviceTypeEnum::UNKNOWN && deviceInfo.hasFullKeyBoard;
 }
 }
 }

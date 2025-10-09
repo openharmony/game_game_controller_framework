@@ -20,6 +20,7 @@
 #include <vector>
 #include <unordered_set>
 #include <parcel.h>
+#include <unordered_map>
 
 namespace OHOS {
 namespace GameController {
@@ -226,12 +227,15 @@ struct DeviceInfo : public Parcelable {
     std::unordered_set<int32_t> ids;
     std::unordered_set<std::string> names;
     std::unordered_set<InputSourceTypeEnum> sourceTypeSet;
+    std::unordered_map<int32_t, std::unordered_set<InputSourceTypeEnum>> idSourceTypeMap;
     int64_t onlineTime;
     int32_t status; // 0-online;1-offline
 
     std::string vidPid;
 
     std::string anonymizationUniq;
+
+    bool hasFullKeyBoard;
 
     bool Marshalling(Parcel &parcel) const
     {
@@ -400,6 +404,8 @@ struct DeviceInfo : public Parcelable {
             tmp.append(std::to_string(sourceType));
             tmp.append("|");
         }
+        tmp.append(", onlineTime:" + std::to_string(onlineTime));
+        tmp.append(", hasFullKeyBoard:" + std::to_string(hasFullKeyBoard));
         return tmp;
     }
 

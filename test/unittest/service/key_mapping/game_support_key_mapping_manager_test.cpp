@@ -36,7 +36,7 @@ using json = nlohmann::json;
 namespace OHOS {
 namespace GameController {
 namespace {
-const size_t MAX_CONFIG_NUM = 200;
+const size_t MAX_CONFIG_NUM = 2000;
 }
 class GameSupportKeyMappingManagerTest : public testing::Test {
 public:

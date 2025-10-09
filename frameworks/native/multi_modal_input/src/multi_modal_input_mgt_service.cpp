@@ -42,7 +42,6 @@ const int32_t OPR_TYPE_GET_ALL_DEVICES = 0;
  */
 const int32_t OPR_TYPE_DEVICE_ONLINE = 1;
 
-const int32_t TIME_CONVERSION_UNIT = 1000;
 }
 
 MultiModalInputMgtService::MultiModalInputMgtService()
@@ -61,7 +60,7 @@ void MultiModalInputMgtService::GetAllDeviceInfosWhenRegisterDeviceMonitor()
 {
     bool isNeedGetAllDeviceInfos = false;
     {
-        std::lock_guard<std::mutex> lock(deviceChangeEventMutex_);
+        std::lock_guard<ffrt::mutex> lock(deviceChangeEventMutex_);
         if (deviceInfoByUniqMap_.empty()) {
             isNeedGetAllDeviceInfos = true;
         } else {
@@ -77,7 +76,7 @@ void MultiModalInputMgtService::GetAllDeviceInfosWhenRegisterDeviceMonitor()
 
 std::pair<int32_t, std::vector<DeviceInfo>> MultiModalInputMgtService::GetAllDeviceInfos()
 {
-    std::lock_guard<std::mutex> lock(deviceChangeEventMutex_);
+    std::lock_guard<ffrt::mutex> lock(deviceChangeEventMutex_);
     std::pair<int32_t, std::vector<DeviceInfo>> result;
     std::pair<int32_t, std::vector<InputDeviceInfo>> inputDeviceInfosPair =
         DelayedSingleton<DeviceInfoService>::GetInstance()->GetAllDeviceInfos();
@@ -131,7 +130,7 @@ void MultiModalInputMgtService::DoDeviceEventCallback(const DeviceInfo &deviceIn
 
 DeviceInfo MultiModalInputMgtService::GetDeviceInfo(const int32_t deviceId)
 {
-    std::lock_guard<std::mutex> lock(deviceChangeEventMutex_);
+    std::lock_guard<ffrt::mutex> lock(deviceChangeEventMutex_);
     if (deviceIdUniqMap_.find(deviceId) == deviceIdUniqMap_.end()) {
         HILOGW("[GameController]GetDeviceInfo failed. No Uniq for deviceId[%{public}d]", deviceId);
         return DeviceInfo();
@@ -148,7 +147,7 @@ DeviceInfo MultiModalInputMgtService::GetDeviceInfo(const int32_t deviceId)
 
 DeviceInfo MultiModalInputMgtService::GetDeviceInfoByUniq(const std::string &uniq)
 {
-    std::lock_guard<std::mutex> lock(deviceChangeEventMutex_);
+    std::lock_guard<ffrt::mutex> lock(deviceChangeEventMutex_);
     if (deviceInfoByUniqMap_.find(uniq) == deviceInfoByUniqMap_.end()) {
         return DeviceInfo();
     }
@@ -157,7 +156,7 @@ DeviceInfo MultiModalInputMgtService::GetDeviceInfoByUniq(const std::string &uni
 
 void MultiModalInputMgtService::DelayHandleDeviceChangeEvent(const DeviceChangeEvent &deviceChangeEvent)
 {
-    std::lock_guard<std::mutex> lock(deviceChangeEventMutex_);
+    std::lock_guard<ffrt::mutex> lock(deviceChangeEventMutex_);
     deviceChangeEventCache_.push_back(deviceChangeEvent);
 
     if (needStartDelayHandle_) {
@@ -177,7 +176,7 @@ void MultiModalInputMgtService::DelayHandleDeviceChangeEvent(const DeviceChangeE
 
 void MultiModalInputMgtService::HandleDeviceChangeEvent()
 {
-    std::lock_guard<std::mutex> lock(deviceChangeEventMutex_);
+    std::lock_guard<ffrt::mutex> lock(deviceChangeEventMutex_);
     std::unordered_map<int32_t, std::string> tempDeviceIdUniqMap;
     std::unordered_map<std::string, DeviceInfo> tempDeviceInfoByUniqMap;
     for (auto deviceChangeEvent: deviceChangeEventCache_) {
@@ -233,22 +232,7 @@ void MultiModalInputMgtService::HandleDeviceRemoveEvent(
         return;
     }
 
-    std::string uniq = deviceIdUniqMap_[deviceId];
-    ClearDeviceIdUniqMapByDeviceId(deviceId);
-    if (deviceInfoByUniqMap_.find(uniq) == deviceInfoByUniqMap_.end()) {
-        HILOGW("[GameController]Discard DeviceOfflineEvent. Because no deviceInfo. "
-               "deviceId is %{public}d, uniq is %{public}s", deviceId, StringUtils::AnonymizationUniq(uniq).c_str());
-        return;
-    }
-    DeviceInfo deviceInfo = deviceInfoByUniqMap_[uniq];
-    for (auto id: deviceInfo.ids) {
-        // Delete other device IDs associated with the device.
-        ClearDeviceIdUniqMapByDeviceId(id);
-    }
-    deviceInfoByUniqMap_.erase(uniq);
-    HILOGI("[GameController][HandleDeviceRemoveEvent]DeviceOfflineEvent. DeviceInfo is %{public}s",
-           deviceInfo.GetDeviceInfoDesc().c_str());
-    DoDeviceEventCallback(deviceInfo, DeviceChangeType::REMOVE);
+    ClearOfflineDeviceAndBroadcast(deviceId);
 }
 
 void MultiModalInputMgtService::HandleDeviceAddEvent(
@@ -317,6 +301,7 @@ void MultiModalInputMgtService::HandleInputDeviceInfo(
         for (auto &sourceType: inputDeviceInfo.sourceTypeSet) {
             deviceInfo.sourceTypeSet.insert(sourceType);
         }
+        deviceInfo.idSourceTypeMap[inputDeviceInfo.id] = inputDeviceInfo.sourceTypeSet;
         tempDeviceInfoByUniqMap[inputDeviceInfo.uniq] = deviceInfo;
     } else {
         DeviceInfo deviceInfo = tempDeviceInfoByUniqMap[inputDeviceInfo.uniq];
@@ -326,6 +311,7 @@ void MultiModalInputMgtService::HandleInputDeviceInfo(
         for (auto &sourceType: inputDeviceInfo.sourceTypeSet) {
             deviceInfo.sourceTypeSet.insert(sourceType);
         }
+        deviceInfo.idSourceTypeMap[inputDeviceInfo.id] = inputDeviceInfo.sourceTypeSet;
         tempDeviceInfoByUniqMap[inputDeviceInfo.uniq] = deviceInfo;
     }
 }
@@ -352,7 +338,7 @@ void MultiModalInputMgtService::IdentifyDeviceType(
         if (deviceInfoByUniqMap_.find(deviceInfo.uniq) == deviceInfoByUniqMap_.end()) {
             // The local cache does not exist. The online event needs to be sent.
             isNeedNotify = true;
-            deviceInfo.onlineTime = GetSysClockTime();
+            deviceInfo.onlineTime = StringUtils::GetSysClockTime();
         } else {
             if (deviceInfoByUniqMap_[deviceInfo.uniq].deviceType == deviceInfo.deviceType) {
                 isNeedNotify = false;
@@ -372,7 +358,7 @@ void MultiModalInputMgtService::IdentifyDeviceType(
         if (isNeedNotify) {
             HILOGI("[GameController]DeviceOnlineEvent. oprType is %{public}d, deviceInfo is %{public}s",
                    oprType, deviceInfo.GetDeviceInfoDesc().c_str());
-            DelayedSingleton<KeyMappingService>::GetInstance()->GetGameKeyMappingFromSa(deviceInfo, true);
+            DelayedSingleton<KeyMappingService>::GetInstance()->BroadCastDeviceInfo(deviceInfo);
             DoDeviceEventCallback(deviceInfo, ADD);
         }
     }
@@ -409,14 +395,30 @@ void MultiModalInputMgtService::ClearAllDeviceIdUniqMap()
     DelayedSingleton<WindowInputIntercept>::GetInstance()->UnRegisterAllWindowInputIntercept();
 }
 
-int64_t MultiModalInputMgtService::GetSysClockTime()
+void MultiModalInputMgtService::ClearOfflineDeviceAndBroadcast(const int32_t deviceId)
 {
-    struct timespec ts = {0, 0};
-    if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) {
-        HILOGE("clock_gettime failed:%{public}d", errno);
-        return 0;
+    std::string uniq = deviceIdUniqMap_[deviceId];
+    ClearDeviceIdUniqMapByDeviceId(deviceId);
+    if (deviceInfoByUniqMap_.find(uniq) == deviceInfoByUniqMap_.end()) {
+        HILOGW("[GameController]Discard DeviceOfflineEvent. Because no deviceInfo. "
+               "deviceId is %{public}d, uniq is %{public}s", deviceId, StringUtils::AnonymizationUniq(uniq).c_str());
+        return;
     }
-    return (ts.tv_sec * TIME_CONVERSION_UNIT * TIME_CONVERSION_UNIT) + (ts.tv_nsec / TIME_CONVERSION_UNIT);
+    DeviceInfo deviceInfo = deviceInfoByUniqMap_[uniq];
+    for (auto id: deviceInfo.ids) {
+        // Delete other device IDs associated with the device.
+        ClearDeviceIdUniqMapByDeviceId(id);
+    }
+    deviceInfoByUniqMap_.erase(uniq);
+    HILOGI("[GameController][ClearOfflineDeviceAndBroadcast]DeviceOfflineEvent. DeviceInfo is %{public}s",
+           deviceInfo.GetDeviceInfoDesc().c_str());
+    deviceInfo.status = 1;
+
+    // Broadcast device offline
+    DelayedSingleton<KeyMappingService>::GetInstance()->BroadCastDeviceInfo(deviceInfo);
+
+    DoDeviceEventCallback(deviceInfo, DeviceChangeType::REMOVE);
 }
+
 }
 }

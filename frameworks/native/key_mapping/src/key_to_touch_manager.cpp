@@ -69,11 +69,12 @@ bool KeyToTouchManager::DispatchKeyEvent(const std::shared_ptr<MMI::KeyEvent> &k
     }
 
     if (keyEvent->GetKeyAction() != KeyEvent::KEY_ACTION_DOWN
-        && keyEvent->GetKeyAction() != KeyEvent::KEY_ACTION_UP) {
+        && keyEvent->GetKeyAction() != KeyEvent::KEY_ACTION_UP
+        && keyEvent->GetKeyAction() != KeyEvent::KEY_ACTION_CANCEL) {
         return false;
     }
 
-    std::lock_guard<std::mutex> lock(checkMutex_);
+    std::lock_guard<ffrt::mutex> lock(checkMutex_);
     if (!IsCanEnableKeyMapping()) {
         return false;
     }
@@ -125,7 +126,7 @@ bool KeyToTouchManager::DispatchPointerEvent(const std::shared_ptr<MMI::PointerE
         return false;
     }
 
-    std::lock_guard<std::mutex> lock(checkMutex_);
+    std::lock_guard<ffrt::mutex> lock(checkMutex_);
     if (!IsCanEnableKeyMapping()) {
         return false;
     }
@@ -235,6 +236,7 @@ void KeyToTouchManager::UpdateContextWindowInfo(const std::shared_ptr<InputToTou
 void KeyToTouchManager::InitGcKeyboardContext(const std::vector<KeyToTouchMappingInfo> &mappingInfos)
 {
     if (gcKeyboardContext_ != nullptr) {
+        DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->StopTask();
         ReleaseContext(gcKeyboardContext_);
     }
     gcKeyboardContext_ = std::make_shared<InputToTouchContext>(GAME_KEY_BOARD,
@@ -281,14 +283,15 @@ void KeyToTouchManager::ReleaseContext(const std::shared_ptr<InputToTouchContext
         }
     }
     if (inputToTouchContext->isEnterCrosshairInfo) {
-        // if it's crosshair status, show the mouse pointer
-        InputManager::GetInstance()->SetPointerVisible(true, 0);
+        if (mappingHandler_.find(MappingTypeEnum::CROSSHAIR_KEY_TO_TOUCH) != mappingHandler_.end()) {
+            mappingHandler_[MappingTypeEnum::CROSSHAIR_KEY_TO_TOUCH]->ExitCrosshairKeyStatus();
+        }
     }
 }
 
 void KeyToTouchManager::ResetMonitor()
 {
-    std::lock_guard<std::mutex> lock(checkMutex_);
+    std::lock_guard<ffrt::mutex> lock(checkMutex_);
     allMonitorKeys_.clear();
     isMonitorMouse_ = false;
     ResetAllMonitorKeysAndMouseMonitor(gcKeyboardContext_);
@@ -301,7 +304,7 @@ void KeyToTouchManager::ResetAllMonitorKeysAndMouseMonitor(const std::shared_ptr
         return;
     }
 
-    if (context->isMonitorMouseMove) {
+    if (context->isMonitorMouse) {
         isMonitorMouse_ = true;
     }
     AddToMonitorKeys(context->deviceType, context->singleKeyMappings);
@@ -340,7 +343,7 @@ bool KeyToTouchManager::GetMappingInfoByKeyCode(const std::shared_ptr<InputToTou
 {
     if (keyEvent->GetKeyAction() == KeyEvent::KEY_ACTION_DOWN) {
         return GetMappingInfoByKeyCodeWhenKeyDown(context, keyEvent, deviceInfo, keyToTouchMappingInfo);
-    } else if (keyEvent->GetKeyAction() == KeyEvent::KEY_ACTION_UP) {
+    } else if (BaseKeyToTouchHandler::IsKeyUpEvent(keyEvent)) {
         return GetMappingInfoByKeyCodeWhenKeyUp(context, keyEvent, keyToTouchMappingInfo);
     } else {
         HILOGE("unknown KeyAction [%{public}d].", keyEvent->GetKeyAction());
@@ -483,35 +486,35 @@ bool KeyToTouchManager::IsHandleMouseMove(std::shared_ptr<InputToTouchContext> &
         return false;
     }
 
+    bool isNeedHandle = false;
     if (context->isSkillOperating) {
         mappingHandler_[SKILL_KEY_TO_TOUCH]->HandlePointerEvent(context, pointerEvent,
                                                                 context->currentSkillKeyInfo);
-        return true;
+        isNeedHandle = true;
     }
 
     if (context->isCrosshairMode) {
         if (context->isEnterCrosshairInfo) {
             ExecuteHandle(context, context->currentCrosshairInfo, pointerEvent);
+            isNeedHandle = true;
         }
-        return true;
     }
 
     if (context->IsMouseRightWalking()) {
         if (context->mouseBtnKeyMappings.find(MOUSE_RIGHT_BUTTON_KEYCODE) != context->mouseBtnKeyMappings.end()) {
             ExecuteHandle(context, context->mouseBtnKeyMappings[MOUSE_RIGHT_BUTTON_KEYCODE],
                           pointerEvent);
-            return true;
+            isNeedHandle = true;
         }
-        return false;
     }
 
     if (context->isPerspectiveObserving &&
         (context->currentPerspectiveObserving.mappingType == OBSERVATION_KEY_TO_TOUCH ||
             context->currentPerspectiveObserving.mappingType == MOUSE_OBSERVATION_TO_TOUCH)) {
         ExecuteHandle(context, context->currentPerspectiveObserving, pointerEvent);
-        return true;
+        isNeedHandle = true;
     }
-    return false;
+    return isNeedHandle;
 }
 
 bool KeyToTouchManager::IsHandleMouseRightButtonEvent(std::shared_ptr<InputToTouchContext> &context,
@@ -552,7 +555,7 @@ void KeyToTouchManager::EnableKeyMapping(bool isEnable)
 
 void KeyToTouchManager::HandleEnableKeyMapping(bool isEnable)
 {
-    std::lock_guard<std::mutex> lock(checkMutex_);
+    std::lock_guard<ffrt::mutex> lock(checkMutex_);
     isEnableKeyMapping_ = isEnable;
     HILOGI("EnableKeyMapping([%{public}d]). 1 is enable", isEnable ? 1 : 0);
     ResetContext(gcKeyboardContext_);

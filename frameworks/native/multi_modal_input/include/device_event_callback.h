@@ -53,7 +53,7 @@ private:
     /**
      * Device event callback lock
      */
-    std::mutex deviceEventCallbackMute_;
+    ffrt::mutex deviceEventCallbackMute_;
 
     /**
      * Cache for device event callback methods

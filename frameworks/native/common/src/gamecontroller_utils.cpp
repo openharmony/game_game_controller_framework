@@ -28,6 +28,7 @@ namespace {
 const char DEVICE_DELIMITER = ':';
 const int32_t START_IDX = 2;
 const int32_t END_IDX = 3;
+const int32_t TIME_CONVERSION_UNIT = 1000;
 }
 
 int32_t StringUtils::ConvertToCharPtrArray(const std::string &string, char** result)
@@ -73,6 +74,16 @@ std::string StringUtils::AnonymizationUniq(const std::string &uniq)
         }
     }
     return temp;
+}
+
+int64_t StringUtils::GetSysClockTime()
+{
+    struct timespec ts = {0, 0};
+    if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) {
+        HILOGE("clock_gettime failed:%{public}d", errno);
+        return 0;
+    }
+    return (ts.tv_sec * TIME_CONVERSION_UNIT * TIME_CONVERSION_UNIT) + (ts.tv_nsec / TIME_CONVERSION_UNIT);
 }
 }
 }

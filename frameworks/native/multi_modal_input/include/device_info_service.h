@@ -112,16 +112,28 @@ public:
     virtual std::pair<int32_t, InputDeviceInfo> GetInputDeviceInfo(int32_t deviceId);
 
     /**
+     * Get the keyboard type
+     * @return first indicates the query result, and second indicates the keyboard type.
+     */
+    virtual std::pair<int32_t, int32_t> GetKeyBoardType(int32_t id);
+
+    /**
      * Setting the current device information
      * @param inputDevice Device Information
      */
-    void GetInputDeviceInfoCallback(std::shared_ptr<InputDevice> inputDevice);
+    void HandleInputDeviceInfoCallback(std::shared_ptr<InputDevice> inputDevice);
 
     /**
      * Callback for querying all device IDs
      * @param deviceIds All device IDs
      */
-    void GetAllDeviceInfosCallback(std::vector<int32_t> &deviceIds);
+    void HandleAllDeviceIdsCallback(std::vector<int32_t> &deviceIds);
+
+    /**
+     * Callback for querying all device IDs
+     * @param deviceIds All device IDs
+     */
+    void HandleKeyBoardTypeCallback(int32_t keyboardType);
 
 private:
     /**
@@ -165,6 +177,8 @@ private:
      * Query result of all device IDs
      */
     std::vector<int32_t> deviceIds_;
+
+    int32_t keyboardType_{0};
 };
 }
 }

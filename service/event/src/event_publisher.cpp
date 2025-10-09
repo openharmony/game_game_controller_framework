@@ -34,6 +34,7 @@ constexpr char* EVENT_PARAM_DEVICE_TYPE = "deviceType";
 constexpr char* EVENT_PARAM_DEVICE_STATUS = "deviceStatus";
 constexpr char* EVENT_PARAM_DEVICE_NAME = "deviceName";
 constexpr char* EVENT_PARAM_GAME_PID = "gamePid";
+constexpr char* EVENT_PARAM_ENABLE = "enable";
 
 const int32_t ALL_SUBSCRIBER_TYPE = 0;
 const int32_t SYSTEM_SUBSCRIBER_TYPE = 1;
@@ -148,6 +149,7 @@ int32_t EventPublisher::SendEnableGameKeyMappingNotify(const GameInfo &gameInfo,
     want.SetAction(COMMON_EVENT_GAME_KEY_MAPPING_ENABLE);
     want.SetBundle(gameInfo.bundleName);
     want.SetParam(EVENT_PARAM_BUNDLE_NAME, gameInfo.bundleName);
+    want.SetParam(EVENT_PARAM_ENABLE, isEnable ? 1 : 0);
     EventFwk::CommonEventData event;
     event.SetWant(want);
     HILOGI("[PUB]SendEnableGameKeyMappingNotify, bundle[%{public}s], isEnable[%{public}d].",

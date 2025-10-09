@@ -18,6 +18,7 @@
 #include "gamecontroller_server_client.h"
 #include "gamecontroller_log.h"
 #include "key_to_touch_manager.h"
+#include "gamecontroller_utils.h"
 #include <unistd.h>
 #include <fstream>
 #include <cstdlib>
@@ -25,6 +26,7 @@
 #include <sys/stat.h>
 #include <filesystem>
 #include <dirent.h>
+#include <input_manager.h>
 
 using json = nlohmann::json;
 namespace OHOS {
@@ -34,6 +36,7 @@ const std::string SUPPORT_KEYMAPPING_CFG = "/data/service/el1/public/for-all-app
 constexpr const char* CONFIG_FILE = "game_support_key_mapping.json";
 constexpr const char* FIELD_BUNDLE_NAME = "bundleName";
 constexpr const char* FIELD_VERSION = "version";
+const int32_t ALPHABETIC_KEYBOARD_TYPE = 2; // Full keyboard
 }
 
 KeyMappingSupportConfig::KeyMappingSupportConfig(const json &jsonObj)
@@ -62,7 +65,7 @@ bool KeyMappingService::IsSupportGameKeyMapping(const std::string &bundleName, c
         isSupportGameKeyMapping_ = false;
         return false;
     }
-    std::lock_guard<std::mutex> lock(isSupportGameKeyMappingMutex_);
+
     bundleName_ = bundleName;
     bundleVersion_ = version;
     isSupportGameKeyMapping_ = false;
@@ -91,45 +94,59 @@ bool KeyMappingService::IsSupportGameKeyMapping(const std::string &bundleName, c
     return false;
 }
 
-void KeyMappingService::GetGameKeyMappingFromSa(const DeviceInfo &deviceInfo, bool isBroadCastDeviceInfo)
+void KeyMappingService::BroadCastDeviceInfo(const DeviceInfo &deviceInfo)
 {
-    if (isSupportGameKeyMapping_) {
-        if (deviceInfo.deviceType == DeviceTypeEnum::GAME_MOUSE || deviceInfo.deviceType == DeviceTypeEnum::UNKNOWN) {
-            HILOGI("[GetGameKeyMappingFromSa] Device type is [%{public}s]. No key-mapping and broadcast. ",
-                   std::to_string(deviceInfo.deviceType).c_str());
+    if (!isSupportGameKeyMapping_) {
+        return;
+    }
+    if (deviceInfo.deviceType == DeviceTypeEnum::GAME_MOUSE) {
+        HILOGI("[BroadCastDeviceInfo] Device type is [%{public}d]. No key-mapping and broadcast. ",
+               deviceInfo.deviceType);
+        return;
+    }
+    DeviceInfo tempDeviceInfo = deviceInfo;
+    if (deviceInfo.deviceType == DeviceTypeEnum::UNKNOWN) {
+        if (deviceInfo.hasFullKeyBoard) {
+            tempDeviceInfo.deviceType = GAME_KEY_BOARD;
+        } else {
             return;
         }
-        handleQueue_->submit([deviceInfo, isBroadCastDeviceInfo, this] {
-            ExecuteGetGameKeyMapping(deviceInfo);
-            if (isBroadCastDeviceInfo) {
-                ExecuteBroadCastDeviceInfo(deviceInfo);
-            }
-        });
     }
+
+    handleQueue_->submit([tempDeviceInfo, this] {
+        if (tempDeviceInfo.status == 0) {
+            // Device online
+            if (loadTemplateCache_.count(tempDeviceInfo.deviceType) == 0 ||
+                !loadTemplateCache_.at(tempDeviceInfo.deviceType)) {
+                ExecuteGetGameKeyMapping(tempDeviceInfo.deviceType);
+            } else {
+                HILOGI("deviceType[%{public}d] has loaded key-mapping", tempDeviceInfo.deviceType);
+            }
+        }
+        ExecuteBroadCastDeviceInfo(tempDeviceInfo);
+    });
 }
 
-void KeyMappingService::ExecuteGetGameKeyMapping(const DeviceInfo &deviceInfo)
+void KeyMappingService::ExecuteGetGameKeyMapping(const DeviceTypeEnum deviceType)
 {
-    std::lock_guard<std::mutex> lock(isSupportGameKeyMappingMutex_);
     GetGameKeyMappingInfoParam param;
     param.bundleName = bundleName_;
-    param.deviceType = deviceInfo.deviceType;
+    param.deviceType = deviceType;
     GameKeyMappingInfo gameKeyMappingInfo;
-    HILOGI("GetGameKeyMapping. uniq[%{public}s]", deviceInfo.anonymizationUniq.c_str());
     int32_t result = DelayedSingleton<GameControllerServerClient>::GetInstance()->
         GetGameKeyMappingConfig(param, gameKeyMappingInfo);
     if (result == GAME_CONTROLLER_SUCCESS) {
+        loadTemplateCache_[deviceType] = true;
+        std::vector<KeyToTouchMappingInfo> mappingInfos;
         if (gameKeyMappingInfo.customKeyToTouchMappings.empty() &&
             gameKeyMappingInfo.defaultKeyToTouchMappings.empty()) {
-            HILOGW("deviceType[%{public}s] doesn't have key-mapping config",
-                   std::to_string(deviceInfo.deviceType).c_str());
+            HILOGI("deviceType[%{public}d] doesn't have key-mapping config", deviceType);
+            DelayedSingleton<KeyToTouchManager>::GetInstance()->UpdateTemplateConfig(deviceType,
+                                                                                     mappingInfos);
             return;
         }
 
-        HILOGI("deviceType[%{public}s] has key-mapping config",
-               std::to_string(deviceInfo.deviceType).c_str());
-
-        std::vector<KeyToTouchMappingInfo> mappingInfos;
+        HILOGI("deviceType[%{public}d] has key-mapping config", deviceType);
         if (gameKeyMappingInfo.customKeyToTouchMappings.empty()) {
             if (!gameKeyMappingInfo.defaultKeyToTouchMappings.empty()) {
                 mappingInfos = gameKeyMappingInfo.defaultKeyToTouchMappings;
@@ -138,12 +155,12 @@ void KeyMappingService::ExecuteGetGameKeyMapping(const DeviceInfo &deviceInfo)
             mappingInfos = gameKeyMappingInfo.customKeyToTouchMappings;
         }
 
-        DelayedSingleton<KeyToTouchManager>::GetInstance()->UpdateTemplateConfig(deviceInfo.deviceType,
+        DelayedSingleton<KeyToTouchManager>::GetInstance()->UpdateTemplateConfig(deviceType,
                                                                                  mappingInfos);
         return;
     }
-    HILOGE("GetGameKeyMapping failed. deviceType[%{public}s]. result [%{private}d]",
-           std::to_string(deviceInfo.deviceType).c_str(), result);
+    HILOGE("GetGameKeyMapping failed. deviceType[%{public}d]. result [%{private}d]",
+           deviceType, result);
 }
 
 void KeyMappingService::ExecuteBroadCastDeviceInfo(const DeviceInfo &deviceInfo)
@@ -207,5 +224,13 @@ std::pair<bool, nlohmann::json> KeyMappingService::ReadJsonFromFile(const std::s
     ifs.close();
     return std::make_pair(true, content);
 }
+
+void KeyMappingService::UpdateGameKeyMappingWhenTemplateChange(DeviceTypeEnum deviceType)
+{
+    handleQueue_->submit([deviceType, this] {
+        ExecuteGetGameKeyMapping(deviceType);
+    });
+}
+
 }
 }

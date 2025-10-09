@@ -17,10 +17,79 @@
 #define GAME_CONTROLLER_FRAMEWORK_SINGLE_KEYBOARD_OBSERVATION_TO_TOUCH_HANDLER_H
 
 #include <mutex>
+#include <singleton.h>
+#include <cpp/queue.h>
 #include "key_to_touch_handler.h"
+#include "ffrt.h"
 
 namespace OHOS {
 namespace GameController {
+class KeyboardObservationToTouchHandlerTask
+    : public DelayedSingleton<KeyboardObservationToTouchHandlerTask>, BaseKeyToTouchHandler {
+DECLARE_DELAYED_SINGLETON(KeyboardObservationToTouchHandlerTask)
+
+public:
+    /**
+     * Start task to send the move pointer
+     */
+    void StartTaskByInterval();
+
+    /**
+     * Stop task
+     */
+    void StopTask();
+
+    /**
+     * Update the information of task
+     * @param currentKeyCode current pressed keycode
+     * @param context InputToTouchContext
+     * @param currentKeyType DpadKeyTypeEnum
+     * @param dpadKeys the current pressed keys information of dpad
+     */
+    void UpdateTaskInfo(int32_t currentKeyCode,
+                        std::shared_ptr<InputToTouchContext> &context,
+                        const DpadKeyTypeEnum currentKeyType,
+                        std::vector<DpadKeyItem> &dpadKeys);
+
+private:
+    void PutTaskToDelayQueue();
+
+    /**
+     * Run the task
+     */
+    void RunTask();
+
+    bool IsValidTask();
+
+    /**
+     * Compute and send the move pointer.
+     */
+    void ComputeAndSendMovePointer();
+
+    /**
+     * Compute the target point
+     * @param context InputToTouchContext
+     * @param lastMovePoint the last move point
+     * @param currentKeyType current pressed keyType
+     * @param targetPoint the target point
+     */
+    void ComputeTargetPoint(std::shared_ptr<InputToTouchContext> &context,
+                            const PointerEvent::PointerItem &lastMovePoint,
+                            const DpadKeyTypeEnum currentKeyType,
+                            Point &targetPoint);
+
+private:
+    ffrt::mutex taskLock_;
+    std::unique_ptr<ffrt::queue> taskQueue_{nullptr};
+    ffrt::task_handle curTaskHandler_;
+    bool taskIsStarting_{false};
+    std::shared_ptr<InputToTouchContext> context_{nullptr};
+    std::vector<DpadKeyItem> dpadKeys_;
+    DpadKeyTypeEnum currentDpadKeyType_{DPAD_KEYTYPE_UNKNOWN};
+    int32_t currentKeyCode_{0};
+    std::unordered_set<std::string> validCombinationKeys_;
+};
+
 class KeyboardObservationToTouchHandler : public BaseKeyToTouchHandler {
 public:
     KeyboardObservationToTouchHandler();
@@ -46,19 +115,10 @@ private:
                      std::shared_ptr<InputToTouchContext> &context,
                      std::vector<DpadKeyItem> &dpadKeys);
 
-    void ContinueObserving(std::shared_ptr<InputToTouchContext> &context,
-                           const std::shared_ptr<MMI::KeyEvent> &keyEvent,
-                           const int32_t currentKeyCode,
-                           const DpadKeyTypeEnum currentKeyType,
-                           std::vector<DpadKeyItem> &dpadKeys);
-
-    void ComputeTargetPoint(std::shared_ptr<InputToTouchContext> &context,
-                            const PointerEvent::PointerItem &lastMovePoint,
-                            const DpadKeyTypeEnum currentKeyType,
-                            Point &targetPoint);
-
-private:
-    std::unordered_set<std::string> validCombinationKeys_;
+    void UpdateTaskInfo(std::shared_ptr<InputToTouchContext> &context,
+                        int32_t currentKeyCode,
+                        DpadKeyTypeEnum currentKeyType,
+                        std::vector<DpadKeyItem> &dpadKeys);
 };
 }
 }

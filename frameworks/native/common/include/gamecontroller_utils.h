@@ -36,6 +36,12 @@ public:
      * @return **.**.00.00
      */
     static std::string AnonymizationUniq(const std::string &uniq);
+
+    /**
+     * Get system timestamp
+     * @return system timestamp
+     */
+    static int64_t GetSysClockTime();
 };
 }
 }

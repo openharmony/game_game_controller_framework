@@ -40,9 +40,6 @@ constexpr const char* EVENT_PARAM_ENABLE = "enable";
 const int32_t GAME_CONTROLLER_UID = 6227;
 static BundleBasicInfo g_bundleInfo;
 const std::string PC_DEVICE_TYPE = "2in1";
-const int32_t PC_KEYBORAD_VENDOR = 99999;
-const int32_t PC_KEYBORAD_PRODUCT = 99999;
-const std::string PC_KEYBORAD_NAME = "PC_Virtual_Keyboard";
 const int KEY_MAPPING_ENABLE = 1;
 }
 
@@ -102,9 +99,9 @@ void InputToTouchClient::StartInputMonitor()
     DelayedSingleton<MultiModalInputMgtService>::GetInstance()->GetAllDeviceInfosWhenRegisterDeviceMonitor();
     // If it's a PC, simulate the built-in keyboard online.
     if (OHOS::system::GetDeviceType() == PC_DEVICE_TYPE) {
-        HILOGI("PC device excutes embeded keyboard online simulation.");
+        HILOGI("It's pc device.");
         g_bundleInfo.isPC = true;
-        SimulateKeyboardOnlineByPC();
+        DelayedSingleton<KeyMappingHandle>::GetInstance()->SetIsPC(true);
     }
 }
 
@@ -124,21 +121,6 @@ void InputToTouchClient::StartPublicEventMonitor()
     } else {
         HILOGE("SubscribeCommonEvent failed");
     }
-}
-
-void InputToTouchClient::SimulateKeyboardOnlineByPC()
-{
-    // Get game key-mapping and broadcast device info.
-    DeviceInfo virtualKeyboard;
-
-    virtualKeyboard.uniq = std::to_string(PC_KEYBORAD_VENDOR) + "_" + std::to_string(PC_KEYBORAD_PRODUCT);
-    virtualKeyboard.name = PC_KEYBORAD_NAME;
-    virtualKeyboard.product = PC_KEYBORAD_PRODUCT;
-    virtualKeyboard.vendor = PC_KEYBORAD_VENDOR;
-    virtualKeyboard.deviceType = DeviceTypeEnum::GAME_KEY_BOARD;
-    virtualKeyboard.anonymizationUniq = StringUtils::AnonymizationUniq(virtualKeyboard.uniq);
-
-    DelayedSingleton<KeyMappingService>::GetInstance()->GetGameKeyMappingFromSa(virtualKeyboard, true);
 }
 
 void GameCommonEventListener::OnReceiveEvent(const EventFwk::CommonEventData &data)
@@ -163,11 +145,10 @@ void GameCommonEventListener::HandleTemplateChangeEvent(const std::string &bundl
 {
     AAFwk::Want want = data.GetWant();
     int deviceType = want.GetIntParam(EVENT_PARAM_DEVICE_TYPE, 0);
-    DeviceInfo deviceInfo;
-    deviceInfo.deviceType = static_cast<DeviceTypeEnum>(deviceType);
     HILOGI("Get the keymapping info by bundleName:%{public}s, deviceType:%{public}d",
            bundleName.c_str(), deviceType);
-    DelayedSingleton<KeyMappingService>::GetInstance()->GetGameKeyMappingFromSa(deviceInfo, false);
+    DelayedSingleton<KeyMappingService>::GetInstance()->UpdateGameKeyMappingWhenTemplateChange(
+        static_cast<DeviceTypeEnum>(deviceType));
 }
 
 void GameCommonEventListener::HandleKeyMappingEnableChangeEvent(const EventFwk::CommonEventData &data)

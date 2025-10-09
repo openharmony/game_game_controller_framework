@@ -122,7 +122,7 @@ private:
 
 private:
     bool isSupportKeyMapping_{false};
-    std::mutex checkMutex_;
+    ffrt::mutex checkMutex_;
     std::unique_ptr<ffrt::queue> handleQueue_{nullptr};
     std::unordered_map<MappingTypeEnum, std::shared_ptr<BaseKeyToTouchHandler>> mappingHandler_;
     std::shared_ptr<InputToTouchContext> gcKeyboardContext_{nullptr};

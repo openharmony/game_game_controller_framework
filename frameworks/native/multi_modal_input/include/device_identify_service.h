@@ -37,20 +37,7 @@ public:
     virtual std::vector<DeviceInfo> IdentifyDeviceType(const std::vector<DeviceInfo> &deviceInfos);
 
 private:
-    /**
-     * Identifies the device type locally.
-     * @param deviceInfo Device Information
-     * @return Device Type
-     */
-    DeviceTypeEnum IdentifyDeviceTypeByLocal(const DeviceInfo &deviceInfo);
-
-private:
-    /**
-     * Identification result cache
-     * The key is the uniq of the device.
-     * The value is DeviceTypeEnum.
-     */
-    std::unordered_map<std::string, DeviceTypeEnum> identifyResultMap_;
+    bool HasFullKeyboard(const DeviceInfo &deviceInfo);
 };
 }
 }

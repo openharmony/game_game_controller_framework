@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <cstdint>
 #include "dpad_key_to_touch_handler.h"
+#include "ffrt.h"
 
 namespace OHOS {
 namespace GameController {
@@ -29,6 +30,7 @@ const int32_t UP_LEFT_ANGLE = 225;
 const int32_t UP_RIGHT_ANGLE = 315;
 const int32_t DOWN_LEFT_ANGLE = 135;
 const int32_t DOWN_RIGHT_ANGLE = 45;
+const int32_t SLEEP_TIME = 40;
 }
 
 DpadKeyToTouchHandler::DpadKeyToTouchHandler()
@@ -65,6 +67,13 @@ void DpadKeyToTouchHandler::HandleKeyDown(std::shared_ptr<InputToTouchContext> &
     TouchEntity touchEntity = BuildTouchEntity(mappingInfo, WALK_POINT_ID,
                                                PointerEvent::POINTER_ACTION_DOWN, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
+
+    /**
+     * 增加20ms的延迟,解决决胜巅峰中方向盘不固定时，由于第一个DOWN和MOVE间隔太短，
+     * 导致游戏中的第一个手指按下的位置概率变为MOVE的坐标位置
+     */
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
+    MoveByKeyDown(context, keyEvent, mappingInfo, deviceInfo);
 }
 
 void DpadKeyToTouchHandler::HandleKeyUp(std::shared_ptr<InputToTouchContext> &context,

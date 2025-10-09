@@ -48,11 +48,16 @@ public:
     bool IsSupportGameKeyMapping(const std::string &bundleName, const std::string &version);
 
     /**
-     * Get KeyMapping config from sa
+     * Broadcast device status and get KeyMapping config from sa if online
      * @param deviceInfo DeviceInfo
-     * @param isBroadCastDeviceInfo Indicates whether to broadcast device information.
      */
-    void GetGameKeyMappingFromSa(const DeviceInfo &deviceInfo, const bool isBroadCastDeviceInfo);
+    void BroadCastDeviceInfo(const DeviceInfo &deviceInfo);
+
+    /**
+     * When the template is changed, update the key mapping.
+     * @param deviceType DeviceTypeEnum
+     */
+    void UpdateGameKeyMappingWhenTemplateChange(DeviceTypeEnum deviceType);
 
     /**
      * Broadcast Opening Template Configuration Page
@@ -61,11 +66,12 @@ public:
     void BroadcastOpenTemplateConfig(const DeviceInfo &deviceInfo);
 
 private:
+
     /**
      * Get KeyMapping config
-     * @param deviceInfo DeviceInfo
+     * @param deviceType DeviceTypeEnum
      */
-    void ExecuteGetGameKeyMapping(const DeviceInfo &deviceInfo);
+    void ExecuteGetGameKeyMapping(const DeviceTypeEnum deviceType);
 
     /**
      * Broadcast device information.
@@ -88,8 +94,6 @@ private:
     std::pair<bool, nlohmann::json> ReadJsonFromFile(const std::string &path);
 
 private:
-    std::mutex isSupportGameKeyMappingMutex_;
-
     /**
      * handle queue
      */
@@ -100,8 +104,9 @@ private:
     std::string bundleName_;
 
     std::string bundleVersion_;
+
+    std::unordered_map<DeviceTypeEnum, bool> loadTemplateCache_;
 };
 }
 }
-
 #endif //GAME_CONTROLLER_FRAMEWORK_KEY_MAPPING_SERVICE_H
