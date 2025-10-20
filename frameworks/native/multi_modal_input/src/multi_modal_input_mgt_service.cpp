@@ -44,17 +44,20 @@ const int32_t OPR_TYPE_DEVICE_ONLINE = 1;
 
 }
 
-MultiModalInputMgtService::MultiModalInputMgtService() {
+MultiModalInputMgtService::MultiModalInputMgtService()
+{
     deviceTaskQueue_ = std::make_unique<ffrt::queue>("deviceTaskQueue",
                                                      ffrt::queue_attr().qos(ffrt::qos_default));
     eventCallbackQueue_ = std::make_unique<ffrt::queue>("deviceEventCallbackQueue",
                                                         ffrt::queue_attr().qos(ffrt::qos_default));
 }
 
-MultiModalInputMgtService::~MultiModalInputMgtService() {
+MultiModalInputMgtService::~MultiModalInputMgtService()
+{
 }
 
-void MultiModalInputMgtService::GetAllDeviceInfosWhenRegisterDeviceMonitor() {
+void MultiModalInputMgtService::GetAllDeviceInfosWhenRegisterDeviceMonitor()
+{
     bool isNeedGetAllDeviceInfos = false;
     {
         std::lock_guard<ffrt::mutex> lock(deviceChangeEventMutex_);
@@ -71,7 +74,8 @@ void MultiModalInputMgtService::GetAllDeviceInfosWhenRegisterDeviceMonitor() {
     }
 }
 
-std::pair<int32_t, std::vector<DeviceInfo>> MultiModalInputMgtService::GetAllDeviceInfos() {
+std::pair<int32_t, std::vector<DeviceInfo>> MultiModalInputMgtService::GetAllDeviceInfos()
+{
     std::lock_guard<ffrt::mutex> lock(deviceChangeEventMutex_);
     std::pair<int32_t, std::vector<DeviceInfo>> result;
     std::pair<int32_t, std::vector<InputDeviceInfo>> inputDeviceInfosPair =
@@ -114,7 +118,8 @@ std::pair<int32_t, std::vector<DeviceInfo>> MultiModalInputMgtService::GetAllDev
 }
 
 void MultiModalInputMgtService::DoDeviceEventCallback(const DeviceInfo &deviceInfo,
-                                                      const DeviceChangeType &deviceChangeType) {
+                                                      const DeviceChangeType &deviceChangeType)
+{
     eventCallbackQueue_->submit([deviceInfo, deviceChangeType, this] {
         DeviceEvent deviceEvent;
         deviceEvent.deviceInfo = deviceInfo;
@@ -123,7 +128,8 @@ void MultiModalInputMgtService::DoDeviceEventCallback(const DeviceInfo &deviceIn
     });
 }
 
-DeviceInfo MultiModalInputMgtService::GetDeviceInfo(const int32_t deviceId) {
+DeviceInfo MultiModalInputMgtService::GetDeviceInfo(const int32_t deviceId)
+{
     std::lock_guard<ffrt::mutex> lock(deviceChangeEventMutex_);
     if (deviceIdUniqMap_.find(deviceId) == deviceIdUniqMap_.end()) {
         HILOGW("[GameController]GetDeviceInfo failed. No Uniq for deviceId[%{public}d]", deviceId);
@@ -139,7 +145,8 @@ DeviceInfo MultiModalInputMgtService::GetDeviceInfo(const int32_t deviceId) {
     return deviceInfoByUniqMap_[uniq];
 }
 
-DeviceInfo MultiModalInputMgtService::GetDeviceInfoByUniq(const std::string &uniq) {
+DeviceInfo MultiModalInputMgtService::GetDeviceInfoByUniq(const std::string &uniq)
+{
     std::lock_guard<ffrt::mutex> lock(deviceChangeEventMutex_);
     if (deviceInfoByUniqMap_.find(uniq) == deviceInfoByUniqMap_.end()) {
         return DeviceInfo();
@@ -147,7 +154,8 @@ DeviceInfo MultiModalInputMgtService::GetDeviceInfoByUniq(const std::string &uni
     return deviceInfoByUniqMap_[uniq];
 }
 
-void MultiModalInputMgtService::DelayHandleDeviceChangeEvent(const DeviceChangeEvent &deviceChangeEvent) {
+void MultiModalInputMgtService::DelayHandleDeviceChangeEvent(const DeviceChangeEvent &deviceChangeEvent)
+{
     std::lock_guard<ffrt::mutex> lock(deviceChangeEventMutex_);
     deviceChangeEventCache_.push_back(deviceChangeEvent);
 
@@ -166,7 +174,8 @@ void MultiModalInputMgtService::DelayHandleDeviceChangeEvent(const DeviceChangeE
     }
 }
 
-std::pair<bool, DeviceInfo> MultiModalInputMgtService::GetHoverTouchPad() {
+std::pair<bool, DeviceInfo> MultiModalInputMgtService::GetHoverTouchPad()
+{
     std::lock_guard<ffrt::mutex> lock(deviceChangeEventMutex_);
     std::pair<bool, DeviceInfo> result;
     result.first = false;
@@ -180,7 +189,8 @@ std::pair<bool, DeviceInfo> MultiModalInputMgtService::GetHoverTouchPad() {
     return result;
 }
 
-void MultiModalInputMgtService::HandleDeviceChangeEvent() {
+void MultiModalInputMgtService::HandleDeviceChangeEvent()
+{
     std::lock_guard<ffrt::mutex> lock(deviceChangeEventMutex_);
     std::unordered_map<int32_t, std::string> tempDeviceIdUniqMap;
     std::unordered_map<std::string, DeviceInfo> tempDeviceInfoByUniqMap;
@@ -207,7 +217,8 @@ void MultiModalInputMgtService::HandleDeviceChangeEvent() {
 void MultiModalInputMgtService::HandleDeviceRemoveEvent(
     const int32_t deviceId,
     std::unordered_map<int32_t, std::string> &tempDeviceIdUniqMap,
-    std::unordered_map<std::string, DeviceInfo> &tempDeviceInfoByUniqMap) {
+    std::unordered_map<std::string, DeviceInfo> &tempDeviceInfoByUniqMap)
+{
     if (deviceIdUniqMap_.find(deviceId) == deviceIdUniqMap_.end()) {
         // No online information about the device is received.
         if (tempDeviceIdUniqMap.find(deviceId) == tempDeviceIdUniqMap.end()) {
@@ -242,7 +253,8 @@ void MultiModalInputMgtService::HandleDeviceRemoveEvent(
 void MultiModalInputMgtService::HandleDeviceAddEvent(
     const int32_t deviceId,
     std::unordered_map<int32_t, std::string> &tempDeviceIdUniqMap,
-    std::unordered_map<std::string, DeviceInfo> &tempDeviceInfoByUniqMap) {
+    std::unordered_map<std::string, DeviceInfo> &tempDeviceInfoByUniqMap)
+{
     std::pair<int32_t, InputDeviceInfo> pair =
         DelayedSingleton<DeviceInfoService>::GetInstance()->GetInputDeviceInfo(deviceId);
     InputDeviceInfo inputDeviceInfo = pair.second;
@@ -262,7 +274,8 @@ void MultiModalInputMgtService::HandleDeviceAddEvent(
 
 bool MultiModalInputMgtService::GetUniqOnDeviceAddEvent(
     const std::unordered_map<std::string, DeviceInfo> &tempDeviceInfoByUniqMap,
-    InputDeviceInfo &inputDeviceInfo) {
+    InputDeviceInfo &inputDeviceInfo)
+{
     if (!inputDeviceInfo.UniqIsEmpty()) {
         return true;
     }
@@ -287,7 +300,8 @@ bool MultiModalInputMgtService::GetUniqOnDeviceAddEvent(
 
 void MultiModalInputMgtService::HandleInputDeviceInfo(
     std::unordered_map<std::string, DeviceInfo> &tempDeviceInfoByUniqMap,
-    InputDeviceInfo &inputDeviceInfo) {
+    InputDeviceInfo &inputDeviceInfo)
+{
     // Aggregation by uniq
     if (tempDeviceInfoByUniqMap.find(inputDeviceInfo.uniq) == tempDeviceInfoByUniqMap.end()) {
         DeviceInfo deviceInfo;
@@ -318,7 +332,8 @@ void MultiModalInputMgtService::HandleInputDeviceInfo(
 }
 
 void MultiModalInputMgtService::IdentifyDeviceType(
-    std::unordered_map<std::string, DeviceInfo> &tempDeviceInfoByUniqMap, int32_t oprType) {
+    std::unordered_map<std::string, DeviceInfo> &tempDeviceInfoByUniqMap, int32_t oprType)
+{
     std::vector<DeviceInfo> deviceInfos;
     for (const auto &pair: tempDeviceInfoByUniqMap) {
         deviceInfos.push_back(pair.second);
@@ -365,7 +380,8 @@ void MultiModalInputMgtService::IdentifyDeviceType(
 }
 
 void MultiModalInputMgtService::CleanOfflineDevice(
-    const std::unordered_map<std::string, DeviceInfo> &tempDeviceInfoByUniqMap) {
+    const std::unordered_map<std::string, DeviceInfo> &tempDeviceInfoByUniqMap)
+{
     std::vector<std::string> needDelete;
     for (auto &pair: deviceInfoByUniqMap_) {
         if (tempDeviceInfoByUniqMap.find(pair.first) != tempDeviceInfoByUniqMap.end()) {
@@ -382,17 +398,20 @@ void MultiModalInputMgtService::CleanOfflineDevice(
     }
 }
 
-void MultiModalInputMgtService::ClearDeviceIdUniqMapByDeviceId(int32_t deviceId) {
+void MultiModalInputMgtService::ClearDeviceIdUniqMapByDeviceId(int32_t deviceId)
+{
     deviceIdUniqMap_.erase(deviceId);
     DelayedSingleton<WindowInputIntercept>::GetInstance()->UnRegisterWindowInputIntercept(deviceId);
 }
 
-void MultiModalInputMgtService::ClearAllDeviceIdUniqMap() {
+void MultiModalInputMgtService::ClearAllDeviceIdUniqMap()
+{
     deviceIdUniqMap_.clear();
     DelayedSingleton<WindowInputIntercept>::GetInstance()->UnRegisterAllWindowInputIntercept();
 }
 
-void MultiModalInputMgtService::ClearOfflineDeviceAndBroadcast(const int32_t deviceId) {
+void MultiModalInputMgtService::ClearOfflineDeviceAndBroadcast(const int32_t deviceId)
+{
     std::string uniq = deviceIdUniqMap_[deviceId];
     ClearDeviceIdUniqMapByDeviceId(deviceId);
     if (deviceInfoByUniqMap_.find(uniq) == deviceInfoByUniqMap_.end()) {
