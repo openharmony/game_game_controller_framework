@@ -69,7 +69,7 @@ public:
 
     /**
      * Get a HoverTouchPad
-     * @return DeviceInfo
+     * @return DeviceInfo.
      */
     virtual std::pair<bool, DeviceInfo> GetHoverTouchPad();
 

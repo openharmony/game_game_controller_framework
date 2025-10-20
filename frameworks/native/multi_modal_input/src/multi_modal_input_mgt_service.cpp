@@ -48,7 +48,7 @@ MultiModalInputMgtService::MultiModalInputMgtService()
 {
     deviceTaskQueue_ = std::make_unique<ffrt::queue>("deviceTaskQueue",
                                                      ffrt::queue_attr().qos(ffrt::qos_default));
-    eventCallbackQueue_ = std::make_unique<ffrt::queue>("deiceEventCallbackQueue",
+    eventCallbackQueue_ = std::make_unique<ffrt::queue>("deviceEventCallbackQueue",
                                                         ffrt::queue_attr().qos(ffrt::qos_default));
 }
 

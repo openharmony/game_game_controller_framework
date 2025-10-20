@@ -120,7 +120,6 @@ void InputToTouchClient::StartPublicEventMonitor()
     subscribeInfo.SetPublisherUid(GAME_CONTROLLER_UID);
 
     InputToTouchClient::subscriber_ = std::make_shared<GameCommonEventListener>(subscribeInfo);
-
     if (EventFwk::CommonEventManager::SubscribeCommonEvent(InputToTouchClient::subscriber_)) {
         HILOGI("SubscribeGameControllerCommonEvent success");
     } else {
@@ -186,7 +185,6 @@ void GameCommonEventListener::HandleScbForwardKeyEvent(const EventFwk::CommonEve
         HILOGW("Discard HandleScbForwardKeyEvent. code is %{public}d", code);
         return;
     }
-
     std::pair<bool, DeviceInfo> deviceInfo = DelayedSingleton<MultiModalInputMgtService>::GetInstance()
         ->GetHoverTouchPad();
     if (!deviceInfo.first) {
