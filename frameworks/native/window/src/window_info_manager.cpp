@@ -36,21 +36,25 @@ void WindowChangeListener::OnModeChange(WindowMode mode, bool hasDeco)
 void WindowLifeCycle::AfterForeground()
 {
     HILOGI("AfterForeground ");
+    DelayedSingleton<WindowInfoManager>::GetInstance()->SetForeground(true);
 }
 
 void WindowLifeCycle::AfterBackground()
 {
     HILOGI("AfterBackground ");
+    DelayedSingleton<WindowInfoManager>::GetInstance()->SetForeground(false);
 }
 
 void WindowLifeCycle::AfterFocused()
 {
     HILOGI("AfterFocused ");
+    DelayedSingleton<WindowInfoManager>::GetInstance()->SetFocus(true);
 }
 
 void WindowLifeCycle::AfterUnfocused()
 {
     HILOGI("AfterUnfocused ");
+    DelayedSingleton<WindowInfoManager>::GetInstance()->SetFocus(false);
 }
 
 void WindowLifeCycle::ForegroundFailed(int32_t ret)
@@ -165,5 +169,22 @@ void WindowInfoManager::UpdateWindowInfo(const Rect &rect)
     DelayedSingleton<KeyToTouchManager>::GetInstance()->UpdateWindowInfo(windowInfoEntity);
 }
 
+void WindowInfoManager::SetForeground(bool isForeground)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    isForeground_ = isForeground;
+}
+
+void WindowInfoManager::SetFocus(bool isFocus)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    isFocus_ = isFocus;
+}
+
+bool WindowInfoManager::IsForegroundAndFocus()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    return isForeground_ && isFocus_;
+}
 }
 }

@@ -133,12 +133,24 @@ public:
      */
     void UpdateWindowInfo(const Rect &rect);
 
+    void SetForeground(bool isForeground);
+
+    void SetFocus(bool isFocus);
+
+    /**
+     * Is it on the front and in focus
+     * @return true means yes.
+     */
+    bool IsForegroundAndFocus();
+
 private:
     std::mutex mutex_;
     sptr<Window> mainWindow_ = nullptr;
     sptr<IWindowChangeListener> windowChangeListener_ = nullptr;
     sptr<IWindowLifeCycle> windowLifeCycle_ = nullptr;
     WindowInfoEntity initWindowInfoEntity_;
+    bool isForeground_{true};
+    bool isFocus_{true};
 };
 }
 }

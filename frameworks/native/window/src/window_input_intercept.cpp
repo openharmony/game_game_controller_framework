@@ -18,7 +18,6 @@
 #include "window_input_intercept_client.h"
 #include "gamecontroller_log.h"
 #include "input_event_callback.h"
-#include "input_manager.h"
 #include "multi_modal_input_mgt_service.h"
 #include "gamecontroller_client_model.h"
 #include "key_mapping_handle.h"
@@ -94,7 +93,6 @@ WindowInputInterceptConsumer::WindowInputInterceptConsumer() noexcept
     clock_gettime(CLOCK_REALTIME, &t2);
     int64_t realTime = int64_t(t2.tv_sec) * ONE_SECOND_BY_NS + t2.tv_nsec;
     deltaTime_ = realTime - monoTime;
-    HILOGI("deltaTime_ is %{public}lld", deltaTime_);
 }
 
 void WindowInputInterceptConsumer::OnInputEvent(const std::shared_ptr<MMI::KeyEvent> &keyEvent)

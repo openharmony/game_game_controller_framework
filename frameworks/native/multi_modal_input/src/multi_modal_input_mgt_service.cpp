@@ -48,7 +48,7 @@ MultiModalInputMgtService::MultiModalInputMgtService()
 {
     deviceTaskQueue_ = std::make_unique<ffrt::queue>("deviceTaskQueue",
                                                      ffrt::queue_attr().qos(ffrt::qos_default));
-    eventCallbackQueue_ = std::make_unique<ffrt::queue>("deiceEventCallbackQueue",
+    eventCallbackQueue_ = std::make_unique<ffrt::queue>("deviceEventCallbackQueue",
                                                         ffrt::queue_attr().qos(ffrt::qos_default));
 }
 
@@ -172,6 +172,21 @@ void MultiModalInputMgtService::DelayHandleDeviceChangeEvent(const DeviceChangeE
             HILOGI("[GameController]DelayHandleDeviceChangeEvent task submit queue success");
         }
     }
+}
+
+std::pair<bool, DeviceInfo> MultiModalInputMgtService::GetHoverTouchPad()
+{
+    std::lock_guard<ffrt::mutex> lock(deviceChangeEventMutex_);
+    std::pair<bool, DeviceInfo> result;
+    result.first = false;
+    for (auto deviceInfo: deviceInfoByUniqMap_) {
+        if (deviceInfo.second.deviceType == HOVER_TOUCH_PAD) {
+            result.first = true;
+            result.second = deviceInfo.second;
+            return result;
+        }
+    }
+    return result;
 }
 
 void MultiModalInputMgtService::HandleDeviceChangeEvent()
