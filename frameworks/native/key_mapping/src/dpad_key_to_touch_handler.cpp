@@ -69,7 +69,7 @@ void DpadKeyToTouchHandler::HandleKeyDown(std::shared_ptr<InputToTouchContext> &
     BuildAndSendPointerEvent(context, touchEntity);
 
     /**
-     * 增加20ms的延迟,解决决胜巅峰中方向盘不固定时，由于第一个DOWN和MOVE间隔太短，
+     * 增加40ms的延迟,解决决胜巅峰中方向盘不固定时，由于第一个DOWN和MOVE间隔太短，
      * 导致游戏中的第一个手指按下的位置概率变为MOVE的坐标位置
      */
     ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));

@@ -67,6 +67,12 @@ public:
      */
     virtual void DelayHandleDeviceChangeEvent(const DeviceChangeEvent &deviceChangeEvent);
 
+    /**
+     * Get a HoverTouchPad
+     * @return DeviceInfo
+     */
+    virtual std::pair<bool, DeviceInfo> GetHoverTouchPad();
+
 private:
     /**
      * Executing a Device Event Callback

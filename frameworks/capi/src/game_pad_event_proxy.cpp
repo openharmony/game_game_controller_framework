@@ -170,7 +170,7 @@ GameController_ErrorCode GamePadEventProxy::GetDeviceIdFromAxisEvent(
     const struct GamePad_AxisEvent* axisEvent, char** deviceId)
 {
     if (axisEvent == nullptr || deviceId == nullptr) {
-        HILOGE("[CAPI][DestroyAxisEvent]axisEvent or deviceId is nullptr");
+        HILOGE("[CAPI][GetDeviceIdFromAxisEvent]axisEvent or deviceId is nullptr");
         return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
     }
 

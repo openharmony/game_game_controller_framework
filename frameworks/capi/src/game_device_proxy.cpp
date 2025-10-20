@@ -84,7 +84,7 @@ GameController_ErrorCode GameDeviceProxy::GetCountFromAllDeviceInfos(
     int32_t* count)
 {
     if (allDeviceInfos == nullptr) {
-        HILOGE("[CAPI][DestroyAllDeviceInfos]allDeviceInfos is nullptr");
+        HILOGE("[CAPI][GetCountFromAllDeviceInfos]allDeviceInfos is nullptr");
         return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
     }
     *count = ((AllDeviceInfos*)allDeviceInfos)->count;
@@ -96,12 +96,12 @@ GameController_ErrorCode GameDeviceProxy::GetDeviceInfoFromAllDeviceInfos(
     const int32_t index, GameDevice_DeviceInfo** deviceInfo)
 {
     if (allDeviceInfos == nullptr) {
-        HILOGE("[CAPI][DestroyAllDeviceInfos]allDeviceInfos is nullptr");
+        HILOGE("[CAPI][GetDeviceInfoFromAllDeviceInfos]allDeviceInfos is nullptr");
         return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
     }
     int count = ((AllDeviceInfos*)allDeviceInfos)->count;
     if (index >= count || index < 0) {
-        HILOGE("[CAPI][DestroyAllDeviceInfos]index is out of range");
+        HILOGE("[CAPI][GetDeviceInfoFromAllDeviceInfos]index is out of range");
         return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
     }
 

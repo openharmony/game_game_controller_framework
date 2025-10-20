@@ -25,7 +25,7 @@ namespace OHOS {
 namespace GameController {
 namespace {
 const int32_t KEYCODE_OPEN_TEMP_FOR_HOVER_TOUCH_CONTROLLER = 3107;
-const int32_t KEY_NUMBER_OPEN_TEMPLATE_BY_KEYBOARD = 3;
+const int32_t KEYS_REQUIRED_FOR_TEMPLATE_OPEN = 3;
 }
 
 KeyMappingHandle::KeyMappingHandle()
@@ -113,7 +113,7 @@ bool KeyMappingHandle::OpenTemplateByKeyBoard(const std::shared_ptr<MMI::KeyEven
     }
 
     // Return true only when CTRL+SHIFT+I are pressed.
-    if (currentItemsMap.size() == KEY_NUMBER_OPEN_TEMPLATE_BY_KEYBOARD &&
+    if (currentItemsMap.size() == KEYS_REQUIRED_FOR_TEMPLATE_OPEN &&
         (currentItemsMap.find(MMI::KeyEvent::KEYCODE_CTRL_LEFT) != currentItemsMap.end() ||
             currentItemsMap.find(MMI::KeyEvent::KEYCODE_CTRL_RIGHT) != currentItemsMap.end()) &&
         (currentItemsMap.find(MMI::KeyEvent::KEYCODE_SHIFT_LEFT) != currentItemsMap.end() ||
