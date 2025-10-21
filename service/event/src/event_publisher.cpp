@@ -26,6 +26,7 @@ constexpr char* COMMON_EVENT_DEVICE_STATUS_CHANGE = "usual.event.ohos.gamecontro
 constexpr char* COMMON_EVENT_GAME_KEY_MAPPING_CHANGE = "usual.event.ohos.gamecontroller.game.keymapping.change";
 constexpr char* COMMON_EVENT_OPEN_TEMPLATE_CONFIG = "usual.event.ohos.gamecontroller.open.template.config";
 constexpr char* COMMON_EVENT_GAME_KEY_MAPPING_ENABLE = "usual.event.ohos.gamecontroller.game.keymapping.enable";
+constexpr char* COMMON_EVENT_SUPPORT_KEY_MAPPING_CHANGE = "usual.event.ohos.gamecontroller.supported.keymapping.change";
 constexpr char* EVENT_PARAM_BUNDLE_NAME = "bundleName";
 constexpr char* EVENT_PARAM_BUNDLE_VERSION = "version";
 constexpr char* EVENT_PARAM_UNIQ = "uniq";
@@ -159,6 +160,22 @@ int32_t EventPublisher::SendEnableGameKeyMappingNotify(const GameInfo &gameInfo,
                gameInfo.bundleName.c_str());
     }
     return GAME_CONTROLLER_SUCCESS;
+}
+
+void EventPublisher::SendSupportedKeyMappingChangeNotify()
+{
+    EventFwk::CommonEventPublishInfo publishInfo;
+    publishInfo.SetOrdered(true);
+    publishInfo.SetSubscriberType(ALL_SUBSCRIBER_TYPE);
+
+    AAFwk::Want want;
+    want.SetAction(COMMON_EVENT_SUPPORT_KEY_MAPPING_CHANGE);
+    EventFwk::CommonEventData event;
+    event.SetWant(want);
+    HILOGI("[PUB]SendSupportedKeyMappingChangeNotify.");
+    if (EventFwk::CommonEventManager::NewPublishCommonEvent(event, publishInfo) != 0) {
+        HILOGE("[PUB]SendSupportedKeyMappingChangeNotify failed.");
+    }
 }
 }
 }

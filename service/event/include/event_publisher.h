@@ -58,6 +58,11 @@ public:
      */
     int32_t SendEnableGameKeyMappingNotify(const GameInfo &gameInfo, bool isEnable);
 
+    /**
+     * Send a notification of changes to the list of games that support keymapping
+     */
+    void SendSupportedKeyMappingChangeNotify();
+
 private:
     EventFwk::CommonEventData BuildCommonEventData(const std::string &action,
                                                    const GameInfo &gameInfo, const DeviceInfo &deviceInfo,

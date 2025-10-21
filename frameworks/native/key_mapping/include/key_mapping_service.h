@@ -28,6 +28,7 @@ namespace GameController {
 struct KeyMappingSupportConfig {
     std::string bundleName;
     std::string version;
+    std::unordered_set<int32_t> deviceTypes;
 
     KeyMappingSupportConfig() = default;
 
@@ -65,13 +66,19 @@ public:
      */
     void BroadcastOpenTemplateConfig(const DeviceInfo &deviceInfo);
 
+    /**
+     * When switch to the front-end or receive update notifications,
+     * reload the keymapping support config
+     */
+    void ReloadKeyMappingSupportConfig();
+
 private:
 
     /**
      * Get KeyMapping config
      * @param deviceType DeviceTypeEnum
      */
-    void ExecuteGetGameKeyMapping(const DeviceTypeEnum deviceType);
+    void ExecuteGetGameKeyMapping(DeviceTypeEnum deviceType);
 
     /**
      * Broadcast device information.
@@ -93,13 +100,33 @@ private:
      */
     std::pair<bool, nlohmann::json> ReadJsonFromFile(const std::string &path);
 
+    /**
+     * Get the key mapping support config
+     * @return pair.first indicates whether it support input-to-touch conversion
+     * and pair.second indicates KeyMappingSupportConfig.
+     */
+    std::pair<bool, KeyMappingSupportConfig> GetKeyMappingSupportConfig();
+
+    /**
+     * whether the device support keymapping
+     * @param deviceTypeEnum deviceType
+     * @return true means support.
+     */
+    bool DeviceIsSupportKeyMapping(DeviceTypeEnum deviceTypeEnum);
+
+    void SyncKeyMappingConfig();
+
 private:
     /**
      * handle queue
      */
     std::unique_ptr<ffrt::queue> handleQueue_{nullptr};
 
+    ffrt::mutex configMutex_;
+
     bool isSupportGameKeyMapping_{false};
+
+    KeyMappingSupportConfig keyMappingSupportConfig_;
 
     std::string bundleName_;
 

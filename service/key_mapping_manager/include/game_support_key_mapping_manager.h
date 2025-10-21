@@ -19,6 +19,7 @@
 #include <memory>
 #include <unordered_map>
 #include <gamecontroller_keymapping_model.h>
+#include <vector>
 #include "nlohmann/json.hpp"
 #include "singleton.h"
 
@@ -27,6 +28,7 @@ namespace GameController {
 struct GameSupportKeyMappingConfig {
     std::string bundleName;
     std::string version;
+    std::vector<int32_t> supportedDeviceTypes;
 
     GameSupportKeyMappingConfig() = default;
 
@@ -36,6 +38,7 @@ struct GameSupportKeyMappingConfig {
     {
         bundleName = gameInfo.bundleName;
         version = gameInfo.version;
+        supportedDeviceTypes = gameInfo.supportedDeviceTypes;
     }
 
     nlohmann::json ConvertToJson() const;

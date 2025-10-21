@@ -28,7 +28,7 @@ class KeyToTouchManager : public DelayedSingleton<KeyToTouchManager> {
 DECLARE_DELAYED_SINGLETON(KeyToTouchManager)
 
 public:
-    void SetSupportKeyMapping(bool isSupportKeyMapping);
+    void SetSupportKeyMapping(bool isSupportKeyMapping, const std::unordered_set<int32_t> &deviceTypeSet);
 
     bool DispatchKeyEvent(const std::shared_ptr<MMI::KeyEvent> &keyEvent);
 
@@ -43,6 +43,8 @@ public:
 private:
 
     bool IsCanEnableKeyMapping();
+
+    bool DeviceIsSupportKeyMapping(DeviceTypeEnum deviceTypeEnum);
 
     void HandleKeyEvent(const std::shared_ptr<MMI::KeyEvent> &keyEvent, const DeviceTypeEnum &deviceType,
                         const DeviceInfo &deviceInfo);
@@ -122,6 +124,7 @@ private:
 
 private:
     bool isSupportKeyMapping_{false};
+    std::unordered_set<int32_t> supportDeviceTypeSet_;
     ffrt::mutex checkMutex_;
     std::unique_ptr<ffrt::queue> handleQueue_{nullptr};
     std::unordered_map<MappingTypeEnum, std::shared_ptr<BaseKeyToTouchHandler>> mappingHandler_;
