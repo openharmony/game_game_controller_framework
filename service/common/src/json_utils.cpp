@@ -28,7 +28,7 @@ namespace OHOS {
 namespace GameController {
 namespace {
 const int32_t ONE_BYTE_CHAR = 1;
-const int32_t TOW_BYTE_CHAR = 2;
+const int32_t TWO_BYTE_CHAR = 2;
 const int32_t THREE_BYTE_CHAR = 3;
 const int32_t FOUR_BYTE_CHAR = 4;
 const char UTF_ONE_BYTE_END = 0x7F;
@@ -48,13 +48,13 @@ const char MULTI_BYTE_START = 0x80;
 
 bool TwoBytes(unsigned char c, std::string::const_iterator &it, std::string::const_iterator end)
 {
-    if (std::distance(it, end) < TOW_BYTE_CHAR) {
+    if (std::distance(it, end) < TWO_BYTE_CHAR) {
         return false;
     }
     if ((*(it + ONE_BYTE_CHAR) & NON_ASCII_START) != MULTI_BYTE_START) {
         return false;
     }
-    it += TOW_BYTE_CHAR;
+    it += TWO_BYTE_CHAR;
     return true;
 }
 
@@ -64,7 +64,7 @@ bool ThreeBytes(unsigned char c, std::string::const_iterator &it, std::string::c
         return false;
     }
     if ((*(it + ONE_BYTE_CHAR) & NON_ASCII_START) != MULTI_BYTE_START ||
-        (*(it + TOW_BYTE_CHAR) & NON_ASCII_START) != MULTI_BYTE_START) {
+        (*(it + TWO_BYTE_CHAR) & NON_ASCII_START) != MULTI_BYTE_START) {
         return false;
     }
     if (c == UTF_THREE_BYTE_START && *(it + ONE_BYTE_CHAR) < UTF_THREE_SECOND_BYTE_LOW_BOUND) {
@@ -83,7 +83,7 @@ bool FourBytes(unsigned char c, std::string::const_iterator &it, std::string::co
         return false;
     }
     if ((*(it + ONE_BYTE_CHAR) & NON_ASCII_START) != MULTI_BYTE_START ||
-        (*(it + TOW_BYTE_CHAR) & NON_ASCII_START) != MULTI_BYTE_START ||
+        (*(it + TWO_BYTE_CHAR) & NON_ASCII_START) != MULTI_BYTE_START ||
         (*(it + THREE_BYTE_CHAR) & NON_ASCII_START) != MULTI_BYTE_START) {
         return false;
     }

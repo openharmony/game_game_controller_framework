@@ -85,7 +85,8 @@ struct DpadKeyCodeEntity : public Parcelable {
     int32_t left = 0;
     int32_t right = 0;
 
-    bool Marshalling(Parcel &parcel) const {
+    bool Marshalling(Parcel &parcel) const
+    {
         if (!parcel.WriteInt32(up)) {
             return false;
         }
@@ -101,7 +102,8 @@ struct DpadKeyCodeEntity : public Parcelable {
         return true;
     }
 
-    static DpadKeyCodeEntity* Unmarshalling(Parcel &parcel) {
+    static DpadKeyCodeEntity* Unmarshalling(Parcel &parcel)
+    {
         DpadKeyCodeEntity* ret = new(std::nothrow) DpadKeyCodeEntity();
         if (ret == nullptr) {
             return nullptr;
@@ -126,7 +128,8 @@ struct DpadKeyCodeEntity : public Parcelable {
         return nullptr;
     }
 
-    bool Contains(int32_t keyCode) {
+    bool Contains(int32_t keyCode)
+    {
         return up == keyCode || down == keyCode || left == keyCode || right == keyCode;
     }
 };
@@ -155,7 +158,8 @@ struct KeyToTouchMappingInfo : public Parcelable {
 
     int32_t yStep = 0;
 
-    bool Marshalling(Parcel &parcel) const {
+    bool Marshalling(Parcel &parcel) const
+    {
         if (!parcel.WriteInt32(keyCode)) {
             return false;
         }
@@ -186,7 +190,8 @@ struct KeyToTouchMappingInfo : public Parcelable {
         return WriteCombinationKeys(parcel);
     }
 
-    bool WriteCombinationKeys(Parcel &parcel) const {
+    bool WriteCombinationKeys(Parcel &parcel) const
+    {
         if (combinationKeys.size() > MAX_COMBINATION_KEYS) {
             return false;
         }
@@ -201,7 +206,8 @@ struct KeyToTouchMappingInfo : public Parcelable {
         return true;
     }
 
-    static KeyToTouchMappingInfo* Unmarshalling(Parcel &parcel) {
+    static KeyToTouchMappingInfo* Unmarshalling(Parcel &parcel)
+    {
         KeyToTouchMappingInfo* ret = new(std::nothrow) KeyToTouchMappingInfo();
         if (ret == nullptr) {
             return nullptr;
@@ -246,7 +252,8 @@ struct KeyToTouchMappingInfo : public Parcelable {
         return nullptr;
     }
 
-    static bool ReadMappingType(Parcel &parcel, KeyToTouchMappingInfo* ret) {
+    static bool ReadMappingType(Parcel &parcel, KeyToTouchMappingInfo* ret)
+    {
         int32_t mappingType;
         if (!parcel.ReadInt32(mappingType)) {
             return false;
@@ -256,7 +263,8 @@ struct KeyToTouchMappingInfo : public Parcelable {
         return true;
     }
 
-    static bool ReadDpadInfo(Parcel &parcel, KeyToTouchMappingInfo* ret) {
+    static bool ReadDpadInfo(Parcel &parcel, KeyToTouchMappingInfo* ret)
+    {
         std::unique_ptr<DpadKeyCodeEntity> dpadInfo(parcel.ReadParcelable<DpadKeyCodeEntity>());
         if (dpadInfo) {
             ret->dpadKeyCodeEntity = *dpadInfo;
@@ -265,7 +273,8 @@ struct KeyToTouchMappingInfo : public Parcelable {
         return false;
     }
 
-    static bool ReadCombinationKeys(Parcel &parcel, KeyToTouchMappingInfo* ret) {
+    static bool ReadCombinationKeys(Parcel &parcel, KeyToTouchMappingInfo* ret)
+    {
         int32_t size = parcel.ReadInt32();
         if (size > static_cast<int32_t>(MAX_COMBINATION_KEYS)) {
             return false;
@@ -282,7 +291,8 @@ struct KeyToTouchMappingInfo : public Parcelable {
     * Obtains key-to-touch mapping information description.
     * @return KeyToTouchMappingInfo description
     */
-    std::string GetKeyToTouchMappingInfoDesc() const {
+    std::string GetKeyToTouchMappingInfoDesc() const
+    {
         std::string tmp = "mappingType:" + std::to_string(mappingType);
         tmp.append(", keyCode:" + std::to_string(keyCode));
         tmp.append(", xValue:" + std::to_string(xValue));
@@ -302,19 +312,22 @@ struct KeyToTouchMappingInfo : public Parcelable {
         return tmp;
     }
 
-    void SetDpadInfoToDefault() {
+    void SetDpadInfoToDefault()
+    {
         dpadKeyCodeEntity.up = 0;
         dpadKeyCodeEntity.down = 0;
         dpadKeyCodeEntity.left = 0;
         dpadKeyCodeEntity.right = 0;
     }
 
-    void SetSkillRangeRadiusToDefault() {
+    void SetSkillRangeRadiusToDefault()
+    {
         skillRange = 0;
         radius = 0;
     }
 
-    void SetStepToDefault() {
+    void SetStepToDefault()
+    {
         xStep = 0;
         yStep = 0;
     }
@@ -330,7 +343,8 @@ struct GetGameKeyMappingInfoParam : public Parcelable {
 
     DeviceTypeEnum deviceType;
 
-    bool Marshalling(Parcel &parcel) const {
+    bool Marshalling(Parcel &parcel) const
+    {
         if (!parcel.WriteString(bundleName)) {
             return false;
         }
@@ -340,7 +354,8 @@ struct GetGameKeyMappingInfoParam : public Parcelable {
         return true;
     }
 
-    static GetGameKeyMappingInfoParam* Unmarshalling(Parcel &parcel) {
+    static GetGameKeyMappingInfoParam* Unmarshalling(Parcel &parcel)
+    {
         GetGameKeyMappingInfoParam* ret = new(std::nothrow) GetGameKeyMappingInfoParam();
         if (ret == nullptr) {
             return nullptr;
@@ -365,7 +380,8 @@ struct GetGameKeyMappingInfoParam : public Parcelable {
      * Validates parameters of the GetGameKeyMappingConfig interface.
      * @return true means valid
      */
-    bool CheckParamValid() const {
+    bool CheckParamValid() const
+    {
         if (bundleName.empty() || bundleName.length() > MAX_BUNDLE_NAME_LENGTH) {
             return false;
         }
@@ -383,7 +399,8 @@ struct GameInfo : public Parcelable {
 
     std::vector<int32_t> supportedDeviceTypes;
 
-    bool Marshalling(Parcel &parcel) const {
+    bool Marshalling(Parcel &parcel) const
+    {
         if (!parcel.WriteString(bundleName)) {
             return false;
         }
@@ -404,7 +421,8 @@ struct GameInfo : public Parcelable {
         return true;
     }
 
-    static GameInfo* Unmarshalling(Parcel &parcel) {
+    static GameInfo* Unmarshalling(Parcel &parcel)
+    {
         GameInfo* ret = new(std::nothrow) GameInfo();
         if (ret == nullptr) {
             return nullptr;
@@ -432,7 +450,8 @@ struct GameInfo : public Parcelable {
         return nullptr;
     }
 
-    static bool ReadSupportedDeviceTypes(Parcel &parcel, GameInfo* ret) {
+    static bool ReadSupportedDeviceTypes(Parcel &parcel, GameInfo* ret)
+    {
         int32_t size = parcel.ReadInt32();
         if (size > MAX_SUPPORT_DEVICE_TYPES) {
             return false;
@@ -457,7 +476,8 @@ struct GameInfo : public Parcelable {
      * Validates parameters of the SyncSupportKeyMappingGames interface.
      * @return true means valid
      */
-    bool CheckParamValid() const {
+    bool CheckParamValid() const
+    {
         if (bundleName.empty() || bundleName.length() > MAX_BUNDLE_NAME_LENGTH) {
             return false;
         }
@@ -492,7 +512,8 @@ struct GameKeyMappingInfo : public Parcelable {
 
     std::vector<KeyToTouchMappingInfo> defaultKeyToTouchMappings;
 
-    bool Marshalling(Parcel &parcel) const {
+    bool Marshalling(Parcel &parcel) const
+    {
         if (!parcel.WriteString(bundleName)) {
             return false;
         }
@@ -524,7 +545,8 @@ struct GameKeyMappingInfo : public Parcelable {
         return true;
     }
 
-    static GameKeyMappingInfo* Unmarshalling(Parcel &parcel) {
+    static GameKeyMappingInfo* Unmarshalling(Parcel &parcel)
+    {
         GameKeyMappingInfo* ret = new(std::nothrow) GameKeyMappingInfo();
         if (ret == nullptr) {
             return nullptr;
@@ -554,7 +576,8 @@ struct GameKeyMappingInfo : public Parcelable {
         return nullptr;
     }
 
-    static bool ReadCustomKeyMapping(Parcel &parcel, GameKeyMappingInfo* ret) {
+    static bool ReadCustomKeyMapping(Parcel &parcel, GameKeyMappingInfo* ret)
+    {
         int32_t size = parcel.ReadInt32();
         if (size > MAX_KEY_MAPPING_SIZE) {
             return false;
@@ -570,7 +593,8 @@ struct GameKeyMappingInfo : public Parcelable {
         return true;
     }
 
-    static bool ReadDefaultKeyMapping(Parcel &parcel, GameKeyMappingInfo* ret) {
+    static bool ReadDefaultKeyMapping(Parcel &parcel, GameKeyMappingInfo* ret)
+    {
         int32_t size = parcel.ReadInt32();
         if (size > MAX_KEY_MAPPING_SIZE) {
             return false;
@@ -590,7 +614,8 @@ struct GameKeyMappingInfo : public Parcelable {
      * Validates parameters of the SetCustomGameKeyMappingConfig interface.
      * @return true means valid
      */
-    bool CheckParamValidForSetCustom() {
+    bool CheckParamValidForSetCustom()
+    {
         return CheckParamValidForSetDefault();
     };
 
@@ -598,7 +623,8 @@ struct GameKeyMappingInfo : public Parcelable {
      * Validates parameters of the SetDefaultGameKeyMappingConfig interface.
      * @return true means valid
      */
-    bool CheckParamValidForSetDefault() {
+    bool CheckParamValidForSetDefault()
+    {
         if (bundleName.empty() || bundleName.length() > MAX_BUNDLE_NAME_LENGTH) {
             return false;
         }
@@ -656,7 +682,8 @@ struct GameKeyMappingInfo : public Parcelable {
      * Indicates whether to delete the default configuration based on the bundle name.
      * @return true means delete the default configuration based on the bundle name.
      */
-    bool IsDelByBundleNameWhenSetDefault() const {
+    bool IsDelByBundleNameWhenSetDefault() const
+    {
         return isOprDelete && deviceType == UNKNOWN;
     }
 
@@ -664,7 +691,8 @@ struct GameKeyMappingInfo : public Parcelable {
      * Indicates whether to delete the default configuration based on the bundle name.
      * @return true means delete the default configuration based on the bundle name.
      */
-    bool IsDelByBundleNameWhenSetCustom() const {
+    bool IsDelByBundleNameWhenSetCustom() const
+    {
         return IsDelByBundleNameWhenSetDefault();
     }
 };
