@@ -73,6 +73,13 @@ public:
      */
     virtual std::pair<bool, DeviceInfo> GetHoverTouchPad();
 
+    /**
+     * Determine whether the device of deviceType exists
+     * @param deviceTypeEnum deviceType
+     * @return true means exist
+     */
+    virtual bool DeviceIsExist(DeviceTypeEnum deviceTypeEnum);
+
 private:
     /**
      * Executing a Device Event Callback

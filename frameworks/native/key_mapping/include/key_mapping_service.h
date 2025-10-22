@@ -116,6 +116,9 @@ private:
 
     void SyncKeyMappingConfig();
 
+    void HandleDeviceTypeChanged(std::unordered_set<int32_t> newDeviceTypes,
+                                 std::unordered_set<int32_t> oldDeviceTypes);
+
 private:
     /**
      * handle queue

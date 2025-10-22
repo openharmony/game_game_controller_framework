@@ -179,7 +179,7 @@ std::pair<bool, DeviceInfo> MultiModalInputMgtService::GetHoverTouchPad()
     std::lock_guard<ffrt::mutex> lock(deviceChangeEventMutex_);
     std::pair<bool, DeviceInfo> result;
     result.first = false;
-    for (auto deviceInfo: deviceInfoByUniqMap_) {
+    for (const auto deviceInfo: deviceInfoByUniqMap_) {
         if (deviceInfo.second.deviceType == HOVER_TOUCH_PAD) {
             result.first = true;
             result.second = deviceInfo.second;
@@ -187,6 +187,17 @@ std::pair<bool, DeviceInfo> MultiModalInputMgtService::GetHoverTouchPad()
         }
     }
     return result;
+}
+
+bool MultiModalInputMgtService::DeviceIsExist(DeviceTypeEnum deviceTypeEnum)
+{
+    std::lock_guard<ffrt::mutex> lock(deviceChangeEventMutex_);
+    for (const auto deviceInfo: deviceInfoByUniqMap_) {
+        if (deviceInfo.second.deviceType == deviceTypeEnum) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void MultiModalInputMgtService::HandleDeviceChangeEvent()

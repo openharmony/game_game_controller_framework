@@ -19,6 +19,7 @@
 #include "gamecontroller_log.h"
 #include "key_to_touch_manager.h"
 #include "gamecontroller_utils.h"
+#include "multi_modal_input_mgt_service.h"
 #include <unistd.h>
 #include <fstream>
 #include <cstdlib>
@@ -261,7 +262,10 @@ void KeyMappingService::ReloadKeyMappingSupportConfig()
     HILOGI("ReloadKeyMappingSupportConfig");
     std::pair<bool, KeyMappingSupportConfig> result = GetKeyMappingSupportConfig();
     if (result.first) {
+        std::unordered_set<int32_t> newDeviceTypes = result.second.deviceTypes;
+        std::unordered_set<int32_t> oldDeviceTypes = keyMappingSupportConfig_.deviceTypes;
         keyMappingSupportConfig_ = result.second;
+        HandleDeviceTypeChanged(newDeviceTypes, oldDeviceTypes);
     } else {
         HILOGW("bundleName[%{public}s] switch to no support keymapping", bundleName_.c_str());
         isSupportGameKeyMapping_ = false;
@@ -276,6 +280,33 @@ void KeyMappingService::SyncKeyMappingConfig()
                                               keyMappingSupportConfig_.deviceTypes.end());
     DelayedSingleton<KeyToTouchManager>::GetInstance()->SetSupportKeyMapping(isSupportGameKeyMapping_, deviceTypeSet);
 
+}
+
+void KeyMappingService::HandleDeviceTypeChanged(std::unordered_set<int32_t> newDeviceTypes,
+                                                std::unordered_set<int32_t> oldDeviceTypes)
+{
+    for (auto deviceType: oldDeviceTypes) {
+        if (newDeviceTypes.count(deviceType) == 0) {
+            // The deviceType is deleted.
+            HILOGI("HandleDeviceTypeChangedForRemove deviceType[%{public}d]", deviceType);
+            DelayedSingleton<KeyToTouchManager>::GetInstance()->UpdateTemplateConfig(
+                static_cast<DeviceTypeEnum>(deviceType),
+                std::vector<KeyToTouchMappingInfo>());
+        }
+    }
+    for (auto deviceType: newDeviceTypes) {
+        if (oldDeviceTypes.count(deviceType) == 0) {
+            // The deviceType is added.
+            HILOGI("HandleDeviceTypeChangedForAdd deviceType[%{public}d]", deviceType);
+            DeviceInfo deviceInfo;
+            deviceInfo.deviceType = static_cast<DeviceTypeEnum>(deviceType);
+            if (DelayedSingleton<MultiModalInputMgtService>::GetInstance()
+                ->DeviceIsExist(deviceInfo.deviceType)) {
+                // There are devices of the deviceType that exist
+                BroadCastDeviceInfo(deviceInfo);
+            }
+        }
+    }
 }
 
 bool KeyMappingService::DeviceIsSupportKeyMapping(DeviceTypeEnum deviceTypeEnum)
