@@ -14,7 +14,6 @@
  */
 #include <fstream>
 #include <unistd.h>
-#include <fstream>
 #include <cstdlib>
 #include <iostream>
 #include <sys/stat.h>
@@ -190,10 +189,9 @@ bool JsonUtils::IsFileExist(const std::string &filePath)
 
 bool JsonUtils::CopyFile(const std::string &src, const std::string &dest, const bool isAllUserRead)
 {
-    char canonicalPath[PATH_MAX] = {};
-    auto srcRealPath = realpath(src.c_str(), canonicalPath);
+    auto srcRealPath = realpath(src.c_str(), nullptr);
     if (srcRealPath == nullptr) {
-        HILOGE("get src realpath faild");
+        HILOGE("get src realpath failed");
         return false;
     }
     std::ifstream srcFile(srcRealPath);

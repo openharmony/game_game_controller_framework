@@ -311,6 +311,8 @@ HWTEST_F(KeyToTouchManagerTest, SetSupportKeyMapping_001, TestSize.Level0)
     handler_->SetSupportKeyMapping(true, deviceTypeSet);
     ASSERT_TRUE(handler_->isSupportKeyMapping_);
     ASSERT_TRUE(handler_->supportDeviceTypeSet_.count(DEVICE_TYPE_KEYBOARD) == 1);
+    deviceTypeSet.clear();
+    deviceTypeSet.insert(DEVICE_TYPE_HOVER_TOUCH_PAD);
     handler_->SetSupportKeyMapping(false, deviceTypeSet);
     ASSERT_TRUE(handler_->supportDeviceTypeSet_.count(DEVICE_TYPE_HOVER_TOUCH_PAD) == 1);
     ASSERT_FALSE(handler_->isSupportKeyMapping_);
