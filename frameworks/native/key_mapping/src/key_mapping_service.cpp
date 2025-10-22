@@ -258,6 +258,7 @@ void KeyMappingService::ReloadKeyMappingSupportConfig()
     if (!isSupportGameKeyMapping_) {
         return;
     }
+    HILOGI("ReloadKeyMappingSupportConfig");
     std::pair<bool, KeyMappingSupportConfig> result = GetKeyMappingSupportConfig();
     if (result.first) {
         keyMappingSupportConfig_ = result.second;

@@ -37,9 +37,7 @@ namespace GameController {
 namespace {
 const int32_t MOUSE_LEFT_BUTTON_ID = 0;
 const int32_t MOUSE_RIGHT_BUTTON_ID = 1;
-
 const int32_t DEVICE_ID = 11;
-
 const int32_t MAX_WIDTH = 2720;
 const int32_t MAX_HEIGHT = 1260;
 const int32_t KEY_CODE_UP = 2301;
@@ -47,6 +45,8 @@ const int32_t KEY_CODE_DOWN = 2302;
 const int32_t KEY_CODE_LEFT = 2303;
 const int32_t KEY_CODE_RIGHT = 2304;
 const int32_t SINGLE_KEYMAPPING_RESULT_SIZE = 4;
+const int32_t DEVICE_TYPE_KEYBOARD = 3;
+const int32_t DEVICE_TYPE_HOVER_TOUCH_PAD = 2;
 const size_t MAX_SINGLE_KEY_SIZE_FOR_HOVER_TOUCH_PAD = 2;
 }
 
@@ -306,9 +306,13 @@ void KeyToTouchManagerTest::CheckTempVariablesDefault()
  */
 HWTEST_F(KeyToTouchManagerTest, SetSupportKeyMapping_001, TestSize.Level0)
 {
-    handler_->SetSupportKeyMapping(true);
+    std::unordered_set<int32_t> deviceTypeSet;
+    deviceTypeSet.insert(DEVICE_TYPE_KEYBOARD);
+    handler_->SetSupportKeyMapping(true, deviceTypeSet);
     ASSERT_TRUE(handler_->isSupportKeyMapping_);
-    handler_->SetSupportKeyMapping(false);
+    ASSERT_TRUE(handler_->supportDeviceTypeSet_.count(DEVICE_TYPE_KEYBOARD) == 1);
+    handler_->SetSupportKeyMapping(false, deviceTypeSet);
+    ASSERT_TRUE(handler_->supportDeviceTypeSet_.count(DEVICE_TYPE_HOVER_TOUCH_PAD) == 1);
     ASSERT_FALSE(handler_->isSupportKeyMapping_);
 }
 

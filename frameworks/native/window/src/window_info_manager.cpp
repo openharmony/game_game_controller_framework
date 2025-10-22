@@ -38,13 +38,13 @@ void WindowLifeCycle::AfterForeground()
 {
     HILOGI("AfterForeground ");
     DelayedSingleton<WindowInfoManager>::GetInstance()->SetForeground(true);
+    DelayedSingleton<KeyMappingService>::GetInstance()->ReloadKeyMappingSupportConfig();
 }
 
 void WindowLifeCycle::AfterBackground()
 {
     HILOGI("AfterBackground ");
     DelayedSingleton<WindowInfoManager>::GetInstance()->SetForeground(false);
-    DelayedSingleton<KeyMappingService>::GetInstance()->ReloadKeyMappingSupportConfig();
 }
 
 void WindowLifeCycle::AfterFocused()
