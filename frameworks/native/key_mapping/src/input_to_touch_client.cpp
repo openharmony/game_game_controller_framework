@@ -203,7 +203,7 @@ void GameCommonEventListener::HandleScbForwardKeyEvent(const EventFwk::CommonEve
         return;
     }
     std::pair<bool, DeviceInfo> deviceInfo = DelayedSingleton<MultiModalInputMgtService>::GetInstance()
-        ->GetHoverTouchPad();
+        ->GetOneDeviceByDeviceType(HOVER_TOUCH_PAD);
     if (!deviceInfo.first) {
         HILOGW("Discard HandleScbForwardKeyEvent. No HoverTouchPad");
         return;

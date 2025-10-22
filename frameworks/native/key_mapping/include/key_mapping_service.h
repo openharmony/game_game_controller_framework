@@ -116,8 +116,8 @@ private:
 
     void SyncKeyMappingConfig();
 
-    void HandleDeviceTypeChanged(std::unordered_set<int32_t> newDeviceTypes,
-                                 std::unordered_set<int32_t> oldDeviceTypes);
+    void HandleDeviceTypeChanged(const std::unordered_set<int32_t> &newDeviceTypes,
+                                 const std::unordered_set<int32_t> &oldDeviceTypes);
 
 private:
     /**

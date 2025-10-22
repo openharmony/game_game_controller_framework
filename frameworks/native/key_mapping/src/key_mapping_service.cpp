@@ -170,6 +170,8 @@ void KeyMappingService::BroadcastOpenTemplateConfig(const DeviceInfo &deviceInfo
 void KeyMappingService::ExecuteOpenTemplateConfig(const DeviceInfo &deviceInfo)
 {
     if (!DeviceIsSupportKeyMapping(deviceInfo.deviceType)) {
+        HILOGW("deviceType[%{public}d] cannot open template config. isSupportGameKeyMapping is %{public}d",
+               deviceInfo.deviceType, isSupportGameKeyMapping_);
         return;
     }
     GameInfo gameInfo;
@@ -282,8 +284,8 @@ void KeyMappingService::SyncKeyMappingConfig()
 
 }
 
-void KeyMappingService::HandleDeviceTypeChanged(std::unordered_set<int32_t> newDeviceTypes,
-                                                std::unordered_set<int32_t> oldDeviceTypes)
+void KeyMappingService::HandleDeviceTypeChanged(const std::unordered_set<int32_t> &newDeviceTypes,
+                                                const std::unordered_set<int32_t> &oldDeviceTypes)
 {
     for (auto deviceType: oldDeviceTypes) {
         if (newDeviceTypes.count(deviceType) == 0) {
@@ -298,12 +300,12 @@ void KeyMappingService::HandleDeviceTypeChanged(std::unordered_set<int32_t> newD
         if (oldDeviceTypes.count(deviceType) == 0) {
             // The deviceType is added.
             HILOGI("HandleDeviceTypeChangedForAdd deviceType[%{public}d]", deviceType);
-            DeviceInfo deviceInfo;
-            deviceInfo.deviceType = static_cast<DeviceTypeEnum>(deviceType);
-            if (DelayedSingleton<MultiModalInputMgtService>::GetInstance()
-                ->DeviceIsExist(deviceInfo.deviceType)) {
+            DeviceTypeEnum deviceTypeEnum = static_cast<DeviceTypeEnum>(deviceType);
+            std::pair<bool, DeviceInfo> result = DelayedSingleton<MultiModalInputMgtService>::GetInstance()
+                ->GetOneDeviceByDeviceType(deviceTypeEnum);
+            if (result.first) {
                 // There are devices of the deviceType that exist
-                BroadCastDeviceInfo(deviceInfo);
+                BroadCastDeviceInfo(result.second);
             }
         }
     }
