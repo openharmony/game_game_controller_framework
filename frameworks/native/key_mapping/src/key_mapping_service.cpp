@@ -318,6 +318,10 @@ bool KeyMappingService::DeviceIsSupportKeyMapping(DeviceTypeEnum deviceTypeEnum)
         // the game not support keymapping.
         return false;
     }
+    if (keyMappingSupportConfig_.deviceTypes.empty()) {
+        // if deviceTypes is empty, all deviceTypes support keyMapping
+        return true;
+    }
     if (keyMappingSupportConfig_.deviceTypes.count(deviceTypeEnum) == 0) {
         // the device type does not support keymapping.
         return false;

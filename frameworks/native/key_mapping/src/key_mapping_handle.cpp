@@ -79,7 +79,11 @@ bool KeyMappingHandle::IsNotifyOpenTemplateConfigPage(const std::shared_ptr<MMI:
         return (this->*isOpenTemplateValidHandlerMap_[deviceType])(keyEvent, deviceInfo);
     } else {
         if (IsFullKeyboard(deviceInfo)) {
-            return (this->*isOpenTemplateValidHandlerMap_[GAME_KEY_BOARD])(keyEvent, deviceInfo);
+            DeviceInfo temp;
+            temp.name = deviceInfo.name;
+            temp.deviceType = GAME_KEY_BOARD;
+            temp.uniq = deviceInfo.uniq;
+            return (this->*isOpenTemplateValidHandlerMap_[GAME_KEY_BOARD])(keyEvent, temp);
         }
         return false;
     }
