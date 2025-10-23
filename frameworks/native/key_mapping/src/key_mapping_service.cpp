@@ -281,7 +281,6 @@ void KeyMappingService::SyncKeyMappingConfig()
     std::unordered_set<int32_t> deviceTypeSet(keyMappingSupportConfig_.deviceTypes.begin(),
                                               keyMappingSupportConfig_.deviceTypes.end());
     DelayedSingleton<KeyToTouchManager>::GetInstance()->SetSupportKeyMapping(isSupportGameKeyMapping_, deviceTypeSet);
-
 }
 
 void KeyMappingService::HandleDeviceTypeChanged(const std::unordered_set<int32_t> &newDeviceTypes,
