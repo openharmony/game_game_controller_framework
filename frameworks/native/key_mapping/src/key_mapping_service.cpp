@@ -291,9 +291,11 @@ void KeyMappingService::HandleDeviceTypeChanged(const std::unordered_set<int32_t
         if (newDeviceTypes.count(deviceType) == 0) {
             // The deviceType is deleted.
             HILOGI("HandleDeviceTypeChangedForRemove deviceType[%{public}d]", deviceType);
+            DeviceTypeEnum deviceTypeEnum = static_cast<DeviceTypeEnum>(deviceType);
             DelayedSingleton<KeyToTouchManager>::GetInstance()->UpdateTemplateConfig(
-                static_cast<DeviceTypeEnum>(deviceType),
+                deviceTypeEnum,
                 std::vector<KeyToTouchMappingInfo>());
+            loadTemplateCache_[deviceTypeEnum] = false;
         }
     }
     for (auto deviceType: newDeviceTypes) {
