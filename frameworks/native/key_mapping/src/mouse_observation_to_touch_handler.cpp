@@ -31,7 +31,13 @@ void MouseObservationToTouchHandler::HandlePointerEvent(std::shared_ptr<InputToT
         return;
     }
     if (BaseKeyToTouchHandler::IsMouseMoveEvent(pointerEvent)) {
-        ComputeTouchPointByMouseMoveEvent(context, pointerEvent, mappingInfo, OBSERVATION_POINT_ID);
+        std::pair<bool, int32_t> pair = context->GetPointerIdByKeyCode(KEY_CODE_OBSERVATION);
+        if (!pair.first) {
+            HILOGW("discard mouse move event. because cannot find the pointerId");
+            return;
+        }
+        int32_t pointerId = pair.second;
+        ComputeTouchPointByMouseMoveEvent(context, pointerEvent, mappingInfo, pointerId);
     }
 }
 
@@ -49,12 +55,12 @@ bool MouseObservationToTouchHandler::HandleMouseRightBtnDown(std::shared_ptr<Inp
     }
 
     HILOGI("convert to down event of mouse-observation");
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context->SetCurrentPerspectiveObserving(mappingInfo, pointerId);
     int64_t actionTime = pointerEvent->GetActionTime();
-    TouchEntity touchEntity = BuildTouchEntity(mappingInfo, OBSERVATION_POINT_ID,
+    TouchEntity touchEntity = BuildTouchEntity(mappingInfo, pointerId,
                                                PointerEvent::POINTER_ACTION_DOWN, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
-    context->isPerspectiveObserving = true;
-    context->currentPerspectiveObserving = mappingInfo;
     PointerEvent::PointerItem pointerItem;
     pointerEvent->GetPointerItem(pointerEvent->GetPointerId(), pointerItem);
     context->lastMousePointer = pointerItem;
@@ -76,8 +82,14 @@ void MouseObservationToTouchHandler::HandleMouseRightBtnUp(std::shared_ptr<Input
         HILOGW("discard mouse right-button up event. mappingType is not same with mouse_observation_to_touch");
         return;
     }
+    std::pair<bool, int32_t> pair = context->GetPointerIdByKeyCode(KEY_CODE_OBSERVATION);
+    if (!pair.first) {
+        HILOGW("discard mouse right-button up event. because cannot find the pointerId");
+        return;
+    }
+    int32_t pointerId = pair.second;
     int64_t actionTime = pointerEvent->GetActionTime();
-    TouchEntity touchEntity = BuildTouchEntity(mappingInfo, OBSERVATION_POINT_ID,
+    TouchEntity touchEntity = BuildTouchEntity(mappingInfo, pointerId,
                                                PointerEvent::POINTER_ACTION_UP, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
     context->ResetCurrentPerspectiveObserving();

@@ -40,10 +40,10 @@ void ObservationKeyToTouchHandler::HandleKeyDown(std::shared_ptr<InputToTouchCon
     }
 
     HILOGI("keyCode [%{private}d] convert to down event of observation_key_to_touch", keyCode);
-    context->isPerspectiveObserving = true;
-    context->currentPerspectiveObserving = mappingInfo;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context->SetCurrentPerspectiveObserving(mappingInfo, pointerId);
     int64_t actionTime = keyEvent->GetActionTime();
-    TouchEntity touchEntity = BuildTouchEntity(context->currentPerspectiveObserving, OBSERVATION_POINT_ID,
+    TouchEntity touchEntity = BuildTouchEntity(context->currentPerspectiveObserving, pointerId,
                                                PointerEvent::POINTER_ACTION_DOWN, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
 }
@@ -63,11 +63,17 @@ void ObservationKeyToTouchHandler::HandleKeyUp(std::shared_ptr<InputToTouchConte
                keyCode);
         return;
     }
-    if (context->pointerItems.find(OBSERVATION_POINT_ID) != context->pointerItems.end()) {
+    std::pair<bool, int32_t> pair = context->GetPointerIdByKeyCode(KEY_CODE_OBSERVATION);
+    if (!pair.first) {
+        HILOGW("discard keyup event. because cannot find the pointerId");
+        return;
+    }
+    int32_t pointerId = pair.second;
+    if (context->pointerItems.find(pointerId) != context->pointerItems.end()) {
         HILOGI("keyCode [%{private}d] convert to up event of observation-key-operating", keyCode);
         int64_t actionTime = keyEvent->GetActionTime();
-        PointerEvent::PointerItem lastMovePoint = context->pointerItems[OBSERVATION_POINT_ID];
-        TouchEntity touchEntity = BuildTouchUpEntity(lastMovePoint, OBSERVATION_POINT_ID,
+        PointerEvent::PointerItem lastMovePoint = context->pointerItems[pointerId];
+        TouchEntity touchEntity = BuildTouchUpEntity(lastMovePoint, pointerId,
                                                      PointerEvent::POINTER_ACTION_UP, actionTime);
         BuildAndSendPointerEvent(context, touchEntity);
     }

@@ -48,10 +48,10 @@ void KeyboardObservationToTouchHandler::HandleKeyDown(std::shared_ptr<InputToTou
     }
 
     HILOGI("keyCode [%{private}d] convert to down event of keyboard_observation_to_touch", keyCode);
-    context->isPerspectiveObserving = true;
-    context->currentPerspectiveObserving = mappingInfo;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context->SetCurrentPerspectiveObserving(mappingInfo, pointerId);
     int64_t actionTime = keyEvent->GetActionTime();
-    TouchEntity touchEntity = BuildTouchEntity(context->currentPerspectiveObserving, OBSERVATION_POINT_ID,
+    TouchEntity touchEntity = BuildTouchEntity(context->currentPerspectiveObserving, pointerId,
                                                PointerEvent::POINTER_ACTION_DOWN, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
 
@@ -73,6 +73,12 @@ void KeyboardObservationToTouchHandler::HandleKeyUp(std::shared_ptr<InputToTouch
                keyCode);
         return;
     }
+    std::pair<bool, int32_t> pair = context->GetPointerIdByKeyCode(KEY_CODE_OBSERVATION);
+    if (!pair.first) {
+        HILOGW("discard keyup event. because cannot find the pointerId");
+        return;
+    }
+    int32_t pointerId = pair.second;
 
     auto mapping = context->currentPerspectiveObserving;
     std::vector<DpadKeyItem> dpadKeys = CollectValidDpadKeys(keyEvent, deviceInfo, mapping);
@@ -80,7 +86,7 @@ void KeyboardObservationToTouchHandler::HandleKeyUp(std::shared_ptr<InputToTouch
         HILOGI("keyCode[%{private}d] convert to up event of keyboard_observation_to_touch", keyCode);
         DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->StopTask();
         int64_t actionTime = keyEvent->GetActionTime();
-        TouchEntity touchEntity = BuildTouchEntity(mapping, OBSERVATION_POINT_ID,
+        TouchEntity touchEntity = BuildTouchEntity(mapping, pointerId,
                                                    PointerEvent::POINTER_ACTION_UP, actionTime);
         BuildAndSendPointerEvent(context, touchEntity);
         context->ResetCurrentPerspectiveObserving();
@@ -126,7 +132,13 @@ void KeyboardObservationToTouchHandler::UpdateTaskInfo(std::shared_ptr<InputToTo
                                                        DpadKeyTypeEnum currentKeyType,
                                                        std::vector<DpadKeyItem> &dpadKeys)
 {
-    if (context->pointerItems.find(OBSERVATION_POINT_ID) == context->pointerItems.end()) {
+    std::pair<bool, int32_t> pair = context->GetPointerIdByKeyCode(KEY_CODE_OBSERVATION);
+    if (!pair.first) {
+        HILOGW("discard mouse move event, because cannot find pointerId");
+        return;
+    }
+    int32_t pointerId = pair.second;
+    if (context->pointerItems.find(pointerId) == context->pointerItems.end()) {
         HILOGW("discard mouse move event, because cannot find the last move event");
         return;
     }
@@ -227,7 +239,13 @@ void KeyboardObservationToTouchHandlerTask::ComputeAndSendMovePointer()
         HILOGW("discard the compute event, because task info is invalid.");
         return;
     }
-    if (context_->pointerItems.find(OBSERVATION_POINT_ID) == context_->pointerItems.end()) {
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_OBSERVATION);
+    if (!pair.first) {
+        HILOGW("discard compute. because cannot find the pointerId");
+        return;
+    }
+    int32_t pointerId = pair.second;
+    if (context_->pointerItems.find(pointerId) == context_->pointerItems.end()) {
         HILOGW("discard the compute event, because cannot find the last move event");
         return;
     }
@@ -250,7 +268,7 @@ void KeyboardObservationToTouchHandlerTask::ComputeAndSendMovePointer()
             break;
         }
     }
-    PointerEvent::PointerItem lastMovePoint = context_->pointerItems[OBSERVATION_POINT_ID];
+    PointerEvent::PointerItem lastMovePoint = context_->pointerItems[pointerId];
     Point targetPoint;
     targetPoint.x = lastMovePoint.GetWindowX();
     targetPoint.y = lastMovePoint.GetWindowY();
@@ -259,7 +277,7 @@ void KeyboardObservationToTouchHandlerTask::ComputeAndSendMovePointer()
     }
     ComputeTargetPoint(context_, lastMovePoint, currentDpadKeyType_, targetPoint);
     int64_t actionTime = StringUtils::GetSysClockTime();
-    TouchEntity touchEntity = BuildMoveTouchEntity(OBSERVATION_POINT_ID, targetPoint, actionTime);
+    TouchEntity touchEntity = BuildMoveTouchEntity(pointerId, targetPoint, actionTime);
     BuildAndSendPointerEvent(context_, touchEntity);
 }
 

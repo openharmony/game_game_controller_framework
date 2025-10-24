@@ -45,12 +45,12 @@ bool MouseRightKeyWalkingToTouchHandler::HandleMouseRightBtnDown(std::shared_ptr
         return true;
     }
     HILOGI("Enter walking by mouse-right-key-walking");
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context->SetCurrentWalking(mappingInfo, pointerId);
     int64_t actionTime = pointerEvent->GetActionTime();
-    TouchEntity touchEntity = BuildTouchEntity(mappingInfo, WALK_POINT_ID,
+    TouchEntity touchEntity = BuildTouchEntity(mappingInfo, pointerId,
                                                PointerEvent::POINTER_ACTION_DOWN, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
-    context->isWalking = true;
-    context->currentWalking = mappingInfo;
     HandleMouseMove(context, pointerEvent);
     return true;
 }
@@ -65,8 +65,14 @@ void MouseRightKeyWalkingToTouchHandler::HandleMouseRightBtnUp(std::shared_ptr<I
         return;
     }
     HILOGI("Exit walking by mouse-right-key-walking");
+    std::pair<bool, int32_t> pair = context->GetPointerIdByKeyCode(KEY_CODE_WALK);
+    if (!pair.first) {
+        HILOGW("discard mouse-right up event. because cannot find the pointerId");
+        return;
+    }
+    int32_t pointerId = pair.second;
     int64_t actionTime = pointerEvent->GetActionTime();
-    TouchEntity touchEntity = BuildTouchEntity(context->currentWalking, WALK_POINT_ID,
+    TouchEntity touchEntity = BuildTouchEntity(context->currentWalking, pointerId,
                                                PointerEvent::POINTER_ACTION_UP, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
     context->ResetCurrentWalking();
@@ -78,6 +84,13 @@ void MouseRightKeyWalkingToTouchHandler::HandleMouseMove(std::shared_ptr<InputTo
     if (!context->IsMouseRightWalking()) {
         return;
     }
+
+    std::pair<bool, int32_t> pair = context->GetPointerIdByKeyCode(KEY_CODE_WALK);
+    if (!pair.first) {
+        HILOGW("discard mouse move event. because cannot find the pointerId");
+        return;
+    }
+    int32_t pointerId = pair.second;
 
     // get the window's center point
     Point centerPoint;
@@ -102,7 +115,7 @@ void MouseRightKeyWalkingToTouchHandler::HandleMouseMove(std::shared_ptr<InputTo
 
     // move to the target
     int64_t actionTime = pointerEvent->GetActionTime();
-    TouchEntity touchEntity = BuildMoveTouchEntity(WALK_POINT_ID, targetPoint, actionTime);
+    TouchEntity touchEntity = BuildMoveTouchEntity(pointerId, targetPoint, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
 }
 }

@@ -47,10 +47,10 @@ void SkillKeyToTouchHandler::HandleKeyDown(std::shared_ptr<InputToTouchContext> 
     }
 
     HILOGI("keyCode [%{private}d] convert to down event of skill-to-touch", keyCode);
-    context->isSkillOperating = true;
-    context->currentSkillKeyInfo = mappingInfo;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context->SetCurrentSkillKeyInfo(mappingInfo, pointerId);
     int64_t actionTime = keyEvent->GetActionTime();
-    TouchEntity touchEntity = BuildTouchEntity(context->currentSkillKeyInfo, SKILL_POINT_ID,
+    TouchEntity touchEntity = BuildTouchEntity(context->currentSkillKeyInfo, pointerId,
                                                PointerEvent::POINTER_ACTION_DOWN, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
 }
@@ -70,15 +70,21 @@ void SkillKeyToTouchHandler::HandleKeyUp(std::shared_ptr<InputToTouchContext> &c
                keyCode);
         return;
     }
-    if (context->pointerItems.find(SKILL_POINT_ID) == context->pointerItems.end()) {
+    std::pair<bool, int32_t> pair = context->GetPointerIdByKeyCode(KEY_CODE_SKILL);
+    if (!pair.first) {
+        HILOGW("discard keyCode [%{private}d]'s keyup event. because cannot find the pointerId", keyCode);
+        return;
+    }
+    int32_t pointerId = pair.second;
+    if (context->pointerItems.find(pointerId) == context->pointerItems.end()) {
         HILOGW("discard button event, because cannot find the last point event");
         return;
     }
-    PointerEvent::PointerItem lastMovePoint = context->pointerItems[SKILL_POINT_ID];
+    PointerEvent::PointerItem lastMovePoint = context->pointerItems[pointerId];
 
     HILOGI("keyCode [%{private}d] convert to up event of skill-to-touch", keyCode);
     int64_t actionTime = keyEvent->GetActionTime();
-    TouchEntity touchEntity = BuildTouchUpEntity(lastMovePoint, SKILL_POINT_ID,
+    TouchEntity touchEntity = BuildTouchUpEntity(lastMovePoint, pointerId,
                                                  PointerEvent::POINTER_ACTION_UP, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
     context->ResetCurrentSkillKeyInfo();
@@ -115,8 +121,14 @@ void SkillKeyToTouchHandler::HandleMouseMove(std::shared_ptr<InputToTouchContext
     skillCenterPoint.y = context->currentSkillKeyInfo.yValue;
     Point targetPoint = ComputeTargetPoint(skillCenterPoint, radius, angle);
 
+    std::pair<bool, int32_t> pair = context->GetPointerIdByKeyCode(KEY_CODE_SKILL);
+    if (!pair.first) {
+        HILOGW("discard mouse move event. because cannot find the pointerId");
+        return;
+    }
+    int32_t pointerId = pair.second;
     int64_t actionTime = pointerEvent->GetActionTime();
-    TouchEntity touchEntity = BuildMoveTouchEntity(SKILL_POINT_ID, targetPoint, actionTime);
+    TouchEntity touchEntity = BuildMoveTouchEntity(pointerId, targetPoint, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
 }
 

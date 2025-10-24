@@ -61,10 +61,10 @@ void DpadKeyToTouchHandler::HandleKeyDown(std::shared_ptr<InputToTouchContext> &
         return;
     }
     HILOGI("Enter walking by dpad");
-    context->isWalking = true;
-    context->currentWalking = mappingInfo;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context->SetCurrentWalking(mappingInfo, pointerId);
     int64_t actionTime = keyEvent->GetActionTime();
-    TouchEntity touchEntity = BuildTouchEntity(mappingInfo, WALK_POINT_ID,
+    TouchEntity touchEntity = BuildTouchEntity(mappingInfo, pointerId,
                                                PointerEvent::POINTER_ACTION_DOWN, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
 
@@ -94,8 +94,14 @@ void DpadKeyToTouchHandler::HandleKeyUp(std::shared_ptr<InputToTouchContext> &co
 
     // If no directional key is pressed, need to exit walking.
     HILOGI("Exit walking by dpad");
+    std::pair<bool, int32_t> pair = context->GetPointerIdByKeyCode(KEY_CODE_WALK);
+    if (!pair.first) {
+        HILOGW("discard keyup event. because cannot find the pointerId");
+        return;
+    }
+    int32_t pointerId = pair.second;
     int64_t actionTime = keyEvent->GetActionTime();
-    TouchEntity touchEntity = BuildTouchEntity(context->currentWalking, WALK_POINT_ID,
+    TouchEntity touchEntity = BuildTouchEntity(context->currentWalking, pointerId,
                                                PointerEvent::POINTER_ACTION_UP, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
     context->ResetCurrentWalking();
@@ -136,7 +142,13 @@ void DpadKeyToTouchHandler::MoveToTarget(std::shared_ptr<InputToTouchContext> &c
     centerPoint.y = mappingInfo.yValue;
     Point targetPoint = ComputeTargetPoint(centerPoint, mappingInfo.radius, static_cast<double>(angle));
     int64_t actionTime = keyEvent->GetActionTime();
-    TouchEntity touchEntity = BuildMoveTouchEntity(WALK_POINT_ID, targetPoint, actionTime);
+    std::pair<bool, int32_t> pair = context->GetPointerIdByKeyCode(KEY_CODE_WALK);
+    if (!pair.first) {
+        HILOGW("discard MoveToTarget. because cannot find the pointerId");
+        return;
+    }
+    int32_t pointerId = pair.second;
+    TouchEntity touchEntity = BuildMoveTouchEntity(pointerId, targetPoint, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
 }
 

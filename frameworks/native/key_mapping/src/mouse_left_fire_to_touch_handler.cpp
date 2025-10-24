@@ -37,8 +37,8 @@ bool MouseLeftFireToTouchHandler::HandleMouseLeftBtnDown(std::shared_ptr<InputTo
         return false;
     }
 
-    if (context->isSingleKeyOperating || context->isMouseRightClickOperating) {
-        HILOGW("discard mouse left-button down event. It's singleKeyOperating or mouseRightClickOperating now");
+    if (context->isMouseRightClickOperating) {
+        HILOGW("discard mouse left-button down event. It's mouseRightClickOperating now");
         return true;
     }
 
@@ -47,11 +47,12 @@ bool MouseLeftFireToTouchHandler::HandleMouseLeftBtnDown(std::shared_ptr<InputTo
     }
 
     HILOGI("convert to down event of mouse-left-fire");
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context->SetCurrentMouseLeftClick(pointerId);
     int64_t actionTime = pointerEvent->GetActionTime();
-    TouchEntity touchEntity = BuildTouchEntity(mappingInfo, SINGLE_POINT_ID,
+    TouchEntity touchEntity = BuildTouchEntity(mappingInfo, pointerId,
                                                PointerEvent::POINTER_ACTION_DOWN, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
-    context->isMouseLeftFireOperating = true;
     return true;
 }
 
@@ -67,13 +68,19 @@ void MouseLeftFireToTouchHandler::HandleMouseLeftBtnUp(std::shared_ptr<InputToTo
         HILOGW("discard mouse left-button up event. It's not mouseLeftFireOperating now");
         return;
     }
+    std::pair<bool, int32_t> pair = context->GetPointerIdByKeyCode(KEY_CODE_MOUSE_LEFT);
+    if (!pair.first) {
+        HILOGW("discard mouse left-button up event. because cannot find the pointerId");
+        return;
+    }
+    int32_t pointerId = pair.second;
 
     HILOGI("convert to up event of mouse-left-fire");
     int64_t actionTime = pointerEvent->GetActionTime();
-    TouchEntity touchEntity = BuildTouchEntity(mappingInfo, SINGLE_POINT_ID,
+    TouchEntity touchEntity = BuildTouchEntity(mappingInfo, pointerId,
                                                PointerEvent::POINTER_ACTION_UP, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
-    context->isMouseLeftFireOperating = false;
+    context->ResetCurrentMouseLeftClick();
 }
 }
 }
