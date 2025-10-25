@@ -22,7 +22,13 @@ void ObservationKeyToTouchHandler::HandlePointerEvent(std::shared_ptr<InputToTou
                                                       const KeyToTouchMappingInfo &mappingInfo)
 {
     if (BaseKeyToTouchHandler::IsMouseMoveEvent(pointerEvent)) {
-        ComputeTouchPointByMouseMoveEvent(context, pointerEvent, mappingInfo, OBSERVATION_POINT_ID);
+        std::pair<bool, int32_t> pair = context->GetPointerIdByKeyCode(KEY_CODE_OBSERVATION);
+        if (!pair.first) {
+            HILOGW("discard mouse move event. because cannot find the pointerId");
+            return;
+        }
+        int32_t pointerId = pair.second;
+        ComputeTouchPointByMouseMoveEvent(context, pointerEvent, mappingInfo, pointerId);
     }
 }
 
@@ -41,7 +47,7 @@ void ObservationKeyToTouchHandler::HandleKeyDown(std::shared_ptr<InputToTouchCon
 
     HILOGI("keyCode [%{private}d] convert to down event of observation_key_to_touch", keyCode);
     int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
-    context->SetCurrentPerspectiveObserving(mappingInfo, pointerId);
+    context->SetCurrentObserving(mappingInfo, pointerId);
     int64_t actionTime = keyEvent->GetActionTime();
     TouchEntity touchEntity = BuildTouchEntity(context->currentPerspectiveObserving, pointerId,
                                                PointerEvent::POINTER_ACTION_DOWN, actionTime);
@@ -78,7 +84,7 @@ void ObservationKeyToTouchHandler::HandleKeyUp(std::shared_ptr<InputToTouchConte
         BuildAndSendPointerEvent(context, touchEntity);
     }
 
-    context->ResetCurrentPerspectiveObserving();
+    context->ResetCurrentObserving();
 }
 }
 }

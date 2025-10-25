@@ -360,18 +360,18 @@ InputToTouchContext::InputToTouchContext(const DeviceTypeEnum &type,
     }
 }
 
-bool InputToTouchContext::HasSingleKeyDown(int32_t keyCode)
+bool InputToTouchContext::HasSingleKeyDown(const int32_t keyCode)
 {
     return currentSingleKeyMap.count(keyCode) != 0;
 }
 
-void InputToTouchContext::SetCurrentSingleKeyInfo(const KeyToTouchMappingInfo &mappingInfo, int32_t pointerId)
+void InputToTouchContext::SetCurrentSingleKeyInfo(const KeyToTouchMappingInfo &mappingInfo, const int32_t pointerId)
 {
     currentSingleKeyMap[mappingInfo.keyCode] = mappingInfo;
     pointerIdWithKeyCodeMap[mappingInfo.keyCode] = pointerId;
 }
 
-void InputToTouchContext::ResetCurrentSingleKeyInfo(int32_t keyCode)
+void InputToTouchContext::ResetCurrentSingleKeyInfo(const int32_t keyCode)
 {
     currentSingleKeyMap.erase(keyCode);
     ReleasePointerId(keyCode);
@@ -391,7 +391,7 @@ void InputToTouchContext::ResetCurrentSkillKeyInfo()
     ReleasePointerId(KEY_CODE_SKILL);
 }
 
-void InputToTouchContext::ResetCurrentPerspectiveObserving()
+void InputToTouchContext::ResetCurrentObserving()
 {
     currentPerspectiveObserving = KeyToTouchMappingInfo();
     isPerspectiveObserving = false;
@@ -436,14 +436,14 @@ void InputToTouchContext::ResetTempVariables()
     pointerIdWithKeyCodeMap.clear();
     ResetCurrentCombinationKey();
     ResetCurrentSkillKeyInfo();
-    ResetCurrentPerspectiveObserving();
+    ResetCurrentObserving();
     ResetCurrentCrosshairInfo();
     ResetCurrentWalking();
     ResetCurrentMouseRightClick();
     ResetCurrentMouseLeftClick();
 }
 
-std::pair<bool, int32_t> InputToTouchContext::GetPointerIdByKeyCode(int32_t keyCode)
+std::pair<bool, int32_t> InputToTouchContext::GetPointerIdByKeyCode(const int32_t keyCode)
 {
     std::pair<bool, int32_t> pair;
     if (pointerIdWithKeyCodeMap.count(keyCode) == 0) {
@@ -455,21 +455,21 @@ std::pair<bool, int32_t> InputToTouchContext::GetPointerIdByKeyCode(int32_t keyC
     return pair;
 }
 
-void InputToTouchContext::SetCurrentSkillKeyInfo(const KeyToTouchMappingInfo &mappingInfo, int32_t pointerId)
+void InputToTouchContext::SetCurrentSkillKeyInfo(const KeyToTouchMappingInfo &mappingInfo, const int32_t pointerId)
 {
     isSkillOperating = true;
     currentSkillKeyInfo = mappingInfo;
     pointerIdWithKeyCodeMap[KEY_CODE_SKILL] = pointerId;
 }
 
-void InputToTouchContext::SetCurrentCombinationKey(const KeyToTouchMappingInfo &mappingInfo, int32_t pointerId)
+void InputToTouchContext::SetCurrentCombinationKey(const KeyToTouchMappingInfo &mappingInfo, const int32_t pointerId)
 {
     isCombinationKeyOperating = true;
     currentCombinationKey = mappingInfo;
     pointerIdWithKeyCodeMap[KEY_CODE_COMBINATION] = pointerId;
 }
 
-void InputToTouchContext::SetCurrentCrosshairInfo(const KeyToTouchMappingInfo &mappingInfo, int32_t pointerId)
+void InputToTouchContext::SetCurrentCrosshairInfo(const KeyToTouchMappingInfo &mappingInfo, const int32_t pointerId)
 {
     isCrosshairMode = true;
     isEnterCrosshairInfo = false;
@@ -477,21 +477,22 @@ void InputToTouchContext::SetCurrentCrosshairInfo(const KeyToTouchMappingInfo &m
     pointerIdWithKeyCodeMap[KEY_CODE_CROSSHAIR] = pointerId;
 }
 
-void InputToTouchContext::SetCurrentWalking(const KeyToTouchMappingInfo &mappingInfo, int32_t pointerId)
+void InputToTouchContext::SetCurrentWalking(const KeyToTouchMappingInfo &mappingInfo, const int32_t pointerId)
 {
     isWalking = true;
     currentWalking = mappingInfo;
     pointerIdWithKeyCodeMap[KEY_CODE_WALK] = pointerId;
 }
 
-void InputToTouchContext::SetCurrentPerspectiveObserving(const KeyToTouchMappingInfo &mappingInfo, int32_t pointerId)
+void
+InputToTouchContext::SetCurrentObserving(const KeyToTouchMappingInfo &mappingInfo, const int32_t pointerId)
 {
     isPerspectiveObserving = true;
     currentPerspectiveObserving = mappingInfo;
     pointerIdWithKeyCodeMap[KEY_CODE_OBSERVATION] = pointerId;
 }
 
-void InputToTouchContext::SetCurrentMouseLeftClick(int32_t pointerId)
+void InputToTouchContext::SetCurrentMouseLeftClick(const int32_t pointerId)
 {
     isMouseLeftFireOperating = true;
     pointerIdWithKeyCodeMap[KEY_CODE_MOUSE_LEFT] = pointerId;
@@ -503,13 +504,13 @@ void InputToTouchContext::ResetCurrentMouseLeftClick()
     ReleasePointerId(KEY_CODE_MOUSE_LEFT);
 }
 
-void InputToTouchContext::SetCurrentMouseRightClick(int32_t pointerId)
+void InputToTouchContext::SetCurrentMouseRightClick(const int32_t pointerId)
 {
     isMouseRightClickOperating = true;
     pointerIdWithKeyCodeMap[KEY_CODE_MOUSE_RIGHT] = pointerId;
 }
 
-void InputToTouchContext::ReleasePointerId(int32_t keyCode)
+void InputToTouchContext::ReleasePointerId(const int32_t keyCode)
 {
     if (pointerIdWithKeyCodeMap.count(keyCode) != 0) {
         int32_t pointerId = pointerIdWithKeyCodeMap[keyCode];
@@ -534,16 +535,18 @@ int32_t PointerManager::ApplyPointerId()
         // Starting from 3, query an unused pointerId
         if (pointerIdCacheSet_.count(pointerId) == 0) {
             pointerIdCacheSet_.insert(pointerId);
+            HILOGI("ApplyPointerId [%{public}d]", pointerId);
             return pointerId;
         }
         pointerId++;
     }
 }
 
-void PointerManager::ReleasePointerId(int32_t pointerId)
+void PointerManager::ReleasePointerId(const int32_t pointerId)
 {
     std::lock_guard<ffrt::mutex> lock(locker);
     pointerIdCacheSet_.erase(pointerId);
+    HILOGI("ReleasePointerId [%{public}d]", pointerId);
 }
 }
 }

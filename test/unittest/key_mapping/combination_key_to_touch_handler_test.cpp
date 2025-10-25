@@ -6,7 +6,8 @@
  *
  *    http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
+ * Unless required by applic
+ * able law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
@@ -61,7 +62,7 @@ public:
 
 class CombinationKeyToTouchHandlerTest : public testing::Test {
 public:
-    void SetUp()
+    void SetUp() override
     {
         handler_ = std::make_shared<CombinationKeyToTouchHandlerEx>();
         context_ = std::make_shared<InputToTouchContext>();
@@ -70,7 +71,7 @@ public:
         mappingInfo_ = BuildKeyToTouchMappingInfo();
     }
 
-    KeyToTouchMappingInfo BuildKeyToTouchMappingInfo()
+    static KeyToTouchMappingInfo BuildKeyToTouchMappingInfo()
     {
         KeyToTouchMappingInfo info;
         info.mappingType = MappingTypeEnum::COMBINATION_KEY_TO_TOUCH;
@@ -79,6 +80,11 @@ public:
         info.combinationKeys.push_back(FIRST_KEY_CODE);
         info.combinationKeys.push_back(KEY_CODE);
         return info;
+    }
+
+    void TearDown() override
+    {
+        context_->ResetCurrentCombinationKey();
     }
 
 public:
@@ -100,21 +106,24 @@ HWTEST_F(CombinationKeyToTouchHandlerTest, HandleKeyDown_001, TestSize.Level0)
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
 
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_COMBINATION);
+    ASSERT_TRUE(pair.first);
+    int32_t pointerId = pair.second;
     ASSERT_TRUE(context_->isCombinationKeyOperating);
-    ASSERT_TRUE(context_->pointerItems.find(COMBINATION_POINT_ID) != context_->pointerItems.end());
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[COMBINATION_POINT_ID];
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
+    PointerEvent::PointerItem pointerItem = context_->pointerItems[pointerId];
     ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE);
     ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE);
     ASSERT_EQ(context_->currentCombinationKey.mappingType, mappingInfo_.mappingType);
     ASSERT_EQ(handler_->touchEntity_.xValue, X_VALUE);
     ASSERT_EQ(handler_->touchEntity_.yValue, Y_VALUE);
     ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_DOWN);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, COMBINATION_POINT_ID);
+    ASSERT_EQ(handler_->touchEntity_.pointerId, pointerId);
 }
 
 /**
  * @tc.name: HandleKeyDown_002
- * @tc.desc: when key is down and mappingInfo_.combinationKeys's size is not equal to 2,
+ * @tc.desc: when key is down and mappingInfoA_.combinationKeys's size is not equal to 2,
  * cannot send touch command
  * @tc.type: FUNC
  * @tc.require: issueNumber
@@ -124,8 +133,8 @@ HWTEST_F(CombinationKeyToTouchHandlerTest, HandleKeyDown_002, TestSize.Level1)
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
     mappingInfo_.combinationKeys.push_back(1);
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
-
-    ASSERT_TRUE(context_->pointerItems.find(COMBINATION_POINT_ID) == context_->pointerItems.end());
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_COMBINATION);
+    ASSERT_FALSE(pair.first);
 }
 
 /**
@@ -141,8 +150,8 @@ HWTEST_F(CombinationKeyToTouchHandlerTest, HandleKeyDown_003, TestSize.Level1)
     context_->isCombinationKeyOperating = true;
     context_->currentCombinationKey.combinationKeys.clear();
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
-
-    ASSERT_TRUE(context_->pointerItems.find(COMBINATION_POINT_ID) == context_->pointerItems.end());
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_COMBINATION);
+    ASSERT_FALSE(pair.first);
     ASSERT_EQ(handler_->touchEntity_.xValue, 0);
     ASSERT_EQ(handler_->touchEntity_.yValue, 0);
 }
@@ -157,18 +166,17 @@ HWTEST_F(CombinationKeyToTouchHandlerTest, HandleKeyUp_001, TestSize.Level0)
 {
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
-
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_COMBINATION);
+    int32_t pointerId = pair.second;
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
     handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
 
     ASSERT_FALSE(context_->isCombinationKeyOperating);
-    ASSERT_EQ(context_->currentSingleKey.xValue, 0);
-    ASSERT_EQ(context_->currentSingleKey.yValue, 0);
-    ASSERT_TRUE(context_->pointerItems.find(COMBINATION_POINT_ID) == context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) == context_->pointerItems.end());
     ASSERT_EQ(handler_->touchEntity_.xValue, X_VALUE);
     ASSERT_EQ(handler_->touchEntity_.yValue, Y_VALUE);
     ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_UP);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, COMBINATION_POINT_ID);
+    ASSERT_EQ(handler_->touchEntity_.pointerId, pointerId);
 }
 
 /**
@@ -185,8 +193,10 @@ HWTEST_F(CombinationKeyToTouchHandlerTest, HandleKeyUp_002, TestSize.Level1)
     context_->isCombinationKeyOperating = false;
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
     handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
-
-    ASSERT_TRUE(context_->pointerItems.find(COMBINATION_POINT_ID) != context_->pointerItems.end());
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_COMBINATION);
+    int32_t pointerId = pair.second;
+    ASSERT_TRUE(pair.first);
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
 }
 
 /**
@@ -207,7 +217,8 @@ HWTEST_F(CombinationKeyToTouchHandlerTest, HandleKeyUp_003, TestSize.Level1)
     handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
 
     ASSERT_TRUE(context_->isCombinationKeyOperating);
-    ASSERT_TRUE(context_->pointerItems.find(COMBINATION_POINT_ID) != context_->pointerItems.end());
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_COMBINATION);
+    ASSERT_TRUE(pair.first);
 }
 
 /**
@@ -228,7 +239,8 @@ HWTEST_F(CombinationKeyToTouchHandlerTest, HandleKeyUp_004, TestSize.Level1)
     handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
 
     ASSERT_TRUE(context_->isCombinationKeyOperating);
-    ASSERT_TRUE(context_->pointerItems.find(COMBINATION_POINT_ID) != context_->pointerItems.end());
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_COMBINATION);
+    ASSERT_TRUE(pair.first);
 }
 }
 }

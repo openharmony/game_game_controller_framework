@@ -54,14 +54,14 @@ void SingleKeyToTouchHandler::HandleKeyUp(std::shared_ptr<InputToTouchContext> &
     }
     int32_t pointerId = pair.second;
     if (context->pointerItems.find(pointerId) == context->pointerItems.end()) {
-        HILOGW("discard keyCode [%{private}d]'s keyup event, because cannot find the last point event", pointerId);
+        HILOGW("discard keyCode [%{private}d]'s keyup event, because cannot find the last point event", keyCode);
         return;
     }
     PointerEvent::PointerItem lastMovePoint = context->pointerItems[pointerId];
 
     HILOGI("keyCode [%{private}d] convert to up event of single-key-to-touch", keyCode);
     int64_t actionTime = keyEvent->GetActionTime();
-    TouchEntity touchEntity = BuildTouchUpEntity(lastMovePoint, SINGLE_POINT_ID,
+    TouchEntity touchEntity = BuildTouchUpEntity(lastMovePoint, pointerId,
                                                  PointerEvent::POINTER_ACTION_UP, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
     context->ResetCurrentSingleKeyInfo(keyCode);

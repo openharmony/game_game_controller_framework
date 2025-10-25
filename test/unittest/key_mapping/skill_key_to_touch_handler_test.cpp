@@ -31,6 +31,8 @@ const int32_t Y_VALUE = 1003;
 const int32_t SKILL_RANGE = 450;
 const int32_t RADIUS = 190;
 const int32_t KEY_CODE = 2301;
+const int32_t X_CENTER_VALUE = 1360;
+const int32_t Y_CENTER_VALUE = 630;
 }
 class SkillKeyToTouchHandlerEx : public SkillKeyToTouchHandler {
 public:
@@ -50,7 +52,7 @@ void SkillKeyToTouchHandlerEx::BuildAndSendPointerEvent(std::shared_ptr<InputToT
 
 class SkillKeyToTouchHandlerTest : public testing::Test {
 public:
-    void SetUp()
+    void SetUp() override
     {
         handler_ = std::make_shared<SkillKeyToTouchHandlerEx>();
         context_ = std::make_shared<InputToTouchContext>();
@@ -62,7 +64,7 @@ public:
         mappingInfo_ = BuildKeyToTouchMappingInfo();
     }
 
-    KeyToTouchMappingInfo BuildKeyToTouchMappingInfo()
+    static KeyToTouchMappingInfo BuildKeyToTouchMappingInfo()
     {
         KeyToTouchMappingInfo info;
         info.keyCode = KEY_CODE;
@@ -72,6 +74,20 @@ public:
         info.skillRange = SKILL_RANGE;
         info.radius = RADIUS;
         return info;
+    }
+
+    int32_t SendDownEvent()
+    {
+        keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
+        handler_->HandleKeyEvent(context_, keyEvent_, deviceInfo_, mappingInfo_);
+        std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_SKILL);
+        int32_t pointerId = pair.second;
+        return pointerId;
+    }
+
+    void TearDown() override
+    {
+        context_->ResetCurrentSkillKeyInfo();
     }
 
 public:
@@ -105,19 +121,18 @@ HWTEST_F(SkillKeyToTouchHandlerTest, HandleKeyEvent_001, TestSize.Level1)
  */
 HWTEST_F(SkillKeyToTouchHandlerTest, HandleKeyEvent_002, TestSize.Level0)
 {
-    keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
-    handler_->HandleKeyEvent(context_, keyEvent_, deviceInfo_, mappingInfo_);
+    int32_t pointerId = SendDownEvent();
 
     ASSERT_TRUE(context_->isSkillOperating);
-    ASSERT_TRUE(context_->pointerItems.find(SKILL_POINT_ID) != context_->pointerItems.end());
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[SKILL_POINT_ID];
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
+    PointerEvent::PointerItem pointerItem = context_->pointerItems[pointerId];
     ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE);
     ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE);
     ASSERT_EQ(context_->currentSkillKeyInfo.mappingType, mappingInfo_.mappingType);
     ASSERT_EQ(handler_->touchEntity_.xValue, X_VALUE);
     ASSERT_EQ(handler_->touchEntity_.yValue, Y_VALUE);
     ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_DOWN);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, SKILL_POINT_ID);
+    ASSERT_EQ(handler_->touchEntity_.pointerId, pointerId);
 }
 
 /**
@@ -128,11 +143,11 @@ HWTEST_F(SkillKeyToTouchHandlerTest, HandleKeyEvent_002, TestSize.Level0)
  */
 HWTEST_F(SkillKeyToTouchHandlerTest, HandleKeyEvent_003, TestSize.Level1)
 {
-    keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
-    context_->isSkillOperating = true;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context_->SetCurrentSkillKeyInfo(mappingInfo_, pointerId);
     handler_->HandleKeyEvent(context_, keyEvent_, deviceInfo_, mappingInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(SKILL_POINT_ID) == context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) == context_->pointerItems.end());
     ASSERT_EQ(handler_->touchEntity_.xValue, 0);
     ASSERT_EQ(handler_->touchEntity_.yValue, 0);
 }
@@ -145,19 +160,18 @@ HWTEST_F(SkillKeyToTouchHandlerTest, HandleKeyEvent_003, TestSize.Level1)
  */
 HWTEST_F(SkillKeyToTouchHandlerTest, HandleKeyEvent_004, TestSize.Level0)
 {
-    keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
-    handler_->HandleKeyEvent(context_, keyEvent_, deviceInfo_, mappingInfo_);
+    int32_t pointerId = SendDownEvent();
 
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
     handler_->HandleKeyEvent(context_, keyEvent_, deviceInfo_, mappingInfo_);
 
     ASSERT_FALSE(context_->isSkillOperating);
     ASSERT_EQ(context_->currentSkillKeyInfo.mappingType, 0);
-    ASSERT_TRUE(context_->pointerItems.find(SKILL_POINT_ID) == context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) == context_->pointerItems.end());
     ASSERT_EQ(handler_->touchEntity_.xValue, X_VALUE);
     ASSERT_EQ(handler_->touchEntity_.yValue, Y_VALUE);
     ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_UP);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, SKILL_POINT_ID);
+    ASSERT_EQ(handler_->touchEntity_.pointerId, pointerId);
 }
 
 /**
@@ -168,14 +182,13 @@ HWTEST_F(SkillKeyToTouchHandlerTest, HandleKeyEvent_004, TestSize.Level0)
  */
 HWTEST_F(SkillKeyToTouchHandlerTest, HandleKeyEvent_005, TestSize.Level0)
 {
-    keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
-    handler_->HandleKeyEvent(context_, keyEvent_, deviceInfo_, mappingInfo_);
+    int32_t pointerId = SendDownEvent();
 
     context_->isSkillOperating = false;
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
     handler_->HandleKeyEvent(context_, keyEvent_, deviceInfo_, mappingInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(SKILL_POINT_ID) != context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
 }
 
 /**
@@ -187,15 +200,14 @@ HWTEST_F(SkillKeyToTouchHandlerTest, HandleKeyEvent_005, TestSize.Level0)
  */
 HWTEST_F(SkillKeyToTouchHandlerTest, HandleKeyEvent_006, TestSize.Level0)
 {
-    keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
-    handler_->HandleKeyEvent(context_, keyEvent_, deviceInfo_, mappingInfo_);
+    int32_t pointerId = SendDownEvent();
 
     keyEvent_->SetKeyCode(0);
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
     handler_->HandleKeyEvent(context_, keyEvent_, deviceInfo_, mappingInfo_);
 
     ASSERT_TRUE(context_->isSkillOperating);
-    ASSERT_TRUE(context_->pointerItems.find(SKILL_POINT_ID) != context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
 }
 
 /**
@@ -207,8 +219,7 @@ HWTEST_F(SkillKeyToTouchHandlerTest, HandleKeyEvent_006, TestSize.Level0)
  */
 HWTEST_F(SkillKeyToTouchHandlerTest, HandleKeyEvent_007, TestSize.Level0)
 {
-    keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
-    handler_->HandleKeyEvent(context_, keyEvent_, deviceInfo_, mappingInfo_);
+    int32_t pointerId = SendDownEvent();
 
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
     context_->pointerItems.clear();
@@ -228,7 +239,7 @@ HWTEST_F(SkillKeyToTouchHandlerTest, HandlePointerEvent_001, TestSize.Level0)
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_UP);
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(SKILL_POINT_ID) == context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.empty());
     ASSERT_EQ(handler_->touchEntity_.xValue, 0);
     ASSERT_EQ(handler_->touchEntity_.yValue, 0);
 }
@@ -244,7 +255,7 @@ HWTEST_F(SkillKeyToTouchHandlerTest, HandlePointerEvent_002, TestSize.Level0)
     context_->isSkillOperating = false;
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(SKILL_POINT_ID) == context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.empty());
     ASSERT_EQ(handler_->touchEntity_.xValue, 0);
     ASSERT_EQ(handler_->touchEntity_.yValue, 0);
 }
@@ -259,7 +270,7 @@ HWTEST_F(SkillKeyToTouchHandlerTest, HandlePointerEvent_003, TestSize.Level0)
 {
     handler_->HandlePointerEvent(context_, nullptr, mappingInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(SKILL_POINT_ID) == context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.empty());
     ASSERT_EQ(handler_->touchEntity_.xValue, 0);
     ASSERT_EQ(handler_->touchEntity_.yValue, 0);
 }
@@ -273,10 +284,11 @@ HWTEST_F(SkillKeyToTouchHandlerTest, HandlePointerEvent_003, TestSize.Level0)
  */
 HWTEST_F(SkillKeyToTouchHandlerTest, HandlePointerEvent_005, TestSize.Level0)
 {
-    context_->currentSkillKeyInfo = mappingInfo_;
-    context_->isSkillOperating = true;
-    context_->windowInfoEntity.xCenter = 1360;
-    context_->windowInfoEntity.yCenter = 630;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context_->SetCurrentSkillKeyInfo(mappingInfo_, pointerId);
+    context_->windowInfoEntity.xCenter = X_CENTER_VALUE;
+    context_->windowInfoEntity.yCenter = Y_CENTER_VALUE;
+
     PointerEvent::PointerItem pointerItem;
     pointerItem.SetWindowX(1540);
     pointerItem.SetWindowY(100);
@@ -284,11 +296,11 @@ HWTEST_F(SkillKeyToTouchHandlerTest, HandlePointerEvent_005, TestSize.Level0)
 
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(SKILL_POINT_ID) != context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
     ASSERT_EQ(handler_->touchEntity_.xValue, 2106);
     ASSERT_EQ(handler_->touchEntity_.yValue, 823);
     ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, SKILL_POINT_ID);
+    ASSERT_EQ(handler_->touchEntity_.pointerId, pointerId);
 }
 
 /**
@@ -300,10 +312,10 @@ HWTEST_F(SkillKeyToTouchHandlerTest, HandlePointerEvent_005, TestSize.Level0)
  */
 HWTEST_F(SkillKeyToTouchHandlerTest, HandlePointerEvent_006, TestSize.Level0)
 {
-    context_->currentSkillKeyInfo = mappingInfo_;
-    context_->isSkillOperating = true;
-    context_->windowInfoEntity.xCenter = 1360;
-    context_->windowInfoEntity.yCenter = 630;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context_->SetCurrentSkillKeyInfo(mappingInfo_, pointerId);
+    context_->windowInfoEntity.xCenter = X_CENTER_VALUE;
+    context_->windowInfoEntity.yCenter = Y_CENTER_VALUE;
     PointerEvent::PointerItem pointerItem;
     pointerItem.SetWindowX(1540);
     pointerItem.SetWindowY(230);
@@ -311,11 +323,11 @@ HWTEST_F(SkillKeyToTouchHandlerTest, HandlePointerEvent_006, TestSize.Level0)
 
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(SKILL_POINT_ID) != context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
     ASSERT_EQ(handler_->touchEntity_.xValue, 2121);
     ASSERT_EQ(handler_->touchEntity_.yValue, 834);
     ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, SKILL_POINT_ID);
+    ASSERT_EQ(handler_->touchEntity_.pointerId, pointerId);
 }
 }
 }

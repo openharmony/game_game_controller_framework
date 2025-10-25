@@ -64,7 +64,7 @@ public:
 
 class ObservationKeyToTouchHandlerTest : public testing::Test {
 public:
-    void SetUp()
+    void SetUp() override
     {
         handler_ = std::make_shared<ObservationKeyToTouchHandlerEx>();
         context_ = std::make_shared<InputToTouchContext>();
@@ -81,7 +81,7 @@ public:
         keyEvent_->SetKeyCode(KEY_CODE);
     }
 
-    KeyToTouchMappingInfo BuildKeyToTouchMappingInfo()
+    static KeyToTouchMappingInfo BuildKeyToTouchMappingInfo()
     {
         KeyToTouchMappingInfo info;
         info.keyCode = KEY_CODE;
@@ -93,12 +93,26 @@ public:
         return info;
     }
 
-    PointerEvent::PointerItem BuildPointerItem(int32_t xVal, int32_t yVal)
+    static PointerEvent::PointerItem BuildPointerItem(int32_t xVal, int32_t yVal)
     {
         PointerEvent::PointerItem pointerItem;
         pointerItem.SetWindowX(xVal);
         pointerItem.SetWindowY(yVal);
         return pointerItem;
+    }
+
+    int32_t SendFirstDownEvent()
+    {
+        keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
+        handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
+        std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_OBSERVATION);
+        int32_t pointerId = pair.second;
+        return pointerId;
+    }
+
+    void TearDown() override
+    {
+        context_->ResetCurrentObserving();
     }
 
 public:
@@ -119,19 +133,18 @@ public:
  */
 HWTEST_F(ObservationKeyToTouchHandlerTest, HandleKeyDown_001, TestSize.Level0)
 {
-    keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
-    handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
+    int32_t pointerId = SendFirstDownEvent();
 
     ASSERT_TRUE(context_->isPerspectiveObserving);
-    ASSERT_TRUE(context_->pointerItems.find(OBSERVATION_POINT_ID) != context_->pointerItems.end());
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[OBSERVATION_POINT_ID];
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
+    PointerEvent::PointerItem pointerItem = context_->pointerItems[pointerId];
     ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE);
     ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE);
     ASSERT_EQ(context_->currentPerspectiveObserving.mappingType, mappingInfo_.mappingType);
     ASSERT_EQ(handler_->touchEntity_.xValue, X_VALUE);
     ASSERT_EQ(handler_->touchEntity_.yValue, Y_VALUE);
     ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_DOWN);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, OBSERVATION_POINT_ID);
+    ASSERT_EQ(handler_->touchEntity_.pointerId, pointerId);
 }
 
 /**
@@ -146,7 +159,8 @@ HWTEST_F(ObservationKeyToTouchHandlerTest, HandleKeyDown_002, TestSize.Level1)
     context_->isPerspectiveObserving = true;
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(OBSERVATION_POINT_ID) == context_->pointerItems.end());
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_OBSERVATION);
+    ASSERT_FALSE(pair.first);
     ASSERT_EQ(handler_->touchEntity_.xValue, 0);
     ASSERT_EQ(handler_->touchEntity_.yValue, 0);
 }
@@ -159,8 +173,7 @@ HWTEST_F(ObservationKeyToTouchHandlerTest, HandleKeyDown_002, TestSize.Level1)
  */
 HWTEST_F(ObservationKeyToTouchHandlerTest, HandleKeyUp_001, TestSize.Level0)
 {
-    keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
-    handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
+    int32_t pointerId = SendFirstDownEvent();
 
     context_->lastMousePointer.SetWindowX(X_VALUE);
     context_->lastMousePointer.SetWindowY(Y_VALUE);
@@ -170,13 +183,13 @@ HWTEST_F(ObservationKeyToTouchHandlerTest, HandleKeyUp_001, TestSize.Level0)
     ASSERT_FALSE(context_->isPerspectiveObserving);
 
     ASSERT_EQ(context_->currentPerspectiveObserving.mappingType, 0);
-    ASSERT_TRUE(context_->pointerItems.find(OBSERVATION_POINT_ID) == context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) == context_->pointerItems.end());
     ASSERT_EQ(context_->lastMousePointer.GetWindowX(), 0);
     ASSERT_EQ(context_->lastMousePointer.GetWindowY(), 0);
     ASSERT_EQ(handler_->touchEntity_.xValue, X_VALUE);
     ASSERT_EQ(handler_->touchEntity_.yValue, Y_VALUE);
     ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_UP);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, OBSERVATION_POINT_ID);
+    ASSERT_EQ(handler_->touchEntity_.pointerId, pointerId);
 }
 
 /**
@@ -187,14 +200,13 @@ HWTEST_F(ObservationKeyToTouchHandlerTest, HandleKeyUp_001, TestSize.Level0)
  */
 HWTEST_F(ObservationKeyToTouchHandlerTest, HandleKeyUp_002, TestSize.Level0)
 {
-    keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
-    handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
+    int32_t pointerId = SendFirstDownEvent();
 
     context_->isPerspectiveObserving = false;
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
     handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(OBSERVATION_POINT_ID) != context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
 }
 
 /**
@@ -206,15 +218,14 @@ HWTEST_F(ObservationKeyToTouchHandlerTest, HandleKeyUp_002, TestSize.Level0)
  */
 HWTEST_F(ObservationKeyToTouchHandlerTest, HandleKeyUp_003, TestSize.Level0)
 {
-    keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
-    handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
+    int32_t pointerId = SendFirstDownEvent();
 
     keyEvent_->SetKeyCode(0);
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
     handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
 
     ASSERT_TRUE(context_->isPerspectiveObserving);
-    ASSERT_TRUE(context_->pointerItems.find(OBSERVATION_POINT_ID) != context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
 }
 
 /**
@@ -226,8 +237,7 @@ HWTEST_F(ObservationKeyToTouchHandlerTest, HandleKeyUp_003, TestSize.Level0)
  */
 HWTEST_F(ObservationKeyToTouchHandlerTest, HandlePointerEvent_001, TestSize.Level0)
 {
-    keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
-    handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
+    int32_t pointerId = SendFirstDownEvent();
 
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_MOVE);
     pointerEvent_->RemoveAllPointerItems();
@@ -238,7 +248,7 @@ HWTEST_F(ObservationKeyToTouchHandlerTest, HandlePointerEvent_001, TestSize.Leve
 
     ASSERT_EQ(context_->lastMousePointer.GetWindowX(), pointerItem.GetWindowX());
     ASSERT_EQ(context_->lastMousePointer.GetWindowY(), pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerId, OBSERVATION_POINT_ID);
+    ASSERT_EQ(handler_->touchEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
     ASSERT_EQ(handler_->touchEntity_.xValue, X_VALUE + X_STEP);
     ASSERT_EQ(handler_->touchEntity_.yValue, Y_VALUE + Y_STEP);
@@ -247,10 +257,10 @@ HWTEST_F(ObservationKeyToTouchHandlerTest, HandlePointerEvent_001, TestSize.Leve
      * touch event's x cannot more than maxWidth
      * touch event's y cannot more than maxHeight
      */
-    PointerEvent::PointerItem lastMovePoint = context_->pointerItems[OBSERVATION_POINT_ID];
+    PointerEvent::PointerItem lastMovePoint = context_->pointerItems[pointerId];
     lastMovePoint.SetWindowX(MAX_WIDTH);
     lastMovePoint.SetWindowY(MAX_HEIGHT);
-    context_->pointerItems[OBSERVATION_POINT_ID] = lastMovePoint;
+    context_->pointerItems[pointerId] = lastMovePoint;
     pointerEvent_->RemoveAllPointerItems();
     pointerItem = BuildPointerItem(MOUSE_X_VALUE + MOUSE_MOVE_DISTANCE + MOUSE_MOVE_DISTANCE,
                                    MOUSE_Y_VALUE + MOUSE_MOVE_DISTANCE + MOUSE_MOVE_DISTANCE);

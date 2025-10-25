@@ -170,39 +170,39 @@ struct InputToTouchContext {
     InputToTouchContext(const DeviceTypeEnum &type, const WindowInfoEntity &windowInfo,
                         const std::vector<KeyToTouchMappingInfo> &mappingInfos);
 
-    void SetCurrentSingleKeyInfo(const KeyToTouchMappingInfo &mappingInfo, int32_t pointerId);
+    void SetCurrentSingleKeyInfo(const KeyToTouchMappingInfo &mappingInfo, const int32_t pointerId);
 
     bool HasSingleKeyDown(int32_t keyCode);
 
     void ResetCurrentSingleKeyInfo(int32_t keyCode);
 
-    void SetCurrentCombinationKey(const KeyToTouchMappingInfo &mappingInfo, int32_t pointerId);
+    void SetCurrentCombinationKey(const KeyToTouchMappingInfo &mappingInfo, const int32_t pointerId);
 
     void ResetCurrentCombinationKey();
 
-    void SetCurrentSkillKeyInfo(const KeyToTouchMappingInfo &mappingInfo, int32_t pointerId);
+    void SetCurrentSkillKeyInfo(const KeyToTouchMappingInfo &mappingInfo, const int32_t pointerId);
 
     void ResetCurrentSkillKeyInfo();
 
-    void SetCurrentPerspectiveObserving(const KeyToTouchMappingInfo &mappingInfo, int32_t pointerId);
+    void SetCurrentObserving(const KeyToTouchMappingInfo &mappingInfo, const int32_t pointerId);
 
-    void ResetCurrentPerspectiveObserving();
+    void ResetCurrentObserving();
 
-    void SetCurrentCrosshairInfo(const KeyToTouchMappingInfo &mappingInfo, int32_t pointerId);
+    void SetCurrentCrosshairInfo(const KeyToTouchMappingInfo &mappingInfo, const int32_t pointerId);
 
     void ResetCurrentCrosshairInfo();
 
-    void SetCurrentWalking(const KeyToTouchMappingInfo &mappingInfo, int32_t pointerId);
+    void SetCurrentWalking(const KeyToTouchMappingInfo &mappingInfo, const int32_t pointerId);
 
     void ResetCurrentWalking();
 
     bool IsMouseRightWalking();
 
-    void SetCurrentMouseLeftClick(int32_t pointerId);
+    void SetCurrentMouseLeftClick(const int32_t pointerId);
 
     void ResetCurrentMouseLeftClick();
 
-    void SetCurrentMouseRightClick(int32_t pointerId);
+    void SetCurrentMouseRightClick(const int32_t pointerId);
 
     void ResetCurrentMouseRightClick();
 
@@ -211,14 +211,14 @@ struct InputToTouchContext {
      */
     void ResetTempVariables();
 
-    void ReleasePointerId(int32_t keyCode);
+    void ReleasePointerId(const int32_t keyCode);
 
     /**
      * Gey the applied pointerId by keycode
      * @param keyCode keyCode
      * @return first means whether pointerId exists
      */
-    std::pair<bool, int32_t> GetPointerIdByKeyCode(int32_t keyCode);
+    std::pair<bool, int32_t> GetPointerIdByKeyCode(const int32_t keyCode);
 };
 
 struct TouchEntity {
@@ -275,7 +275,7 @@ public:
      * Release the pointerId
      * @param pointerId pointerId
      */
-    void ReleasePointerId(int32_t pointerId);
+    void ReleasePointerId(const int32_t pointerId);
 
 private:
     ffrt::mutex locker;

@@ -76,12 +76,9 @@ public:
         return info;
     }
 
-    PointerEvent::PointerItem BuildPointerItem(int32_t xVal, int32_t yVal)
+    void TearDown()
     {
-        PointerEvent::PointerItem pointerItem;
-        pointerItem.SetWindowX(xVal);
-        pointerItem.SetWindowY(yVal);
-        return pointerItem;
+        context_->ResetCurrentMouseLeftClick();
     }
 
 public:
@@ -108,9 +105,12 @@ HWTEST_F(MouseLeftFireToTouchHandlerTest, HandlePointerEvent_001, TestSize.Level
 
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(SINGLE_POINT_ID) != context_->pointerItems.end());
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_MOUSE_LEFT);
+    ASSERT_TRUE(pair.first);
+    int32_t pointerId = pair.second;
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
     ASSERT_TRUE(context_->isMouseLeftFireOperating);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, SINGLE_POINT_ID);
+    ASSERT_EQ(handler_->touchEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_DOWN);
     ASSERT_EQ(handler_->touchEntity_.xValue, X_VALUE);
     ASSERT_EQ(handler_->touchEntity_.yValue, Y_VALUE);
@@ -132,7 +132,8 @@ HWTEST_F(MouseLeftFireToTouchHandlerTest, HandlePointerEvent_002, TestSize.Level
 
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(SINGLE_POINT_ID) == context_->pointerItems.end());
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_MOUSE_LEFT);
+    ASSERT_FALSE(pair.first);
 }
 
 /**
@@ -151,7 +152,8 @@ HWTEST_F(MouseLeftFireToTouchHandlerTest, HandlePointerEvent_003, TestSize.Level
 
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(SINGLE_POINT_ID) == context_->pointerItems.end());
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_MOUSE_LEFT);
+    ASSERT_FALSE(pair.first);
     ASSERT_FALSE(context_->isMouseLeftFireOperating);
 }
 
@@ -170,7 +172,8 @@ HWTEST_F(MouseLeftFireToTouchHandlerTest, HandlePointerEvent_004, TestSize.Level
 
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(SINGLE_POINT_ID) == context_->pointerItems.end());
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_MOUSE_LEFT);
+    ASSERT_FALSE(pair.first);
     ASSERT_FALSE(context_->isMouseLeftFireOperating);
 }
 
@@ -189,7 +192,8 @@ HWTEST_F(MouseLeftFireToTouchHandlerTest, HandlePointerEvent_005, TestSize.Level
 
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(SINGLE_POINT_ID) == context_->pointerItems.end());
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_MOUSE_LEFT);
+    ASSERT_FALSE(pair.first);
     ASSERT_FALSE(context_->isMouseLeftFireOperating);
 }
 
@@ -207,13 +211,15 @@ HWTEST_F(MouseLeftFireToTouchHandlerTest, HandlePointerEvent_006, TestSize.Level
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_DOWN);
     pointerEvent_->SetButtonId(0);
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
-
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_MOUSE_LEFT);
+    ASSERT_TRUE(pair.first);
+    int32_t pointerId = pair.second;
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_UP);
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(SINGLE_POINT_ID) == context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) == context_->pointerItems.end());
     ASSERT_FALSE(context_->isMouseLeftFireOperating);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, SINGLE_POINT_ID);
+    ASSERT_EQ(handler_->touchEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_UP);
     ASSERT_EQ(handler_->touchEntity_.xValue, X_VALUE);
     ASSERT_EQ(handler_->touchEntity_.yValue, Y_VALUE);
@@ -233,12 +239,15 @@ HWTEST_F(MouseLeftFireToTouchHandlerTest, HandlePointerEvent_007, TestSize.Level
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_DOWN);
     pointerEvent_->SetButtonId(0);
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_MOUSE_LEFT);
+    ASSERT_TRUE(pair.first);
+    int32_t pointerId = pair.second;
 
     context_->isMouseLeftFireOperating = false;
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_UP);
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(SINGLE_POINT_ID) != context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
     ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_DOWN);
 }
 
@@ -256,12 +265,15 @@ HWTEST_F(MouseLeftFireToTouchHandlerTest, HandlePointerEvent_008, TestSize.Level
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_DOWN);
     pointerEvent_->SetButtonId(0);
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_MOUSE_LEFT);
+    ASSERT_TRUE(pair.first);
+    int32_t pointerId = pair.second;
 
     context_->isMouseLeftFireOperating = false;
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_UP);
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(SINGLE_POINT_ID) != context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
     ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_DOWN);
 }
 
@@ -279,26 +291,9 @@ HWTEST_F(MouseLeftFireToTouchHandlerTest, HandlePointerEvent_009, TestSize.Level
     pointerEvent_->SetButtonId(0);
 
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
-
-    ASSERT_TRUE(context_->pointerItems.find(SINGLE_POINT_ID) == context_->pointerItems.end());
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_MOUSE_LEFT);
+    ASSERT_FALSE(pair.first);
 }
 
-/**
- * @tc.name: HandlePointerEvent_010
- * @tc.desc: when it's mouse left-button down event and isSingleKeyOperating is true,
- * discard the event
- * @tc.type: FUNC
- * @tc.require: issueNumber
- */
-HWTEST_F(MouseLeftFireToTouchHandlerTest, HandlePointerEvent_010, TestSize.Level1)
-{
-    context_->isSingleKeyOperating = true;
-    pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_DOWN);
-    pointerEvent_->SetButtonId(0);
-
-    handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
-
-    ASSERT_TRUE(context_->pointerItems.find(SINGLE_POINT_ID) == context_->pointerItems.end());
-}
 }
 }

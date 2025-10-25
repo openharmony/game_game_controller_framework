@@ -50,7 +50,7 @@ public:
 
 class MouseRightKeyClickToTouchHandlerTest : public testing::Test {
 public:
-    void SetUp()
+    void SetUp() override
     {
         handler_ = std::make_shared<MouseRightKeyClickToTouchHandlerEx>();
         context_ = std::make_shared<InputToTouchContext>();
@@ -65,7 +65,7 @@ public:
         context_->windowInfoEntity.maxHeight = MAX_HEIGHT;
     }
 
-    KeyToTouchMappingInfo BuildKeyToTouchMappingInfo()
+    static KeyToTouchMappingInfo BuildKeyToTouchMappingInfo()
     {
         KeyToTouchMappingInfo info;
         info.mappingType = MappingTypeEnum::MOUSE_RIGHT_KEY_CLICK_TO_TOUCH;
@@ -76,12 +76,19 @@ public:
         return info;
     }
 
-    PointerEvent::PointerItem BuildPointerItem(int32_t xVal, int32_t yVal)
+    void TearDown() override
     {
-        PointerEvent::PointerItem pointerItem;
-        pointerItem.SetWindowX(xVal);
-        pointerItem.SetWindowY(yVal);
-        return pointerItem;
+        context_->ResetCurrentMouseRightClick();
+    }
+
+    int32_t SendMouseRightDownEvent()
+    {
+        context_->isMouseRightClickOperating = false;
+        pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_DOWN);
+        handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
+        std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_MOUSE_RIGHT);
+        int32_t pointerId = pair.second;
+        return pointerId;
     }
 
 public:
@@ -101,15 +108,10 @@ public:
  */
 HWTEST_F(MouseRightKeyClickToTouchHandlerTest, HandlePointerEvent_001, TestSize.Level0)
 {
-    context_->isMouseRightClickOperating = false;
-    pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_DOWN);
-
-    handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
-
-    ASSERT_TRUE(context_->pointerItems.find(SINGLE_POINT_ID) != context_->pointerItems.end());
+    int32_t pointerId = SendMouseRightDownEvent();
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
     ASSERT_TRUE(context_->isMouseRightClickOperating);
-    ASSERT_EQ(context_->currentMouseRightClick.mappingType, mappingInfo_.mappingType);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, SINGLE_POINT_ID);
+    ASSERT_EQ(handler_->touchEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_DOWN);
     ASSERT_EQ(handler_->touchEntity_.xValue, X_VALUE);
     ASSERT_EQ(handler_->touchEntity_.yValue, Y_VALUE);
@@ -129,25 +131,8 @@ HWTEST_F(MouseRightKeyClickToTouchHandlerTest, HandlePointerEvent_002, TestSize.
 
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(SINGLE_POINT_ID) == context_->pointerItems.end());
-}
-
-/**
- * @tc.name: HandlePointerEvent_003
- * @tc.desc: when it's mouse right-button down event and isSingleKeyOperating is true,
- * discard the event
- * @tc.type: FUNC
- * @tc.require: issueNumber
- */
-HWTEST_F(MouseRightKeyClickToTouchHandlerTest, HandlePointerEvent_003, TestSize.Level1)
-{
-    context_->isSingleKeyOperating = true;
-    pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_DOWN);
-
-    handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
-
-    ASSERT_TRUE(context_->pointerItems.find(SINGLE_POINT_ID) == context_->pointerItems.end());
-    ASSERT_FALSE(context_->isMouseRightClickOperating);
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_MOUSE_RIGHT);
+    ASSERT_FALSE(pair.first);
 }
 
 /**
@@ -158,14 +143,14 @@ HWTEST_F(MouseRightKeyClickToTouchHandlerTest, HandlePointerEvent_003, TestSize.
  */
 HWTEST_F(MouseRightKeyClickToTouchHandlerTest, HandlePointerEvent_004, TestSize.Level1)
 {
-    context_->isSingleKeyOperating = false;
     context_->isMouseRightClickOperating = false;
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_MOVE);
     pointerEvent_->SetButtonId(0);
 
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(SINGLE_POINT_ID) == context_->pointerItems.end());
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_MOUSE_RIGHT);
+    ASSERT_FALSE(pair.first);
 }
 
 /**
@@ -181,7 +166,8 @@ HWTEST_F(MouseRightKeyClickToTouchHandlerTest, HandlePointerEvent_005, TestSize.
 
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(SINGLE_POINT_ID) == context_->pointerItems.end());
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_MOUSE_RIGHT);
+    ASSERT_FALSE(pair.first);
     ASSERT_FALSE(context_->isMouseRightClickOperating);
 }
 
@@ -217,14 +203,13 @@ HWTEST_F(MouseRightKeyClickToTouchHandlerTest, HandlePointerEvent_006, TestSize.
  */
 HWTEST_F(MouseRightKeyClickToTouchHandlerTest, HandlePointerEvent_007, TestSize.Level0)
 {
-    pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_DOWN);
-    handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
+    int32_t pointerId = SendMouseRightDownEvent();
 
     context_->isMouseRightClickOperating = false;
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_UP);
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(SINGLE_POINT_ID) != context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
     ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_DOWN);
 }
 
@@ -242,7 +227,8 @@ HWTEST_F(MouseRightKeyClickToTouchHandlerTest, HandlePointerEvent_008, TestSize.
 
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(SINGLE_POINT_ID) == context_->pointerItems.end());
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_MOUSE_RIGHT);
+    ASSERT_FALSE(pair.first);
     ASSERT_FALSE(context_->isMouseRightClickOperating);
 }
 }

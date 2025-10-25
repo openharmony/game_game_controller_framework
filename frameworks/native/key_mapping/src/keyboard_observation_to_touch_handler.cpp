@@ -49,7 +49,7 @@ void KeyboardObservationToTouchHandler::HandleKeyDown(std::shared_ptr<InputToTou
 
     HILOGI("keyCode [%{private}d] convert to down event of keyboard_observation_to_touch", keyCode);
     int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
-    context->SetCurrentPerspectiveObserving(mappingInfo, pointerId);
+    context->SetCurrentObserving(mappingInfo, pointerId);
     int64_t actionTime = keyEvent->GetActionTime();
     TouchEntity touchEntity = BuildTouchEntity(context->currentPerspectiveObserving, pointerId,
                                                PointerEvent::POINTER_ACTION_DOWN, actionTime);
@@ -89,7 +89,7 @@ void KeyboardObservationToTouchHandler::HandleKeyUp(std::shared_ptr<InputToTouch
         TouchEntity touchEntity = BuildTouchEntity(mapping, pointerId,
                                                    PointerEvent::POINTER_ACTION_UP, actionTime);
         BuildAndSendPointerEvent(context, touchEntity);
-        context->ResetCurrentPerspectiveObserving();
+        context->ResetCurrentObserving();
         return;
     } else {
         MoveByKeyUp(keyEvent, mapping, context, dpadKeys);

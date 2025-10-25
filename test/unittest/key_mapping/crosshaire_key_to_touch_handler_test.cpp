@@ -83,7 +83,7 @@ public:
 
 class CrosshairKeyToTouchHandlerTest : public testing::Test {
 public:
-    void SetUp()
+    void SetUp() override
     {
         handler_ = std::make_shared<CrosshairKeyToTouchHandlerEx>();
         context_ = std::make_shared<InputToTouchContext>();
@@ -100,7 +100,12 @@ public:
         keyEvent_->SetKeyCode(KEY_CODE);
     }
 
-    KeyToTouchMappingInfo BuildKeyToTouchMappingInfo()
+    void TearDown() override
+    {
+        context_->ResetCurrentCrosshairInfo();
+    }
+
+    static KeyToTouchMappingInfo BuildKeyToTouchMappingInfo()
     {
         KeyToTouchMappingInfo info;
         info.mappingType = MappingTypeEnum::CROSSHAIR_KEY_TO_TOUCH;
@@ -112,7 +117,7 @@ public:
         return info;
     }
 
-    PointerEvent::PointerItem BuildPointerItem(int32_t xVal, int32_t yVal)
+    static PointerEvent::PointerItem BuildPointerItem(int32_t xVal, int32_t yVal)
     {
         PointerEvent::PointerItem pointerItem;
         pointerItem.SetWindowX(xVal);
@@ -144,9 +149,12 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandleKeyDown_001, TestSize.Level0)
 
     ASSERT_TRUE(context_->isCrosshairMode);
     ASSERT_FALSE(context_->isEnterCrosshairInfo);
-    ASSERT_TRUE(context_->pointerItems.find(CROSSHAIR_POINT_ID) != context_->pointerItems.end());
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_CROSSHAIR);
+    ASSERT_TRUE(pair.first);
+    int32_t pointerId = pair.second;
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
     ASSERT_EQ(context_->currentCrosshairInfo.mappingType, mappingInfo_.mappingType);
-    ASSERT_EQ(handler_->touchDownEntity_.pointerId, CROSSHAIR_POINT_ID);
+    ASSERT_EQ(handler_->touchDownEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchDownEntity_.pointerAction, PointerEvent::POINTER_ACTION_DOWN);
     ASSERT_EQ(handler_->touchDownEntity_.xValue, X_VALUE);
     ASSERT_EQ(handler_->touchDownEntity_.yValue, Y_VALUE);
@@ -199,16 +207,18 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandleKeyUp_002, TestSize.Level0)
     // first key up, it will into crosshair status
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
-
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_CROSSHAIR);
+    ASSERT_TRUE(pair.first);
+    int32_t pointerId = pair.second;
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
     handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
 
     // second key up, it will into crosshair status
-    context_->pointerItems[CROSSHAIR_POINT_ID] = BuildPointerItem(X_VALUE, Y_VALUE);
+    context_->pointerItems[pointerId] = BuildPointerItem(X_VALUE, Y_VALUE);
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
     handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(CROSSHAIR_POINT_ID) == context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) == context_->pointerItems.end());
     ASSERT_FALSE(context_->isCrosshairMode);
     ASSERT_FALSE(context_->isEnterCrosshairInfo);
     ASSERT_EQ(context_->currentCrosshairInfo.mappingType, 0);
@@ -249,9 +259,9 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandleKeyUp_004, TestSize.Level0)
 {
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
     handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
-
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_CROSSHAIR);
+    ASSERT_FALSE(pair.first);
     ASSERT_FALSE(context_->isEnterCrosshairInfo);
-    ASSERT_TRUE(context_->pointerItems.find(CROSSHAIR_POINT_ID) == context_->pointerItems.end());
     ASSERT_FALSE(handler_->hasTouchEvent_);
 }
 
@@ -266,7 +276,9 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_001, TestSize.Level0
 {
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
-
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_CROSSHAIR);
+    ASSERT_TRUE(pair.first);
+    int32_t pointerId = pair.second;
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
     handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
 
@@ -276,12 +288,12 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_001, TestSize.Level0
                                                              MOUSE_Y_VALUE + MOUSE_MOVE_DISTANCE);
     pointerEvent_->AddPointerItem(pointerItem);
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
-    ASSERT_EQ(handler_->touchDownEntity_.pointerId, CROSSHAIR_POINT_ID);
+    ASSERT_EQ(handler_->touchDownEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchDownEntity_.pointerAction, PointerEvent::POINTER_ACTION_DOWN);
 
     ASSERT_EQ(context_->lastMousePointer.GetWindowX(), pointerItem.GetWindowX());
     ASSERT_EQ(context_->lastMousePointer.GetWindowY(), pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchMoveEntity_.pointerId, CROSSHAIR_POINT_ID);
+    ASSERT_EQ(handler_->touchMoveEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchMoveEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
     ASSERT_EQ(handler_->touchMoveEntity_.xValue, X_VALUE + X_STEP);
     ASSERT_EQ(handler_->touchMoveEntity_.yValue, Y_VALUE + Y_STEP);
@@ -338,13 +350,13 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_003, TestSize.Level0
  */
 HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_004, TestSize.Level0)
 {
-    context_->isEnterCrosshairInfo = true;
-    context_->currentCrosshairInfo = mappingInfo_;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context_->SetCurrentCrosshairInfo(mappingInfo_, pointerId);
     handler_->currentIdx_ = 1;
     PointerEvent::PointerItem lastMovePoint = context_->pointerItems[OBSERVATION_POINT_ID];
     lastMovePoint.SetWindowX(MAX_WIDTH);
     lastMovePoint.SetWindowY(MAX_HEIGHT);
-    context_->pointerItems[CROSSHAIR_POINT_ID] = lastMovePoint;
+    context_->pointerItems[pointerId] = lastMovePoint;
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_MOVE);
     pointerEvent_->RemoveAllPointerItems();
     PointerEvent::PointerItem pointerItem = BuildPointerItem(MAX_WIDTH,
@@ -354,7 +366,7 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_004, TestSize.Level0
 
     ASSERT_EQ(context_->lastMousePointer.GetWindowX(), MAX_WIDTH);
     ASSERT_EQ(context_->lastMousePointer.GetWindowY(), MAX_HEIGHT);
-    ASSERT_EQ(handler_->touchMoveEntity_.pointerId, CROSSHAIR_POINT_ID);
+    ASSERT_EQ(handler_->touchMoveEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchMoveEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
     ASSERT_EQ(handler_->touchMoveEntity_.xValue, MAX_WIDTH);
     ASSERT_EQ(handler_->touchMoveEntity_.yValue, MAX_HEIGHT);
@@ -369,13 +381,13 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_004, TestSize.Level0
  */
 HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_005, TestSize.Level0)
 {
-    context_->isEnterCrosshairInfo = true;
-    context_->currentCrosshairInfo = mappingInfo_;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context_->SetCurrentCrosshairInfo(mappingInfo_, pointerId);
     handler_->currentIdx_ = 1;
     PointerEvent::PointerItem lastMovePoint = context_->pointerItems[OBSERVATION_POINT_ID];
     lastMovePoint.SetWindowX(0);
     lastMovePoint.SetWindowY(0);
-    context_->pointerItems[CROSSHAIR_POINT_ID] = lastMovePoint;
+    context_->pointerItems[pointerId] = lastMovePoint;
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_MOVE);
     pointerEvent_->RemoveAllPointerItems();
     PointerEvent::PointerItem pointerItem = BuildPointerItem(0, 0);
@@ -384,7 +396,7 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_005, TestSize.Level0
 
     ASSERT_EQ(context_->lastMousePointer.GetWindowX(), 0);
     ASSERT_EQ(context_->lastMousePointer.GetWindowY(), 0);
-    ASSERT_EQ(handler_->touchMoveEntity_.pointerId, CROSSHAIR_POINT_ID);
+    ASSERT_EQ(handler_->touchMoveEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchMoveEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
     ASSERT_EQ(handler_->touchMoveEntity_.xValue, 1);
     ASSERT_EQ(handler_->touchMoveEntity_.yValue, 1);
@@ -400,14 +412,14 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_005, TestSize.Level0
  */
 HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_006, TestSize.Level0)
 {
-    context_->isEnterCrosshairInfo = true;
-    context_->currentCrosshairInfo = mappingInfo_;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context_->SetCurrentCrosshairInfo(mappingInfo_, pointerId);
     handler_->currentIdx_ = 1;
     int32_t nextIdx = handler_->currentIdx_ + 1;
     PointerEvent::PointerItem lastMovePoint = context_->pointerItems[OBSERVATION_POINT_ID];
     lastMovePoint.SetWindowX(X_VALUE - X_STEP);
     lastMovePoint.SetWindowY(Y_VALUE - Y_STEP);
-    context_->pointerItems[CROSSHAIR_POINT_ID] = lastMovePoint;
+    context_->pointerItems[pointerId] = lastMovePoint;
     context_->lastMousePointer = BuildPointerItem(X_VALUE, Y_VALUE);
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_MOVE);
     pointerEvent_->RemoveAllPointerItems();
@@ -417,7 +429,7 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_006, TestSize.Level0
 
     ASSERT_EQ(context_->lastMousePointer.GetWindowX(), X_VALUE);
     ASSERT_EQ(context_->lastMousePointer.GetWindowY(), Y_VALUE);
-    ASSERT_EQ(handler_->touchMoveEntity_.pointerId, CROSSHAIR_POINT_ID);
+    ASSERT_EQ(handler_->touchMoveEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchMoveEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
     ASSERT_EQ(handler_->touchMoveEntity_.xValue, X_VALUE - X_STEP);
     ASSERT_EQ(handler_->touchMoveEntity_.yValue, Y_VALUE - Y_STEP);
@@ -434,22 +446,22 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_006, TestSize.Level0
  */
 HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_007, TestSize.Level0)
 {
-    context_->isEnterCrosshairInfo = true;
-    context_->currentCrosshairInfo = mappingInfo_;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context_->SetCurrentCrosshairInfo(mappingInfo_, pointerId);
     handler_->currentIdx_ = 1;
     int32_t nextIdx = handler_->currentIdx_ + 1;
     PointerEvent::PointerItem lastMovePoint = context_->pointerItems[OBSERVATION_POINT_ID];
     lastMovePoint.SetWindowX(X_VALUE);
     lastMovePoint.SetWindowY(Y_VALUE);
-    context_->pointerItems[CROSSHAIR_POINT_ID] = lastMovePoint;
+    context_->pointerItems[pointerId] = lastMovePoint;
     context_->lastMousePointer = BuildPointerItem(MAX_WIDTH - 1, 1);
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_MOVE);
     pointerEvent_->RemoveAllPointerItems();
     PointerEvent::PointerItem pointerItem = BuildPointerItem(MAX_WIDTH - 1, 1);
     pointerEvent_->AddPointerItem(pointerItem);
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
-    
-    ASSERT_EQ(handler_->touchMoveEntity_.pointerId, CROSSHAIR_POINT_ID);
+
+    ASSERT_EQ(handler_->touchMoveEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchMoveEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
     ASSERT_EQ(handler_->touchMoveEntity_.xValue, X_VALUE + X_STEP);
     ASSERT_EQ(handler_->touchMoveEntity_.yValue, Y_VALUE - Y_STEP);
@@ -465,8 +477,8 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_007, TestSize.Level0
  */
 HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_008, TestSize.Level0)
 {
-    context_->isEnterCrosshairInfo = true;
-    context_->currentCrosshairInfo = mappingInfo_;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context_->SetCurrentCrosshairInfo(mappingInfo_, pointerId);
     handler_->currentIdx_ = 0;
     int32_t nextIdx = handler_->currentIdx_ + 1;
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_MOVE);
@@ -475,7 +487,7 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_008, TestSize.Level0
     pointerEvent_->AddPointerItem(pointerItem);
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
-    ASSERT_EQ(handler_->touchDownEntity_.pointerId, CROSSHAIR_POINT_ID);
+    ASSERT_EQ(handler_->touchDownEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchDownEntity_.pointerAction, PointerEvent::POINTER_ACTION_DOWN);
     ASSERT_EQ(handler_->touchDownEntity_.xValue, X_VALUE);
     ASSERT_EQ(handler_->touchDownEntity_.yValue, Y_VALUE);
@@ -491,20 +503,20 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_008, TestSize.Level0
  */
 HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_009, TestSize.Level0)
 {
-    context_->isEnterCrosshairInfo = true;
-    context_->currentCrosshairInfo = mappingInfo_;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context_->SetCurrentCrosshairInfo(mappingInfo_, pointerId);
     handler_->currentIdx_ = 10;
     PointerEvent::PointerItem lastMovePoint = context_->pointerItems[OBSERVATION_POINT_ID];
     lastMovePoint.SetWindowX(X_VALUE - X_STEP);
     lastMovePoint.SetWindowY(Y_VALUE - Y_STEP);
-    context_->pointerItems[CROSSHAIR_POINT_ID] = lastMovePoint;
+    context_->pointerItems[pointerId] = lastMovePoint;
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_MOVE);
     pointerEvent_->RemoveAllPointerItems();
     PointerEvent::PointerItem pointerItem = BuildPointerItem(X_VALUE, Y_VALUE);
     pointerEvent_->AddPointerItem(pointerItem);
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
-    ASSERT_EQ(handler_->touchUpEntity_.pointerId, CROSSHAIR_POINT_ID);
+    ASSERT_EQ(handler_->touchUpEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchUpEntity_.pointerAction, PointerEvent::POINTER_ACTION_UP);
     ASSERT_EQ(handler_->touchUpEntity_.xValue, lastMovePoint.GetWindowX());
     ASSERT_EQ(handler_->touchUpEntity_.yValue, lastMovePoint.GetWindowY());

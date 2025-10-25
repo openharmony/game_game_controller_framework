@@ -56,7 +56,7 @@ bool MouseObservationToTouchHandler::HandleMouseRightBtnDown(std::shared_ptr<Inp
 
     HILOGI("convert to down event of mouse-observation");
     int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
-    context->SetCurrentPerspectiveObserving(mappingInfo, pointerId);
+    context->SetCurrentObserving(mappingInfo, pointerId);
     int64_t actionTime = pointerEvent->GetActionTime();
     TouchEntity touchEntity = BuildTouchEntity(mappingInfo, pointerId,
                                                PointerEvent::POINTER_ACTION_DOWN, actionTime);
@@ -92,7 +92,7 @@ void MouseObservationToTouchHandler::HandleMouseRightBtnUp(std::shared_ptr<Input
     TouchEntity touchEntity = BuildTouchEntity(mappingInfo, pointerId,
                                                PointerEvent::POINTER_ACTION_UP, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
-    context->ResetCurrentPerspectiveObserving();
+    context->ResetCurrentObserving();
 }
 }
 }

@@ -77,7 +77,7 @@ public:
 
 class DpadKeyToTouchHandlerTest : public testing::Test {
 public:
-    void SetUp()
+    void SetUp() override
     {
         handler_ = std::make_shared<DpadKeyToTouchHandlerEx>();
         context_ = std::make_shared<InputToTouchContext>();
@@ -88,7 +88,12 @@ public:
         deviceInfo_.onlineTime = 1;
     }
 
-    KeyToTouchMappingInfo BuildKeyToTouchMappingInfo()
+    void TearDown() override
+    {
+        context_->ResetCurrentWalking();
+    }
+
+    static KeyToTouchMappingInfo BuildKeyToTouchMappingInfo()
     {
         KeyToTouchMappingInfo info;
         info.dpadKeyCodeEntity.up = KEY_UP_CODE;
@@ -102,7 +107,7 @@ public:
         return info;
     }
 
-    KeyEvent::KeyItem BuildKeyItem(int32_t keycode, bool isPressed)
+    static KeyEvent::KeyItem BuildKeyItem(int32_t keycode, bool isPressed)
     {
         KeyEvent::KeyItem keyItem;
         keyItem.SetKeyCode(keycode);
@@ -112,7 +117,7 @@ public:
         return keyItem;
     }
 
-    void CheckTouchMoveEntity(PointerEvent::PointerItem pointerItem)
+    void CheckTouchMoveEntity(const PointerEvent::PointerItem &pointerItem)
     {
         ASSERT_EQ(handler_->touchMoveEntity_.xValue, pointerItem.GetWindowX());
         ASSERT_EQ(handler_->touchMoveEntity_.yValue, pointerItem.GetWindowY());
@@ -140,16 +145,18 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_001, TestSize.Level0)
     keyEvent_->SetKeyCode(KEY_UP_CODE);
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_UP_CODE, true));
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
-
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_WALK);
+    ASSERT_TRUE(pair.first);
+    int32_t pointerId = pair.second;
     ASSERT_TRUE(context_->isWalking);
     ASSERT_EQ(context_->currentWalking.mappingType, mappingInfo_.mappingType);
     ASSERT_EQ(handler_->touchDownEntity_.xValue, X_VALUE);
     ASSERT_EQ(handler_->touchDownEntity_.yValue, Y_VALUE);
     ASSERT_EQ(handler_->touchDownEntity_.pointerAction, PointerEvent::POINTER_ACTION_DOWN);
-    ASSERT_EQ(handler_->touchDownEntity_.pointerId, WALK_POINT_ID);
+    ASSERT_EQ(handler_->touchDownEntity_.pointerId, pointerId);
 
-    ASSERT_TRUE(context_->pointerItems.find(WALK_POINT_ID) != context_->pointerItems.end());
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[WALK_POINT_ID];
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
+    PointerEvent::PointerItem pointerItem = context_->pointerItems[pointerId];
     ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE);
     ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE - RADIUS);
     CheckTouchMoveEntity(pointerItem);
@@ -165,11 +172,12 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_001, TestSize.Level0)
 HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_002, TestSize.Level1)
 {
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
-    context_->isWalking = true;
     context_->currentWalking.mappingType = MOUSE_RIGHT_KEY_WALKING_TO_TOUCH;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context_->SetCurrentWalking(context_->currentWalking, pointerId);
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(WALK_POINT_ID) == context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) == context_->pointerItems.end());
     ASSERT_FALSE(handler_->hasTouchEvent_);
 }
 
@@ -185,12 +193,12 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_003, TestSize.Level0)
     keyEvent_->SetKeyCode(KEY_UP_CODE);
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_UP_CODE, true));
-    context_->isWalking = true;
-    context_->currentWalking = mappingInfo_;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context_->SetCurrentWalking(mappingInfo_, pointerId);
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(WALK_POINT_ID) != context_->pointerItems.end());
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[WALK_POINT_ID];
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
+    PointerEvent::PointerItem pointerItem = context_->pointerItems[pointerId];
     ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE);
     ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE - RADIUS);
     CheckTouchMoveEntity(pointerItem);
@@ -208,12 +216,12 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_004, TestSize.Level0)
     keyEvent_->SetKeyCode(KEY_DOWN_CODE);
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_DOWN_CODE, true));
-    context_->isWalking = true;
-    context_->currentWalking = mappingInfo_;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context_->SetCurrentWalking(mappingInfo_, pointerId);
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(WALK_POINT_ID) != context_->pointerItems.end());
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[WALK_POINT_ID];
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
+    PointerEvent::PointerItem pointerItem = context_->pointerItems[pointerId];
     ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE);
     ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE + RADIUS);
     CheckTouchMoveEntity(pointerItem);
@@ -231,12 +239,12 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_005, TestSize.Level0)
     keyEvent_->SetKeyCode(KEY_LEFT_CODE);
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_LEFT_CODE, true));
-    context_->isWalking = true;
-    context_->currentWalking = mappingInfo_;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context_->SetCurrentWalking(mappingInfo_, pointerId);
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(WALK_POINT_ID) != context_->pointerItems.end());
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[WALK_POINT_ID];
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
+    PointerEvent::PointerItem pointerItem = context_->pointerItems[pointerId];
     ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE - RADIUS);
     ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE);
     CheckTouchMoveEntity(pointerItem);
@@ -254,12 +262,12 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_006, TestSize.Level0)
     keyEvent_->SetKeyCode(KEY_RIGHT_CODE);
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_RIGHT_CODE, true));
-    context_->isWalking = true;
-    context_->currentWalking = mappingInfo_;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context_->SetCurrentWalking(mappingInfo_, pointerId);
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(WALK_POINT_ID) != context_->pointerItems.end());
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[WALK_POINT_ID];
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
+    PointerEvent::PointerItem pointerItem = context_->pointerItems[pointerId];
     ASSERT_EQ(pointerItem.GetWindowX(), X_VALUE + RADIUS);
     ASSERT_EQ(pointerItem.GetWindowY(), Y_VALUE);
     CheckTouchMoveEntity(pointerItem);
@@ -282,12 +290,12 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_007, TestSize.Level0)
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_LEFT_CODE, true));
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_RIGHT_CODE, false));
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_UP_CODE, true));
-    context_->isWalking = true;
-    context_->currentWalking = mappingInfo_;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context_->SetCurrentWalking(mappingInfo_, pointerId);
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(WALK_POINT_ID) != context_->pointerItems.end());
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[WALK_POINT_ID];
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
+    PointerEvent::PointerItem pointerItem = context_->pointerItems[pointerId];
     ASSERT_EQ(pointerItem.GetWindowX(), 376);
     ASSERT_EQ(pointerItem.GetWindowY(), 838);
     CheckTouchMoveEntity(pointerItem);
@@ -312,12 +320,12 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_008, TestSize.Level0)
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_LEFT_CODE, true));
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_RIGHT_CODE, true));
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_UP_CODE, true));
-    context_->isWalking = true;
-    context_->currentWalking = mappingInfo_;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context_->SetCurrentWalking(mappingInfo_, pointerId);
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(WALK_POINT_ID) != context_->pointerItems.end());
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[WALK_POINT_ID];
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
+    PointerEvent::PointerItem pointerItem = context_->pointerItems[pointerId];
     ASSERT_EQ(pointerItem.GetWindowX(), 376);
     ASSERT_EQ(pointerItem.GetWindowY(), 1163);
     CheckTouchMoveEntity(pointerItem);
@@ -342,12 +350,12 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_009, TestSize.Level0)
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_RIGHT_CODE, true));
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_UP_CODE, true));
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_CODE, true));
-    context_->isWalking = true;
-    context_->currentWalking = mappingInfo_;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context_->SetCurrentWalking(mappingInfo_, pointerId);
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(WALK_POINT_ID) != context_->pointerItems.end());
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[WALK_POINT_ID];
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
+    PointerEvent::PointerItem pointerItem = context_->pointerItems[pointerId];
     ASSERT_EQ(pointerItem.GetWindowX(), 701);
     ASSERT_EQ(pointerItem.GetWindowY(), 838);
     CheckTouchMoveEntity(pointerItem);
@@ -372,12 +380,12 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_010, TestSize.Level0)
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_LEFT_CODE, true));
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_RIGHT_CODE, true));
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_UP_CODE, true));
-    context_->isWalking = true;
-    context_->currentWalking = mappingInfo_;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context_->SetCurrentWalking(mappingInfo_, pointerId);
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(WALK_POINT_ID) != context_->pointerItems.end());
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[WALK_POINT_ID];
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
+    PointerEvent::PointerItem pointerItem = context_->pointerItems[pointerId];
     ASSERT_EQ(pointerItem.GetWindowX(), 701);
     ASSERT_EQ(pointerItem.GetWindowY(), 1163);
     CheckTouchMoveEntity(pointerItem);
@@ -400,12 +408,12 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_011, TestSize.Level0)
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_LEFT_CODE, true));
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_RIGHT_CODE, true));
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_UP_CODE, true));
-    context_->isWalking = true;
-    context_->currentWalking = mappingInfo_;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context_->SetCurrentWalking(mappingInfo_, pointerId);
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(WALK_POINT_ID) != context_->pointerItems.end());
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[WALK_POINT_ID];
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
+    PointerEvent::PointerItem pointerItem = context_->pointerItems[pointerId];
     ASSERT_EQ(pointerItem.GetWindowX(), 376);
     ASSERT_EQ(pointerItem.GetWindowY(), 838);
     CheckTouchMoveEntity(pointerItem);
@@ -430,12 +438,12 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_012, TestSize.Level0)
     keyItem.SetDownTime(1000);
     keyEvent_->AddKeyItem(keyItem);
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_UP_CODE, true));
-    context_->isWalking = true;
-    context_->currentWalking = mappingInfo_;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context_->SetCurrentWalking(mappingInfo_, pointerId);
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(WALK_POINT_ID) != context_->pointerItems.end());
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[WALK_POINT_ID];
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
+    PointerEvent::PointerItem pointerItem = context_->pointerItems[pointerId];
     ASSERT_EQ(pointerItem.GetWindowX(), 701);
     ASSERT_EQ(pointerItem.GetWindowY(), 838);
     CheckTouchMoveEntity(pointerItem);
@@ -458,12 +466,12 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_013, TestSize.Level0)
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_LEFT_CODE, true));
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_RIGHT_CODE, true));
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_UP_CODE, true));
-    context_->isWalking = true;
-    context_->currentWalking = mappingInfo_;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context_->SetCurrentWalking(mappingInfo_, pointerId);
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(WALK_POINT_ID) != context_->pointerItems.end());
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[WALK_POINT_ID];
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
+    PointerEvent::PointerItem pointerItem = context_->pointerItems[pointerId];
     ASSERT_EQ(pointerItem.GetWindowX(), 376);
     ASSERT_EQ(pointerItem.GetWindowY(), 1163);
     CheckTouchMoveEntity(pointerItem);
@@ -488,12 +496,12 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyDown_014, TestSize.Level0)
     keyItem.SetDownTime(1000);
     keyEvent_->AddKeyItem(keyItem);
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_UP_CODE, true));
-    context_->isWalking = true;
-    context_->currentWalking = mappingInfo_;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context_->SetCurrentWalking(mappingInfo_, pointerId);
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(WALK_POINT_ID) != context_->pointerItems.end());
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[WALK_POINT_ID];
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
+    PointerEvent::PointerItem pointerItem = context_->pointerItems[pointerId];
     ASSERT_EQ(pointerItem.GetWindowX(), 701);
     ASSERT_EQ(pointerItem.GetWindowY(), 1163);
     CheckTouchMoveEntity(pointerItem);
@@ -510,7 +518,9 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyUp_001, TestSize.Level0)
 {
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
-
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_WALK);
+    ASSERT_TRUE(pair.first);
+    int32_t pointerId = pair.second;
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_UP_CODE, false));
     KeyEvent::KeyItem keyItem = BuildKeyItem(KEY_DOWN_CODE, true);
@@ -522,9 +532,9 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyUp_001, TestSize.Level0)
     ASSERT_FALSE(context_->isWalking);
     ASSERT_EQ(context_->currentWalking.xValue, 0);
     ASSERT_EQ(context_->currentWalking.yValue, 0);
-    ASSERT_TRUE(context_->pointerItems.find(WALK_POINT_ID) == context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) == context_->pointerItems.end());
     ASSERT_EQ(handler_->touchUpEntity_.pointerAction, PointerEvent::POINTER_ACTION_UP);
-    ASSERT_EQ(handler_->touchUpEntity_.pointerId, WALK_POINT_ID);
+    ASSERT_EQ(handler_->touchUpEntity_.pointerId, pointerId);
 }
 
 /**
@@ -537,12 +547,14 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyUp_002, TestSize.Level1)
 {
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
-
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_WALK);
+    ASSERT_TRUE(pair.first);
+    int32_t pointerId = pair.second;
     context_->isWalking = false;
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
     handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(WALK_POINT_ID) != context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
 }
 
 /**
@@ -557,13 +569,14 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyUp_003, TestSize.Level1)
 {
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
-
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_WALK);
+    int32_t pointerId = pair.second;
     context_->currentWalking.mappingType = MOUSE_LEFT_FIRE_TO_TOUCH;
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
     handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
 
     ASSERT_TRUE(context_->isWalking);
-    ASSERT_TRUE(context_->pointerItems.find(WALK_POINT_ID) != context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
 }
 
 /**
@@ -580,6 +593,8 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyUp_004, TestSize.Level0)
     keyEvent_->SetKeyCode(KEY_LEFT_CODE);
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
     handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_WALK);
+    int32_t pointerId = pair.second;
 
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_DOWN_CODE, true));
@@ -588,8 +603,8 @@ HWTEST_F(DpadKeyToTouchHandlerTest, HandleKeyUp_004, TestSize.Level0)
     keyEvent_->AddKeyItem(BuildKeyItem(KEY_RIGHT_CODE, true));
     handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(WALK_POINT_ID) != context_->pointerItems.end());
-    PointerEvent::PointerItem pointerItem = context_->pointerItems[WALK_POINT_ID];
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
+    PointerEvent::PointerItem pointerItem = context_->pointerItems[pointerId];
     ASSERT_EQ(pointerItem.GetWindowX(), 701);
     ASSERT_EQ(pointerItem.GetWindowY(), 838);
     CheckTouchMoveEntity(pointerItem);

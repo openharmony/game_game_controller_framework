@@ -63,8 +63,6 @@ public:
 
     void SetDeviceInfo();
 
-    void SetContext();
-
     void CheckCombinationKey(const DeviceTypeEnum &deviceType);
 
     void CheckDpadKeyAndKeyBoardObservation(const DeviceTypeEnum &deviceType, const MappingTypeEnum &type);
@@ -74,8 +72,6 @@ public:
     void CheckSingleKeyAndMouse(const DeviceTypeEnum &deviceType, const MappingTypeEnum &type);
 
     void CheckWindowInfo(const WindowInfoEntity &windowLeft, const WindowInfoEntity &windowRight);
-
-    void CheckTempVariablesDefault();
 
 public:
     std::shared_ptr<KeyToTouchManager> handler_;
@@ -153,25 +149,6 @@ void KeyToTouchManagerTest::SetDeviceInfo()
 {
     deviceInfo_.uniq = "notnull";
     deviceInfo_.deviceType = DeviceTypeEnum::GAME_KEY_BOARD;
-}
-
-void KeyToTouchManagerTest::SetContext()
-{
-    std::vector<KeyToTouchMappingInfo> testMapping;
-    KeyToTouchMappingInfo info = BuildKeyMapping(MappingTypeEnum::SINGE_KEY_TO_TOUCH);
-    info.keyCode = KEY_CODE_UP;
-    testMapping.push_back(info);
-    handler_->InitGcKeyboardContext(testMapping);
-    handler_->gcKeyboardContext_->deviceType = DeviceTypeEnum::GAME_KEY_BOARD;
-
-    // set current temp variables
-    handler_->gcKeyboardContext_->isSingleKeyOperating = true;
-    handler_->gcKeyboardContext_->currentSingleKey = BuildKeyMapping(MappingTypeEnum::SINGE_KEY_TO_TOUCH);
-    handler_->gcKeyboardContext_->currentSingleKey.keyCode = KEY_CODE_UP;
-    handler_->gcKeyboardContext_->isCombinationKeyOperating = true;
-    handler_->gcKeyboardContext_->currentCombinationKey = BuildKeyMapping(MappingTypeEnum::COMBINATION_KEY_TO_TOUCH);
-    handler_->gcKeyboardContext_->isSkillOperating = true;
-    handler_->gcKeyboardContext_->currentSkillKeyInfo = BuildKeyMapping(MappingTypeEnum::SKILL_KEY_TO_TOUCH);
 }
 
 void KeyToTouchManagerTest::CheckCombinationKey(const DeviceTypeEnum &deviceType)
@@ -285,17 +262,6 @@ void KeyToTouchManagerTest::CheckWindowInfo(const WindowInfoEntity &windowLeft, 
     ASSERT_EQ(windowLeft.isFullScreen, windowRight.isFullScreen);
     ASSERT_EQ(windowLeft.xCenter, windowRight.xCenter);
     ASSERT_EQ(windowLeft.yCenter, windowRight.yCenter);
-}
-
-void KeyToTouchManagerTest::CheckTempVariablesDefault()
-{
-    ASSERT_FALSE(handler_->gcKeyboardContext_->isSingleKeyOperating);
-    ASSERT_EQ(handler_->gcKeyboardContext_->currentSingleKey.keyCode, 0);
-    ASSERT_FALSE(handler_->gcKeyboardContext_->isCombinationKeyOperating);
-    ASSERT_EQ(handler_->gcKeyboardContext_->currentCombinationKey.combinationKeys.size(), 0);
-    ASSERT_FALSE(handler_->gcKeyboardContext_->isSkillOperating);
-    ASSERT_EQ(handler_->gcKeyboardContext_->currentSkillKeyInfo.skillRange, 0);
-    ASSERT_EQ(handler_->gcKeyboardContext_->currentSkillKeyInfo.radius, 0);
 }
 
 /**
@@ -646,9 +612,26 @@ HWTEST_F(KeyToTouchManagerTest, HandleEnableKeyMapping_001, TestSize.Level0)
  */
 HWTEST_F(KeyToTouchManagerTest, HandleEnableKeyMapping_002, TestSize.Level0)
 {
-    SetContext();
+    std::vector<KeyToTouchMappingInfo> testMapping;
+    KeyToTouchMappingInfo info = BuildKeyMapping(MappingTypeEnum::SINGE_KEY_TO_TOUCH);
+    info.keyCode = KEY_CODE_UP;
+    testMapping.push_back(info);
+    handler_->InitGcKeyboardContext(testMapping);
+    handler_->gcKeyboardContext_->deviceType = DeviceTypeEnum::GAME_KEY_BOARD;
+
+    // set current temp variables
+    handler_->gcKeyboardContext_->isCombinationKeyOperating = true;
+    handler_->gcKeyboardContext_->currentCombinationKey = BuildKeyMapping(MappingTypeEnum::COMBINATION_KEY_TO_TOUCH);
+    handler_->gcKeyboardContext_->isSkillOperating = true;
+    handler_->gcKeyboardContext_->currentSkillKeyInfo = BuildKeyMapping(MappingTypeEnum::SKILL_KEY_TO_TOUCH);
+
     handler_->HandleEnableKeyMapping(true);
-    CheckTempVariablesDefault();
+
+    ASSERT_FALSE(handler_->gcKeyboardContext_->isCombinationKeyOperating);
+    ASSERT_EQ(handler_->gcKeyboardContext_->currentCombinationKey.combinationKeys.size(), 0);
+    ASSERT_FALSE(handler_->gcKeyboardContext_->isSkillOperating);
+    ASSERT_EQ(handler_->gcKeyboardContext_->currentSkillKeyInfo.skillRange, 0);
+    ASSERT_EQ(handler_->gcKeyboardContext_->currentSkillKeyInfo.radius, 0);
 }
 }
 }
