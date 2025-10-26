@@ -57,15 +57,6 @@ struct DpadKeyItem {
     }
 };
 
-enum TouchPointId {
-    SINGLE_POINT_ID = 3,
-    WALK_POINT_ID = 4,
-    SKILL_POINT_ID = 5,
-    OBSERVATION_POINT_ID = 6,
-    CROSSHAIR_POINT_ID = 7,
-    COMBINATION_POINT_ID = 8,
-};
-
 enum KeyCodeForPointer : int32_t {
     KEY_CODE_COMBINATION = 100000000,
     KEY_CODE_WALK = 100000001,

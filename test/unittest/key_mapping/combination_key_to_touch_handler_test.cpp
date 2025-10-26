@@ -87,6 +87,15 @@ public:
         context_->ResetCurrentCombinationKey();
     }
 
+    int32_t SendFirstDownTouch()
+    {
+        keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
+        handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
+        std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_COMBINATION);
+        int32_t pointerId = pair.second;
+        return pointerId;
+    }
+
 public:
     std::shared_ptr<CombinationKeyToTouchHandlerEx> handler_;
     std::shared_ptr<InputToTouchContext> context_;
@@ -103,12 +112,7 @@ public:
  */
 HWTEST_F(CombinationKeyToTouchHandlerTest, HandleKeyDown_001, TestSize.Level0)
 {
-    keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
-    handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
-
-    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_COMBINATION);
-    ASSERT_TRUE(pair.first);
-    int32_t pointerId = pair.second;
+    int32_t pointerId = SendFirstDownTouch();
     ASSERT_TRUE(context_->isCombinationKeyOperating);
     ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
     PointerEvent::PointerItem pointerItem = context_->pointerItems[pointerId];
@@ -164,10 +168,7 @@ HWTEST_F(CombinationKeyToTouchHandlerTest, HandleKeyDown_003, TestSize.Level1)
  */
 HWTEST_F(CombinationKeyToTouchHandlerTest, HandleKeyUp_001, TestSize.Level0)
 {
-    keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
-    handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
-    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_COMBINATION);
-    int32_t pointerId = pair.second;
+    int32_t pointerId = SendFirstDownTouch();
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
     handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
 
@@ -187,15 +188,11 @@ HWTEST_F(CombinationKeyToTouchHandlerTest, HandleKeyUp_001, TestSize.Level0)
  */
 HWTEST_F(CombinationKeyToTouchHandlerTest, HandleKeyUp_002, TestSize.Level1)
 {
-    keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
-    handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
+    int32_t pointerId = SendFirstDownTouch();
 
     context_->isCombinationKeyOperating = false;
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
     handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
-    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_COMBINATION);
-    int32_t pointerId = pair.second;
-    ASSERT_TRUE(pair.first);
     ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
 }
 
@@ -209,16 +206,14 @@ HWTEST_F(CombinationKeyToTouchHandlerTest, HandleKeyUp_002, TestSize.Level1)
  */
 HWTEST_F(CombinationKeyToTouchHandlerTest, HandleKeyUp_003, TestSize.Level1)
 {
-    keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
-    handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
+    int32_t pointerId = SendFirstDownTouch();
 
     keyEvent_->SetKeyCode(FIRST_KEY_CODE);
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
     handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
 
     ASSERT_TRUE(context_->isCombinationKeyOperating);
-    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_COMBINATION);
-    ASSERT_TRUE(pair.first);
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
 }
 
 /**
@@ -231,16 +226,14 @@ HWTEST_F(CombinationKeyToTouchHandlerTest, HandleKeyUp_003, TestSize.Level1)
  */
 HWTEST_F(CombinationKeyToTouchHandlerTest, HandleKeyUp_004, TestSize.Level1)
 {
-    keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
-    handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
+    int32_t pointerId = SendFirstDownTouch();
 
     context_->currentCombinationKey.combinationKeys.push_back(1);
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
     handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
 
     ASSERT_TRUE(context_->isCombinationKeyOperating);
-    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_COMBINATION);
-    ASSERT_TRUE(pair.first);
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
 }
 }
 }

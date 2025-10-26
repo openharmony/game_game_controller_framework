@@ -122,7 +122,8 @@ public:
         ASSERT_EQ(handler_->touchMoveEntity_.xValue, pointerItem.GetWindowX());
         ASSERT_EQ(handler_->touchMoveEntity_.yValue, pointerItem.GetWindowY());
         ASSERT_EQ(handler_->touchMoveEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-        ASSERT_EQ(handler_->touchMoveEntity_.pointerId, WALK_POINT_ID);
+        std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_WALK);
+        ASSERT_EQ(handler_->touchMoveEntity_.pointerId, pair.second);
     }
 
 public:

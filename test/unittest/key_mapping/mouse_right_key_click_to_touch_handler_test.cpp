@@ -180,15 +180,14 @@ HWTEST_F(MouseRightKeyClickToTouchHandlerTest, HandlePointerEvent_005, TestSize.
  */
 HWTEST_F(MouseRightKeyClickToTouchHandlerTest, HandlePointerEvent_006, TestSize.Level0)
 {
-    pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_DOWN);
-    handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
+    int32_t pointerId = SendMouseRightDownEvent();
 
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_UP);
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(SINGLE_POINT_ID) == context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) == context_->pointerItems.end());
     ASSERT_FALSE(context_->isMouseRightClickOperating);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, SINGLE_POINT_ID);
+    ASSERT_EQ(handler_->touchEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_UP);
     ASSERT_EQ(handler_->touchEntity_.xValue, X_VALUE);
     ASSERT_EQ(handler_->touchEntity_.yValue, Y_VALUE);

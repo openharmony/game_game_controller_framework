@@ -125,6 +125,15 @@ public:
         return pointerItem;
     }
 
+    int32_t SendTouchDown()
+    {
+        keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
+        handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
+        std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_CROSSHAIR);
+        int32_t pointerId = pair.second;
+        return pointerId;
+    }
+
 public:
     std::shared_ptr<CrosshairKeyToTouchHandlerEx> handler_;
     std::shared_ptr<InputToTouchContext> context_;
@@ -144,14 +153,10 @@ public:
  */
 HWTEST_F(CrosshairKeyToTouchHandlerTest, HandleKeyDown_001, TestSize.Level0)
 {
-    keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
-    handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
+    int32_t pointerId = SendTouchDown();
 
     ASSERT_TRUE(context_->isCrosshairMode);
     ASSERT_FALSE(context_->isEnterCrosshairInfo);
-    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_CROSSHAIR);
-    ASSERT_TRUE(pair.first);
-    int32_t pointerId = pair.second;
     ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
     ASSERT_EQ(context_->currentCrosshairInfo.mappingType, mappingInfo_.mappingType);
     ASSERT_EQ(handler_->touchDownEntity_.pointerId, pointerId);
@@ -198,22 +203,23 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandleKeyUp_001, TestSize.Level0)
 /**
  * @tc.name: HandleKeyUp_002
  * @tc.desc: when key is up and context_->isCrosshairMode is true, and context_->isEnterCrosshairInfo is true.
- * exit the crosshairMode. if CROSSHAIR_POINT_ID is in pointerItems, send up touch event
+ * exit the crosshairMode. if pointerId is in pointerItems, send up touch event
  * @tc.type: FUNC
  * @tc.require: issueNumber
  */
 HWTEST_F(CrosshairKeyToTouchHandlerTest, HandleKeyUp_002, TestSize.Level0)
 {
-    // first key up, it will into crosshair status
-    keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
-    handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
-    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_CROSSHAIR);
-    ASSERT_TRUE(pair.first);
-    int32_t pointerId = pair.second;
+    // first key up, it will enter into crosshair status
+    int32_t pointerId = SendTouchDown();
+    ASSERT_TRUE(context_->isCrosshairMode);
+    ASSERT_FALSE(context_->isEnterCrosshairInfo);
+
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
     handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
+    ASSERT_TRUE(context_->isCrosshairMode);
+    ASSERT_TRUE(context_->isEnterCrosshairInfo);
 
-    // second key up, it will into crosshair status
+    // second key up, it will exit crosshair status
     context_->pointerItems[pointerId] = BuildPointerItem(X_VALUE, Y_VALUE);
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
     handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
@@ -257,6 +263,7 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandleKeyUp_003, TestSize.Level0)
  */
 HWTEST_F(CrosshairKeyToTouchHandlerTest, HandleKeyUp_004, TestSize.Level0)
 {
+    context_->isCrosshairMode = false;
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
     handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
     std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_CROSSHAIR);
@@ -274,11 +281,7 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandleKeyUp_004, TestSize.Level0)
  */
 HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_001, TestSize.Level0)
 {
-    keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_DOWN);
-    handler_->HandleKeyDown(context_, keyEvent_, mappingInfo_, deviceInfo_);
-    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_CROSSHAIR);
-    ASSERT_TRUE(pair.first);
-    int32_t pointerId = pair.second;
+    int32_t pointerId = SendTouchDown();
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
     handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
 
@@ -353,7 +356,7 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_004, TestSize.Level0
     int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
     context_->SetCurrentCrosshairInfo(mappingInfo_, pointerId);
     handler_->currentIdx_ = 1;
-    PointerEvent::PointerItem lastMovePoint = context_->pointerItems[OBSERVATION_POINT_ID];
+    PointerEvent::PointerItem lastMovePoint;
     lastMovePoint.SetWindowX(MAX_WIDTH);
     lastMovePoint.SetWindowY(MAX_HEIGHT);
     context_->pointerItems[pointerId] = lastMovePoint;
@@ -384,7 +387,7 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_005, TestSize.Level0
     int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
     context_->SetCurrentCrosshairInfo(mappingInfo_, pointerId);
     handler_->currentIdx_ = 1;
-    PointerEvent::PointerItem lastMovePoint = context_->pointerItems[OBSERVATION_POINT_ID];
+    PointerEvent::PointerItem lastMovePoint;
     lastMovePoint.SetWindowX(0);
     lastMovePoint.SetWindowY(0);
     context_->pointerItems[pointerId] = lastMovePoint;
@@ -416,7 +419,7 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_006, TestSize.Level0
     context_->SetCurrentCrosshairInfo(mappingInfo_, pointerId);
     handler_->currentIdx_ = 1;
     int32_t nextIdx = handler_->currentIdx_ + 1;
-    PointerEvent::PointerItem lastMovePoint = context_->pointerItems[OBSERVATION_POINT_ID];
+    PointerEvent::PointerItem lastMovePoint;
     lastMovePoint.SetWindowX(X_VALUE - X_STEP);
     lastMovePoint.SetWindowY(Y_VALUE - Y_STEP);
     context_->pointerItems[pointerId] = lastMovePoint;
@@ -450,7 +453,7 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_007, TestSize.Level0
     context_->SetCurrentCrosshairInfo(mappingInfo_, pointerId);
     handler_->currentIdx_ = 1;
     int32_t nextIdx = handler_->currentIdx_ + 1;
-    PointerEvent::PointerItem lastMovePoint = context_->pointerItems[OBSERVATION_POINT_ID];
+    PointerEvent::PointerItem lastMovePoint;
     lastMovePoint.SetWindowX(X_VALUE);
     lastMovePoint.SetWindowY(Y_VALUE);
     context_->pointerItems[pointerId] = lastMovePoint;
@@ -506,7 +509,7 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_009, TestSize.Level0
     int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
     context_->SetCurrentCrosshairInfo(mappingInfo_, pointerId);
     handler_->currentIdx_ = 10;
-    PointerEvent::PointerItem lastMovePoint = context_->pointerItems[OBSERVATION_POINT_ID];
+    PointerEvent::PointerItem lastMovePoint;
     lastMovePoint.SetWindowX(X_VALUE - X_STEP);
     lastMovePoint.SetWindowY(Y_VALUE - Y_STEP);
     context_->pointerItems[pointerId] = lastMovePoint;
