@@ -353,8 +353,9 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_003, TestSize.Level0
  */
 HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_004, TestSize.Level0)
 {
-    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
-    context_->SetCurrentCrosshairInfo(mappingInfo_, pointerId);
+    int32_t pointerId = SendTouchDown();
+    keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
+    handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
     handler_->currentIdx_ = 1;
     PointerEvent::PointerItem lastMovePoint;
     lastMovePoint.SetWindowX(MAX_WIDTH);
@@ -384,8 +385,10 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_004, TestSize.Level0
  */
 HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_005, TestSize.Level0)
 {
-    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
-    context_->SetCurrentCrosshairInfo(mappingInfo_, pointerId);
+    int32_t pointerId = SendTouchDown();
+    keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
+    handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
+
     handler_->currentIdx_ = 1;
     PointerEvent::PointerItem lastMovePoint;
     lastMovePoint.SetWindowX(0);
@@ -415,8 +418,9 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_005, TestSize.Level0
  */
 HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_006, TestSize.Level0)
 {
-    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
-    context_->SetCurrentCrosshairInfo(mappingInfo_, pointerId);
+    int32_t pointerId = SendTouchDown();
+    keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
+    handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
     handler_->currentIdx_ = 1;
     int32_t nextIdx = handler_->currentIdx_ + 1;
     PointerEvent::PointerItem lastMovePoint;
@@ -449,8 +453,9 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_006, TestSize.Level0
  */
 HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_007, TestSize.Level0)
 {
-    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
-    context_->SetCurrentCrosshairInfo(mappingInfo_, pointerId);
+    int32_t pointerId = SendTouchDown();
+    keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
+    handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
     handler_->currentIdx_ = 1;
     int32_t nextIdx = handler_->currentIdx_ + 1;
     PointerEvent::PointerItem lastMovePoint;
@@ -480,8 +485,9 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_007, TestSize.Level0
  */
 HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_008, TestSize.Level0)
 {
-    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
-    context_->SetCurrentCrosshairInfo(mappingInfo_, pointerId);
+    int32_t pointerId = SendTouchDown();
+    keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
+    handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
     handler_->currentIdx_ = 0;
     int32_t nextIdx = handler_->currentIdx_ + 1;
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_MOVE);
@@ -506,8 +512,9 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_008, TestSize.Level0
  */
 HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_009, TestSize.Level0)
 {
-    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
-    context_->SetCurrentCrosshairInfo(mappingInfo_, pointerId);
+    int32_t pointerId = SendTouchDown();
+    keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
+    handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
     handler_->currentIdx_ = 10;
     PointerEvent::PointerItem lastMovePoint;
     lastMovePoint.SetWindowX(X_VALUE - X_STEP);

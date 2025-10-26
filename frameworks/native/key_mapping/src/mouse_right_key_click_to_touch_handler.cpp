@@ -67,7 +67,7 @@ void MouseRightKeyClickToTouchHandler::HandleMouseRightBtnUp(std::shared_ptr<Inp
         return;
     }
 
-    std::pair<bool, int32_t> pair = context->GetPointerIdByKeyCode(KEY_CODE_MOUSE_LEFT);
+    std::pair<bool, int32_t> pair = context->GetPointerIdByKeyCode(KEY_CODE_MOUSE_RIGHT);
     if (!pair.first) {
         HILOGW("discard mouse right-button up event. because cannot find the pointerId");
         return;

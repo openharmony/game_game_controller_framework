@@ -616,7 +616,7 @@ HWTEST_F(KeyboardObservationToTouchHandlerTest, HandleKeyUp_003, TestSize.Level1
     keyEvent_->SetKeyAction(KeyEvent::KEY_ACTION_UP);
     handler_->HandleKeyUp(context_, keyEvent_, deviceInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(KEY_CODE_OBSERVATION) != context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
     ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_DOWN);
     ASSERT_TRUE(DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->taskIsStarting_);
 }
