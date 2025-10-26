@@ -428,12 +428,12 @@ void InputToTouchContext::ResetCurrentMouseRightClick()
 
 void InputToTouchContext::ResetTempVariables()
 {
-    pointerItems.clear();
     currentSingleKeyMap.clear();
     for (const auto &pointerIdWithKeyCode: pointerIdWithKeyCodeMap) {
         DelayedSingleton<PointerManager>::GetInstance()->ReleasePointerId(pointerIdWithKeyCode.second);
     }
     pointerIdWithKeyCodeMap.clear();
+    pointerItems.clear();
     ResetCurrentCombinationKey();
     ResetCurrentSkillKeyInfo();
     ResetCurrentObserving();
@@ -516,6 +516,7 @@ void InputToTouchContext::ReleasePointerId(const int32_t keyCode)
         int32_t pointerId = pointerIdWithKeyCodeMap[keyCode];
         DelayedSingleton<PointerManager>::GetInstance()->ReleasePointerId(pointerId);
         pointerIdWithKeyCodeMap.erase(keyCode);
+        pointerItems.erase(keyCode);
     }
 }
 
