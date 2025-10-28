@@ -37,6 +37,8 @@ namespace OHOS {
 namespace GameController {
 namespace {
 const size_t MAX_CONFIG_NUM = 2000;
+const int32_t DEVICE_TYPE_KEYBOARD = 3;
+const int32_t DEVICE_TYPE_HOVER_TOUCH_PAD = 2;
 }
 class GameSupportKeyMappingManagerTest : public testing::Test {
 public:
@@ -53,6 +55,8 @@ static GameInfo BuildGameInfo(const std::string &bundleName, const std::string &
     gameInfo.bundleName = bundleName;
     gameInfo.version = version;
     gameInfo.isSupportKeyMapping = isSupportKeyMapping;
+    gameInfo.supportedDeviceTypes.push_back(DEVICE_TYPE_KEYBOARD);
+    gameInfo.supportedDeviceTypes.push_back(DEVICE_TYPE_HOVER_TOUCH_PAD);
     return gameInfo;
 }
 
@@ -118,7 +122,7 @@ HWTEST_F(GameSupportKeyMappingManagerTest, SyncSupportKeyMappingGames_001, TestS
     gameInfos.clear();
     gameInfos.push_back(BuildGameInfo("deviceId", "121", true));
     rtn = DelayedSingleton<GameSupportKeyMappingManager>::GetInstance()->SyncSupportKeyMappingGames(false,
-                                                                                                gameInfos);
+                                                                                                    gameInfos);
     ASSERT_EQ(GAME_ERR_ARGUMENT_INVALID, rtn);
 }
 
@@ -126,6 +130,11 @@ static void CheckGameConfig(GameInfo &gameInfo, GameSupportKeyMappingConfig &gam
 {
     ASSERT_EQ(gameInfo.bundleName, gameConfig.bundleName);
     ASSERT_EQ(gameInfo.version, gameConfig.version);
+    int32_t idx = 0;
+    for (auto deviceType: gameInfo.supportedDeviceTypes) {
+        ASSERT_EQ(deviceType, gameConfig.supportedDeviceTypes[idx]);
+        idx++;
+    }
 }
 
 /**

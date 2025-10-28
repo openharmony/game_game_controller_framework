@@ -54,9 +54,9 @@ const int32_t KEYCODE_OPEN_TEMP_FOR_HOVER_TOUCH_CONTROLLER = 3107;
 class KeyMappingHandleTest : public testing::Test {
 public:
 
-    void SetUp();
+    void SetUp() override;
 
-    void TearDown();
+    void TearDown() override;
 
     void SetKeyEvent();
 
@@ -146,7 +146,7 @@ HWTEST_F(KeyMappingHandleTest, IsNotifyOpenTemplateConfigPage_001, TestSize.Leve
 
 /**
  * @tc.name: IsNotifyOpenTemplateConfigPage_001
- * @tc.desc: When key action of keyEvent_ is not KEY_ACTION_DOWN, IsNotifyOpenTemplateConfigPage return false.
+ * @tc.desc: When key action of keyEventA_ is not KEY_ACTION_DOWN, IsNotifyOpenTemplateConfigPage return false.
  * @tc.type: FUNC
  * @tc.require: issueNumber
  */
@@ -244,7 +244,7 @@ HWTEST_F(KeyMappingHandleTest, IsNotifyOpenTemplateConfigPage_007, TestSize.Leve
 
 /**
  * @tc.name: IsNotifyOpenTemplateConfigPage_008
- * @tc.desc: When one deviceId of ctrl+shift+i keys is not same with keyEvent_, IsNotifyOpenTemplateConfigPage return
+ * @tc.desc: When one deviceId of ctrl+shift+i keys is not same with keyEventA_, IsNotifyOpenTemplateConfigPage return
  * false.
  * @tc.type: FUNC
  * @tc.require: issueNumber

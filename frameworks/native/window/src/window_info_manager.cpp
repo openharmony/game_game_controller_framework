@@ -16,6 +16,7 @@
 #include "window_info_manager.h"
 #include "gamecontroller_log.h"
 #include "key_to_touch_manager.h"
+#include "key_mapping_service.h"
 
 namespace OHOS {
 namespace GameController {
@@ -37,6 +38,7 @@ void WindowLifeCycle::AfterForeground()
 {
     HILOGI("AfterForeground ");
     DelayedSingleton<WindowInfoManager>::GetInstance()->SetForeground(true);
+    DelayedSingleton<KeyMappingService>::GetInstance()->ReloadKeyMappingSupportConfig();
 }
 
 void WindowLifeCycle::AfterBackground()

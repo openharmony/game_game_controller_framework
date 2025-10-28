@@ -68,10 +68,11 @@ public:
     virtual void DelayHandleDeviceChangeEvent(const DeviceChangeEvent &deviceChangeEvent);
 
     /**
-     * Get a HoverTouchPad
-     * @return DeviceInfo.
+     * Get one deviceInfo by deviceType
+     * @param deviceTypeEnum deviceType
+     * @return first means it exists
      */
-    virtual std::pair<bool, DeviceInfo> GetHoverTouchPad();
+    virtual std::pair<bool, DeviceInfo> GetOneDeviceByDeviceType(DeviceTypeEnum deviceTypeEnum);
 
 private:
     /**

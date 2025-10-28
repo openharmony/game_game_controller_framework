@@ -79,7 +79,7 @@ public:
 
     std::string FourByteWrong2();
 
-    bool PreBuildTestFile(const string &filename);
+    void PreBuildTestFile(const string &filename);
 
     void RemoveTestFile(const string &filepath);
 
@@ -88,10 +88,12 @@ public:
 
 void JsonUtilsTest::SetUp()
 {
+    PreBuildTestFile(TEST_FILE_NAME);
 }
 
 void JsonUtilsTest::TearDown()
 {
+    RemoveTestFile(TEST_FILE_NAME);
 }
 
 std::string JsonUtilsTest::TwoByte()
@@ -167,14 +169,14 @@ std::string JsonUtilsTest::FourByteWrong2()
     return testStr;
 }
 
-bool JsonUtilsTest::PreBuildTestFile(const string &filename)
+void JsonUtilsTest::PreBuildTestFile(const string &filename)
 {
     std::ofstream file(filename);
     if (!file) {
-        return false;
+        return;
     }
     file.close();
-    return true;
+    return;
 }
 
 void JsonUtilsTest::RemoveTestFile(const string &filepath)
@@ -276,13 +278,10 @@ HWTEST_F(JsonUtilsTest, IsUtf8_006, TestSize.Level0)
 */
 HWTEST_F(JsonUtilsTest, WriteFileFromJson_001, TestSize.Level0)
 {
-    if (PreBuildTestFile(TEST_FILE_NAME)) {
-        std::string path = "./" + TEST_FILE_NAME;
-        json obj;
-        obj["key"] = "value";
-        ASSERT_TRUE(JsonUtils::WriteFileFromJson(path, obj));
-        RemoveTestFile(TEST_FILE_NAME);
-    }
+    std::string path = "./" + TEST_FILE_NAME;
+    json obj;
+    obj["key"] = "value";
+    ASSERT_TRUE(JsonUtils::WriteFileFromJson(path, obj));
 }
 
 /**
@@ -293,20 +292,17 @@ HWTEST_F(JsonUtilsTest, WriteFileFromJson_001, TestSize.Level0)
 */
 HWTEST_F(JsonUtilsTest, ReadJsonFromFile_001, TestSize.Level0)
 {
-    if (PreBuildTestFile(TEST_FILE_NAME)) {
-        std::string path = "./" + TEST_FILE_NAME;
-        json obj;
-        obj["key"] = "value";
-        ASSERT_TRUE(JsonUtils::WriteFileFromJson(path, obj));
-        std::pair<bool, nlohmann::json> result = JsonUtils::ReadJsonFromFile(path);
-        ASSERT_TRUE(result.first);
-        json resultObject = result.second;
-        ASSERT_TRUE(resultObject.size() == 1);
-        auto it = resultObject.find("key");
-        ASSERT_TRUE(it != resultObject.end());
-        ASSERT_TRUE(*it == "value");
-        RemoveTestFile(TEST_FILE_NAME);
-    }
+    std::string path = "./" + TEST_FILE_NAME;
+    json obj;
+    obj["key"] = "value";
+    ASSERT_TRUE(JsonUtils::WriteFileFromJson(path, obj));
+    std::pair<bool, nlohmann::json> result = JsonUtils::ReadJsonFromFile(path);
+    ASSERT_TRUE(result.first);
+    json resultObject = result.second;
+    ASSERT_TRUE(resultObject.size() == 1);
+    auto it = resultObject.find("key");
+    ASSERT_TRUE(it != resultObject.end());
+    ASSERT_TRUE(*it == "value");
 }
 
 /**
@@ -317,12 +313,10 @@ HWTEST_F(JsonUtilsTest, ReadJsonFromFile_001, TestSize.Level0)
 */
 HWTEST_F(JsonUtilsTest, IsFileExist_001, TestSize.Level0)
 {
-    if (PreBuildTestFile(TEST_FILE_NAME)) {
-        std::string path = "./" + TEST_FILE_NAME;
-        ASSERT_TRUE(JsonUtils::IsFileExist(path));
-        RemoveTestFile(TEST_FILE_NAME);
-        ASSERT_FALSE(JsonUtils::IsFileExist(path));
-    }
+    std::string path = "./" + TEST_FILE_NAME;
+    ASSERT_TRUE(JsonUtils::IsFileExist(path));
+    RemoveTestFile(TEST_FILE_NAME);
+    ASSERT_FALSE(JsonUtils::IsFileExist(path));
 }
 
 /**
@@ -333,25 +327,22 @@ HWTEST_F(JsonUtilsTest, IsFileExist_001, TestSize.Level0)
 */
 HWTEST_F(JsonUtilsTest, CopyFile_001, TestSize.Level0)
 {
-    if (PreBuildTestFile(TEST_FILE_NAME)) {
-        std::string src = "./" + TEST_FILE_NAME;
-        json obj;
-        obj["key"] = "value";
-        ASSERT_TRUE(JsonUtils::WriteFileFromJson(src, obj));
-        std::string des = COPY_FILE_NAME;
-        ASSERT_TRUE(JsonUtils::CopyFile(src, des, true));
-        struct stat fileStat;
-        if (stat(COPY_FILE_NAME.c_str(), &fileStat) == 0) {
-            ASSERT_EQ(FileMode(fileStat), ALL_USER_READ_MODE);
-        }
-        RemoveTestFile(COPY_FILE_NAME);
-        ASSERT_TRUE(JsonUtils::CopyFile(src, des, false));
-        if (stat(COPY_FILE_NAME.c_str(), &fileStat) == 0) {
-            ASSERT_EQ(FileMode(fileStat), OWNER_ONLY_MODE);
-        }
-        RemoveTestFile(COPY_FILE_NAME);
-        RemoveTestFile(TEST_FILE_NAME);
+    std::string src = "./" + TEST_FILE_NAME;
+    json obj;
+    obj["key"] = "value";
+    ASSERT_TRUE(JsonUtils::WriteFileFromJson(src, obj));
+    std::string des = COPY_FILE_NAME;
+    ASSERT_TRUE(JsonUtils::CopyFile(src, des, true));
+    struct stat fileStat;
+    if (stat(COPY_FILE_NAME.c_str(), &fileStat) == 0) {
+        ASSERT_EQ(FileMode(fileStat), ALL_USER_READ_MODE);
     }
+    RemoveTestFile(COPY_FILE_NAME);
+    ASSERT_TRUE(JsonUtils::CopyFile(src, des, false));
+    if (stat(COPY_FILE_NAME.c_str(), &fileStat) == 0) {
+        ASSERT_EQ(FileMode(fileStat), OWNER_ONLY_MODE);
+    }
+    RemoveTestFile(COPY_FILE_NAME);
 }
 
 /**

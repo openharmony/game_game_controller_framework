@@ -24,22 +24,15 @@ void SingleKeyToTouchHandler::HandleKeyDown(std::shared_ptr<InputToTouchContext>
                                             const DeviceInfo &deviceInfo)
 {
     int32_t keyCode = keyEvent->GetKeyCode();
-    if (context->isMouseRightClickOperating || context->isMouseLeftFireOperating) {
-        HILOGW("discard keyCode [%{private}d]. It's mouseRightClickOperating or mouseLeftFireOperating now", keyCode);
-        return;
-    }
-    if (context->isSingleKeyOperating) {
-        if (context->currentSingleKey.keyCode != keyCode) {
-            HILOGW("discard keyCode [%{private}d]. It's single-key-operating now", keyCode);
-        }
+    if (context->HasSingleKeyDown(keyCode)) {
         return;
     }
 
     HILOGI("keyCode [%{private}d] convert to down event of single-key-to-touch", keyCode);
-    context->isSingleKeyOperating = true;
-    context->currentSingleKey = mappingInfo;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context->SetCurrentSingleKeyInfo(mappingInfo, pointerId);
     int64_t actionTime = keyEvent->GetActionTime();
-    TouchEntity touchEntity = BuildTouchEntity(context->currentSingleKey, SINGLE_POINT_ID,
+    TouchEntity touchEntity = BuildTouchEntity(mappingInfo, pointerId,
                                                PointerEvent::POINTER_ACTION_DOWN, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
 }
@@ -49,28 +42,29 @@ void SingleKeyToTouchHandler::HandleKeyUp(std::shared_ptr<InputToTouchContext> &
                                           const DeviceInfo &deviceInfo)
 {
     int32_t keyCode = keyEvent->GetKeyCode();
-    if (!context->isSingleKeyOperating) {
+    if (!context->HasSingleKeyDown(keyCode)) {
         HILOGW("discard keyCode [%{private}d]'s keyup event. No single-key-operating",
                keyCode);
         return;
     }
-    if (context->currentSingleKey.keyCode != keyCode) {
-        HILOGW("discard keyCode [%{private}d]'s keyup event. keyCode is not current single-key-operating keycode",
-               keyCode);
+    std::pair<bool, int32_t> pair = context->GetPointerIdByKeyCode(keyCode);
+    if (!pair.first) {
+        HILOGW("discard keyCode [%{private}d]'s keyup event, because cannot find the pointerId", keyCode);
         return;
     }
-    if (context->pointerItems.find(SINGLE_POINT_ID) == context->pointerItems.end()) {
-        HILOGW("discard button event, because cannot find the last point event");
+    int32_t pointerId = pair.second;
+    if (context->pointerItems.find(pointerId) == context->pointerItems.end()) {
+        HILOGW("discard keyCode [%{private}d]'s keyup event, because cannot find the last point event", keyCode);
         return;
     }
-    PointerEvent::PointerItem lastMovePoint = context->pointerItems[SINGLE_POINT_ID];
+    PointerEvent::PointerItem lastMovePoint = context->pointerItems[pointerId];
 
     HILOGI("keyCode [%{private}d] convert to up event of single-key-to-touch", keyCode);
     int64_t actionTime = keyEvent->GetActionTime();
-    TouchEntity touchEntity = BuildTouchUpEntity(lastMovePoint, SINGLE_POINT_ID,
+    TouchEntity touchEntity = BuildTouchUpEntity(lastMovePoint, pointerId,
                                                  PointerEvent::POINTER_ACTION_UP, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
-    context->ResetCurrentSingleKeyInfo();
+    context->ResetCurrentSingleKeyInfo(keyCode);
 }
 }
 }

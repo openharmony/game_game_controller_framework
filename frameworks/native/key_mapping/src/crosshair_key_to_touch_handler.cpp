@@ -35,9 +35,8 @@ void CrosshairKeyToTouchHandler::HandleKeyDown(std::shared_ptr<InputToTouchConte
     }
 
     HILOGI("enter into CrosshairMode");
-    context->isCrosshairMode = true;
-    context->isEnterCrosshairInfo = false;
-    context->currentCrosshairInfo = mappingInfo;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context->SetCurrentCrosshairInfo(mappingInfo, pointerId);
     SendDownTouch(context, keyEvent->GetActionTime());
 }
 
@@ -57,7 +56,7 @@ void CrosshairKeyToTouchHandler::HandleKeyUp(std::shared_ptr<InputToTouchContext
         SendUpTouch(context, keyEvent->GetActionTime());
         HILOGI("exit CrosshairMode, and show mouse pointer");
         ExitCrosshairKeyStatus();
-        context->ResetCrosshairInfo();
+        context->ResetCurrentCrosshairInfo();
         return;
     }
 
@@ -93,13 +92,25 @@ void CrosshairKeyToTouchHandler::SendMoveTouch(std::shared_ptr<InputToTouchConte
                                                const std::shared_ptr<MMI::PointerEvent> &pointerEvent,
                                                const KeyToTouchMappingInfo &mappingInfo)
 {
+    std::pair<bool, int32_t> pair = context->GetPointerIdByKeyCode(KEY_CODE_CROSSHAIR);
+    if (!pair.first) {
+        HILOGW("discard send move touch. because cannot find the pointerId");
+        return;
+    }
+    int32_t pointerId = pair.second;
     currentIdx_++;
-    ComputeTouchPointByMouseMoveEvent(context, pointerEvent, mappingInfo, CROSSHAIR_POINT_ID);
+    ComputeTouchPointByMouseMoveEvent(context, pointerEvent, mappingInfo, pointerId);
 }
 
 void CrosshairKeyToTouchHandler::SendDownTouch(std::shared_ptr<InputToTouchContext> &context, int64_t actionTime)
 {
-    TouchEntity touchEntity = BuildTouchEntity(context->currentCrosshairInfo, CROSSHAIR_POINT_ID,
+    std::pair<bool, int32_t> pair = context->GetPointerIdByKeyCode(KEY_CODE_CROSSHAIR);
+    if (!pair.first) {
+        HILOGW("discard send down touch. because cannot find the pointerId");
+        return;
+    }
+    int32_t pointerId = pair.second;
+    TouchEntity touchEntity = BuildTouchEntity(context->currentCrosshairInfo, pointerId,
                                                PointerEvent::POINTER_ACTION_DOWN, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
     currentIdx_ = 1;
@@ -107,9 +118,15 @@ void CrosshairKeyToTouchHandler::SendDownTouch(std::shared_ptr<InputToTouchConte
 
 void CrosshairKeyToTouchHandler::SendUpTouch(std::shared_ptr<InputToTouchContext> &context, int64_t actionTime)
 {
-    if (context->pointerItems.find(CROSSHAIR_POINT_ID) != context->pointerItems.end()) {
-        PointerEvent::PointerItem lastMovePoint = context->pointerItems[CROSSHAIR_POINT_ID];
-        TouchEntity touchEntity = BuildTouchUpEntity(lastMovePoint, CROSSHAIR_POINT_ID,
+    std::pair<bool, int32_t> pair = context->GetPointerIdByKeyCode(KEY_CODE_CROSSHAIR);
+    if (!pair.first) {
+        HILOGW("discard send up touch. because cannot find the pointerId");
+        return;
+    }
+    int32_t pointerId = pair.second;
+    if (context->pointerItems.find(pointerId) != context->pointerItems.end()) {
+        PointerEvent::PointerItem lastMovePoint = context->pointerItems[pointerId];
+        TouchEntity touchEntity = BuildTouchUpEntity(lastMovePoint, pointerId,
                                                      PointerEvent::POINTER_ACTION_UP, actionTime);
         BuildAndSendPointerEvent(context, touchEntity);
     }

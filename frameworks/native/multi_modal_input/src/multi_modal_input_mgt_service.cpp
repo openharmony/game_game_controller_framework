@@ -174,13 +174,19 @@ void MultiModalInputMgtService::DelayHandleDeviceChangeEvent(const DeviceChangeE
     }
 }
 
-std::pair<bool, DeviceInfo> MultiModalInputMgtService::GetHoverTouchPad()
+std::pair<bool, DeviceInfo> MultiModalInputMgtService::GetOneDeviceByDeviceType(DeviceTypeEnum deviceTypeEnum)
 {
     std::lock_guard<ffrt::mutex> lock(deviceChangeEventMutex_);
     std::pair<bool, DeviceInfo> result;
     result.first = false;
-    for (auto deviceInfo: deviceInfoByUniqMap_) {
-        if (deviceInfo.second.deviceType == HOVER_TOUCH_PAD) {
+    for (const auto deviceInfo: deviceInfoByUniqMap_) {
+        if (deviceInfo.second.deviceType == deviceTypeEnum) {
+            result.first = true;
+            result.second = deviceInfo.second;
+            return result;
+        }
+
+        if (deviceTypeEnum == GAME_KEY_BOARD && deviceInfo.second.hasFullKeyBoard) {
             result.first = true;
             result.second = deviceInfo.second;
             return result;

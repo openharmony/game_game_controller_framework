@@ -34,6 +34,8 @@ namespace {
 constexpr const char* PERMISSION = "ohos.permission.PUBLISH_SYSTEM_COMMON_EVENT";
 constexpr const char* KEY_MAPPING_CHANGE_EVENT = "usual.event.ohos.gamecontroller.game.keymapping.change";
 constexpr const char* KEY_MAPPING_ENABLE_EVENT = "usual.event.ohos.gamecontroller.game.keymapping.enable";
+constexpr const char* SUPPORT_KEY_MAPPING_CHANGE_EVENT =
+    "usual.event.ohos.gamecontroller.supported.keymapping.change";
 constexpr const char* SCB_FORWARD_KEY_EVENT = "custom.event.SCB_FORWARD_KEYEVENT";
 constexpr const char* SCB_BUNDLE_NAME = "com.ohos.sceneboard";
 constexpr const char* EVENT_PARAM_BUNDLE_NAME = "bundleName";
@@ -70,7 +72,6 @@ void InputToTouchClient::DoAsyncTask()
         return;
     }
     DelayedSingleton<KeyMappingHandle>::GetInstance()->SetSupportKeyMapping(true);
-    DelayedSingleton<KeyToTouchManager>::GetInstance()->SetSupportKeyMapping(true);
     HILOGI("The app supports input-to-touch feature.");
 
     // Start Multi-Modal-Input Monitor
@@ -112,26 +113,37 @@ void InputToTouchClient::StartInputMonitor()
 
 void InputToTouchClient::StartPublicEventMonitor()
 {
+    SubscribeGameControllerSaEvent();
+
+    SubscribeScbEvent();
+}
+
+void InputToTouchClient::SubscribeGameControllerSaEvent()
+{
     EventFwk::MatchingSkills matchingSkills;
     matchingSkills.AddEvent(KEY_MAPPING_CHANGE_EVENT);
     matchingSkills.AddEvent(KEY_MAPPING_ENABLE_EVENT);
+    matchingSkills.AddEvent(SUPPORT_KEY_MAPPING_CHANGE_EVENT);
     EventFwk::CommonEventSubscribeInfo subscribeInfo(matchingSkills);
     subscribeInfo.SetPermission(PERMISSION);
     subscribeInfo.SetPublisherUid(GAME_CONTROLLER_UID);
 
-    InputToTouchClient::subscriber_ = std::make_shared<GameCommonEventListener>(subscribeInfo);
-    if (EventFwk::CommonEventManager::SubscribeCommonEvent(InputToTouchClient::subscriber_)) {
+    subscriber_ = std::make_shared<GameCommonEventListener>(subscribeInfo);
+    if (EventFwk::CommonEventManager::SubscribeCommonEvent(subscriber_)) {
         HILOGI("SubscribeGameControllerCommonEvent success");
     } else {
         HILOGE("SubscribeGameControllerCommonEvent failed");
     }
+}
 
+void InputToTouchClient::SubscribeScbEvent()
+{
     EventFwk::MatchingSkills scbMatchingSkills;
     scbMatchingSkills.AddEvent(SCB_FORWARD_KEY_EVENT);
     EventFwk::CommonEventSubscribeInfo subscribeInfoForScb(scbMatchingSkills);
     subscribeInfoForScb.SetPublisherBundleName(SCB_BUNDLE_NAME);
-    InputToTouchClient::subscriberForScb_ = std::make_shared<GameCommonEventListener>(subscribeInfoForScb);
-    if (EventFwk::CommonEventManager::SubscribeCommonEvent(InputToTouchClient::subscriberForScb_)) {
+    subscriberForScb_ = std::make_shared<GameCommonEventListener>(subscribeInfoForScb);
+    if (EventFwk::CommonEventManager::SubscribeCommonEvent(subscriberForScb_)) {
         HILOGI("SubscribeScbCommonEvent success");
     } else {
         HILOGE("SubscribeScbCommonEvent failed");
@@ -144,6 +156,11 @@ void GameCommonEventListener::OnReceiveEvent(const EventFwk::CommonEventData &da
     std::string action = want.GetAction();
     if (action == SCB_FORWARD_KEY_EVENT) {
         HandleScbForwardKeyEvent(data);
+        return;
+    }
+
+    if (action == SUPPORT_KEY_MAPPING_CHANGE_EVENT) {
+        HandleSupportedKeyMappingChangeEvent();
         return;
     }
     std::string bundleName = want.GetStringParam(EVENT_PARAM_BUNDLE_NAME);
@@ -186,7 +203,7 @@ void GameCommonEventListener::HandleScbForwardKeyEvent(const EventFwk::CommonEve
         return;
     }
     std::pair<bool, DeviceInfo> deviceInfo = DelayedSingleton<MultiModalInputMgtService>::GetInstance()
-        ->GetHoverTouchPad();
+        ->GetOneDeviceByDeviceType(HOVER_TOUCH_PAD);
     if (!deviceInfo.first) {
         HILOGW("Discard HandleScbForwardKeyEvent. No HoverTouchPad");
         return;
@@ -198,6 +215,11 @@ void GameCommonEventListener::HandleScbForwardKeyEvent(const EventFwk::CommonEve
     } else {
         HILOGW("Discard HandleScbForwardKeyEvent. Game is not foreground and focus");
     }
+}
+
+void GameCommonEventListener::HandleSupportedKeyMappingChangeEvent()
+{
+    DelayedSingleton<KeyMappingService>::GetInstance()->ReloadKeyMappingSupportConfig();
 }
 
 bool GameCommonEventListener::IsCurrentGameEvent(const std::string &bundleName)

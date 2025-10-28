@@ -38,10 +38,10 @@ void CombinationKeyToTouchHandler::HandleKeyDown(std::shared_ptr<InputToTouchCon
     }
 
     HILOGI("keyCode [%{private}d] convert to down event of combination-key-to-touch", keyCode);
-    context->isCombinationKeyOperating = true;
-    context->currentCombinationKey = mappingInfo;
+    int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    context->SetCurrentCombinationKey(mappingInfo, pointerId);
     int64_t actionTime = keyEvent->GetActionTime();
-    TouchEntity touchEntity = BuildTouchEntity(context->currentCombinationKey, COMBINATION_POINT_ID,
+    TouchEntity touchEntity = BuildTouchEntity(context->currentCombinationKey, pointerId,
                                                PointerEvent::POINTER_ACTION_DOWN, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
 }
@@ -65,15 +65,18 @@ void CombinationKeyToTouchHandler::HandleKeyUp(std::shared_ptr<InputToTouchConte
                keyCode);
         return;
     }
-    if (context->pointerItems.find(COMBINATION_POINT_ID) == context->pointerItems.end()) {
-        HILOGW("discard button event, because cannot find the last point event");
+
+    std::pair<bool, int32_t> pair = context->GetPointerIdByKeyCode(KEY_CODE_COMBINATION);
+    if (!pair.first) {
+        HILOGW("discard keyCode [%{private}d]'s keyup event. because cannot find the pointerId", keyCode);
         return;
     }
+    int32_t pointerId = pair.second;
 
     HILOGI("keyCode [%{private}d] convert to up event of combination-to-touch", keyCode);
-    PointerEvent::PointerItem lastMovePoint = context->pointerItems[COMBINATION_POINT_ID];
+    PointerEvent::PointerItem lastMovePoint = context->pointerItems[pointerId];
     int64_t actionTime = keyEvent->GetActionTime();
-    TouchEntity touchEntity = BuildTouchUpEntity(lastMovePoint, COMBINATION_POINT_ID,
+    TouchEntity touchEntity = BuildTouchUpEntity(lastMovePoint, pointerId,
                                                  PointerEvent::POINTER_ACTION_UP, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
     context->ResetCurrentCombinationKey();

@@ -44,6 +44,8 @@ private:
 
     void HandleScbForwardKeyEvent(const EventFwk::CommonEventData &data);
 
+    void HandleSupportedKeyMappingChangeEvent();
+
     bool IsCurrentGameEvent(const std::string &bundleName);
 };
 
@@ -65,6 +67,10 @@ private:
 private:
     static std::shared_ptr<GameCommonEventListener> subscriber_;
     static std::shared_ptr<GameCommonEventListener> subscriberForScb_;
+
+    static void SubscribeScbEvent();
+
+    static void SubscribeGameControllerSaEvent();
 };
 }
 }

@@ -61,7 +61,7 @@ public:
 
 class MouseRightKeyWalkingToTouchHandlerTest : public testing::Test {
 public:
-    void SetUp()
+    void SetUp() override
     {
         handler_ = std::make_shared<MouseRightKeyWalkingToTouchHandlerEx>();
         context_ = std::make_shared<InputToTouchContext>();
@@ -76,7 +76,7 @@ public:
         context_->windowInfoEntity.yCenter = MAX_HEIGHT / HALF_LENGTH;
     }
 
-    KeyToTouchMappingInfo BuildKeyToTouchMappingInfo()
+    static KeyToTouchMappingInfo BuildKeyToTouchMappingInfo()
     {
         KeyToTouchMappingInfo info;
         info.mappingType = MappingTypeEnum::MOUSE_RIGHT_KEY_WALKING_TO_TOUCH;
@@ -86,12 +86,26 @@ public:
         return info;
     }
 
-    PointerEvent::PointerItem BuildPointerItem(int32_t xVal, int32_t yVal)
+    static PointerEvent::PointerItem BuildPointerItem(int32_t xVal, int32_t yVal)
     {
         PointerEvent::PointerItem pointerItem;
         pointerItem.SetWindowX(xVal);
         pointerItem.SetWindowY(yVal);
         return pointerItem;
+    }
+
+    void TearDown() override
+    {
+        context_->ResetCurrentWalking();
+    }
+
+    int32_t SendMouseRightDownEvent()
+    {
+        pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_DOWN);
+        handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
+        std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_WALK);
+        int32_t pointerId = pair.second;
+        return pointerId;
     }
 
 public:
@@ -110,19 +124,17 @@ public:
  */
 HWTEST_F(MouseRightKeyWalkingToTouchHandlerTest, HandlePointerEvent_001, TestSize.Level0)
 {
-    context_->isWalking = false;
-    pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_DOWN);
-    handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
+    int32_t pointerId = SendMouseRightDownEvent();
 
-    ASSERT_TRUE(context_->pointerItems.find(WALK_POINT_ID) != context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
     ASSERT_TRUE(context_->isWalking);
     ASSERT_EQ(context_->currentWalking.mappingType, MappingTypeEnum::MOUSE_RIGHT_KEY_WALKING_TO_TOUCH);
-    ASSERT_EQ(handler_->touchDownEntity_.pointerId, WALK_POINT_ID);
+    ASSERT_EQ(handler_->touchDownEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchDownEntity_.pointerAction, PointerEvent::POINTER_ACTION_DOWN);
     ASSERT_EQ(handler_->touchDownEntity_.xValue, X_VALUE);
     ASSERT_EQ(handler_->touchDownEntity_.yValue, Y_VALUE);
 
-    ASSERT_EQ(handler_->touchMoveEntity_.pointerId, WALK_POINT_ID);
+    ASSERT_EQ(handler_->touchMoveEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchMoveEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
     ASSERT_EQ(handler_->touchMoveEntity_.xValue, 459);
     ASSERT_EQ(handler_->touchMoveEntity_.yValue, 1216);
@@ -155,16 +167,15 @@ HWTEST_F(MouseRightKeyWalkingToTouchHandlerTest, HandlePointerEvent_002, TestSiz
  */
 HWTEST_F(MouseRightKeyWalkingToTouchHandlerTest, HandlePointerEvent_003, TestSize.Level1)
 {
-    pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_DOWN);
-    handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
+    int32_t pointerId = SendMouseRightDownEvent();
 
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_UP);
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
-    ASSERT_TRUE(context_->pointerItems.find(WALK_POINT_ID) == context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) == context_->pointerItems.end());
     ASSERT_FALSE(context_->isWalking);
     ASSERT_EQ(context_->currentWalking.mappingType, 0);
 
-    ASSERT_EQ(handler_->touchUpEntity_.pointerId, WALK_POINT_ID);
+    ASSERT_EQ(handler_->touchUpEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchUpEntity_.pointerAction, PointerEvent::POINTER_ACTION_UP);
     ASSERT_EQ(handler_->touchUpEntity_.xValue, X_VALUE);
     ASSERT_EQ(handler_->touchUpEntity_.yValue, Y_VALUE);
@@ -179,14 +190,12 @@ HWTEST_F(MouseRightKeyWalkingToTouchHandlerTest, HandlePointerEvent_003, TestSiz
  */
 HWTEST_F(MouseRightKeyWalkingToTouchHandlerTest, HandlePointerEvent_004, TestSize.Level1)
 {
-    pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_DOWN);
-    handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
-
+    int32_t pointerId = SendMouseRightDownEvent();
     context_->isWalking = false;
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_UP);
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(WALK_POINT_ID) != context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
     ASSERT_EQ(context_->currentWalking.mappingType, MappingTypeEnum::MOUSE_RIGHT_KEY_WALKING_TO_TOUCH);
 }
 
@@ -200,14 +209,13 @@ HWTEST_F(MouseRightKeyWalkingToTouchHandlerTest, HandlePointerEvent_004, TestSiz
  */
 HWTEST_F(MouseRightKeyWalkingToTouchHandlerTest, HandlePointerEvent_005, TestSize.Level1)
 {
-    pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_DOWN);
-    handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
+    int32_t pointerId = SendMouseRightDownEvent();
 
     context_->currentWalking.mappingType = MappingTypeEnum::DPAD_KEY_TO_TOUCH;
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_UP);
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(WALK_POINT_ID) != context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
     ASSERT_EQ(context_->currentWalking.mappingType, MappingTypeEnum::DPAD_KEY_TO_TOUCH);
 }
 
@@ -221,13 +229,12 @@ HWTEST_F(MouseRightKeyWalkingToTouchHandlerTest, HandlePointerEvent_005, TestSiz
  */
 HWTEST_F(MouseRightKeyWalkingToTouchHandlerTest, HandlePointerEvent_006, TestSize.Level0)
 {
-    context_->isWalking = true;
-    context_->currentWalking = mappingInfo_;
+    int32_t pointerId = SendMouseRightDownEvent();
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_MOVE);
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(WALK_POINT_ID) != context_->pointerItems.end());
-    ASSERT_EQ(handler_->touchMoveEntity_.pointerId, WALK_POINT_ID);
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
+    ASSERT_EQ(handler_->touchMoveEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchMoveEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
     ASSERT_EQ(handler_->touchMoveEntity_.xValue, 459);
     ASSERT_EQ(handler_->touchMoveEntity_.yValue, 1216);

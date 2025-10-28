@@ -16,6 +16,7 @@
 #include <gamecontroller_errors.h>
 #include "game_support_key_mapping_manager.h"
 #include "json_utils.h"
+#include "event_publisher.h"
 
 using json = nlohmann::json;
 namespace OHOS {
@@ -24,6 +25,7 @@ namespace {
 const std::string BUNDLE_SUPPORT_KEYMAPPING_CFG = "/data/service/el1/public/for-all-app/gamecontroller_server/";
 constexpr const char* FIELD_BUNDLE_NAME = "bundleName";
 constexpr const char* FIELD_VERSION = "version";
+constexpr const char* FIELD_SUPPORT_DEVICETYPES = "deviceTypes";
 constexpr const char* CONFIG_FILE = "game_support_key_mapping.json";
 const size_t MAX_CONFIG_NUM = 2000;
 }
@@ -36,6 +38,9 @@ GameSupportKeyMappingConfig::GameSupportKeyMappingConfig(const json &jsonObj)
     if (jsonObj.contains(FIELD_VERSION) && jsonObj.at(FIELD_VERSION).is_string()) {
         this->version = jsonObj.at(FIELD_VERSION).get<std::string>();
     }
+    if (jsonObj.contains(FIELD_SUPPORT_DEVICETYPES) && jsonObj.at(FIELD_SUPPORT_DEVICETYPES).is_array()) {
+        this->supportedDeviceTypes = jsonObj.at(FIELD_SUPPORT_DEVICETYPES).get<std::vector<int32_t>>();
+    }
 }
 
 json GameSupportKeyMappingConfig::ConvertToJson() const
@@ -43,6 +48,7 @@ json GameSupportKeyMappingConfig::ConvertToJson() const
     json jsonContent;
     jsonContent[FIELD_BUNDLE_NAME] = this->bundleName;
     jsonContent[FIELD_VERSION] = this->version;
+    jsonContent[FIELD_SUPPORT_DEVICETYPES] = this->supportedDeviceTypes;
     return jsonContent;
 }
 
@@ -63,6 +69,7 @@ int32_t GameSupportKeyMappingManager::IsSupportGameKeyMapping(const GameInfo &ga
         GameSupportKeyMappingConfig gameConfig = configMap_[gameInfo.bundleName];
         resultGameInfo.version = gameConfig.version;
         resultGameInfo.isSupportKeyMapping = true;
+        resultGameInfo.supportedDeviceTypes = gameConfig.supportedDeviceTypes;
         HILOGI("[%{public}s] supports key-mapping", gameInfo.bundleName.c_str());
     } else {
         resultGameInfo.isSupportKeyMapping = false;
@@ -113,6 +120,7 @@ int32_t GameSupportKeyMappingManager::SyncSupportKeyMappingGames(bool isSyncAll,
         HILOGI("save GameSupportKeyMappingConfig success");
         configMap_.clear();
         configMap_.insert(tempMap.begin(), tempMap.end());
+        DelayedSingleton<EventPublisher>::GetInstance()->SendSupportedKeyMappingChangeNotify();
         return GAME_CONTROLLER_SUCCESS;
     }
 

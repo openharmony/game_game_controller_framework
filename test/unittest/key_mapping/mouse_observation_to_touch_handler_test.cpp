@@ -34,7 +34,6 @@ const int32_t MAX_HEIGHT = 1260;
 const int32_t X_STEP = 1;
 const int32_t Y_STEP = 2;
 const int32_t MOUSE_MOVE_DISTANCE = 10;
-const int32_t MIN_EDGE = 1;
 }
 class MouseObservationToTouchHandlerEx : public MouseObservationToTouchHandler {
 public:
@@ -51,7 +50,7 @@ public:
 
 class MouseObservationToTouchHandlerTest : public testing::Test {
 public:
-    void SetUp()
+    void SetUp() override
     {
         handler_ = std::make_shared<MouseObservationToTouchHandlerEx>();
         context_ = std::make_shared<InputToTouchContext>();
@@ -65,7 +64,7 @@ public:
         context_->windowInfoEntity.maxHeight = MAX_HEIGHT;
     }
 
-    KeyToTouchMappingInfo BuildKeyToTouchMappingInfo()
+    static KeyToTouchMappingInfo BuildKeyToTouchMappingInfo()
     {
         KeyToTouchMappingInfo info;
         info.mappingType = MappingTypeEnum::MOUSE_OBSERVATION_TO_TOUCH;
@@ -76,12 +75,27 @@ public:
         return info;
     }
 
-    PointerEvent::PointerItem BuildPointerItem(int32_t xVal, int32_t yVal)
+    static PointerEvent::PointerItem BuildPointerItem(int32_t xVal, int32_t yVal)
     {
         PointerEvent::PointerItem pointerItem;
         pointerItem.SetWindowX(xVal);
         pointerItem.SetWindowY(yVal);
         return pointerItem;
+    }
+
+    void TearDown() override
+    {
+        context_->ResetCurrentObserving();
+    }
+
+    int32_t SendMouseRightDownEvent()
+    {
+        pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_DOWN);
+        pointerEvent_->SetButtonId(1);
+        handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
+        std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_OBSERVATION);
+        int32_t pointerId = pair.second;
+        return pointerId;
     }
 
 public:
@@ -100,17 +114,14 @@ public:
  */
 HWTEST_F(MouseObservationToTouchHandlerTest, HandlePointerEvent_001, TestSize.Level0)
 {
-    pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_DOWN);
-    pointerEvent_->SetButtonId(1);
+    int32_t pointerId = SendMouseRightDownEvent();
 
-    handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
-
-    ASSERT_TRUE(context_->pointerItems.find(OBSERVATION_POINT_ID) != context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
     ASSERT_TRUE(context_->isPerspectiveObserving);
     ASSERT_EQ(context_->currentPerspectiveObserving.mappingType, MOUSE_OBSERVATION_TO_TOUCH);
     ASSERT_EQ(context_->lastMousePointer.GetWindowX(), MOUSE_X_VALUE);
     ASSERT_EQ(context_->lastMousePointer.GetWindowY(), MOUSE_Y_VALUE);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, OBSERVATION_POINT_ID);
+    ASSERT_EQ(handler_->touchEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_DOWN);
     ASSERT_EQ(handler_->touchEntity_.xValue, X_VALUE);
     ASSERT_EQ(handler_->touchEntity_.yValue, Y_VALUE);
@@ -124,19 +135,16 @@ HWTEST_F(MouseObservationToTouchHandlerTest, HandlePointerEvent_001, TestSize.Le
  */
 HWTEST_F(MouseObservationToTouchHandlerTest, HandlePointerEvent_002, TestSize.Level0)
 {
-    pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_DOWN);
-    pointerEvent_->SetButtonId(1);
-    handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
-
+    int32_t pointerId = SendMouseRightDownEvent();
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_UP);
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(OBSERVATION_POINT_ID) == context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) == context_->pointerItems.end());
     ASSERT_FALSE(context_->isPerspectiveObserving);
     ASSERT_EQ(context_->currentPerspectiveObserving.mappingType, 0);
     ASSERT_EQ(context_->lastMousePointer.GetWindowX(), 0);
     ASSERT_EQ(context_->lastMousePointer.GetWindowY(), 0);
-    ASSERT_EQ(handler_->touchEntity_.pointerId, OBSERVATION_POINT_ID);
+    ASSERT_EQ(handler_->touchEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_UP);
     ASSERT_EQ(handler_->touchEntity_.xValue, X_VALUE);
     ASSERT_EQ(handler_->touchEntity_.yValue, Y_VALUE);
@@ -156,7 +164,8 @@ HWTEST_F(MouseObservationToTouchHandlerTest, HandlePointerEvent_003, TestSize.Le
 
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(OBSERVATION_POINT_ID) == context_->pointerItems.end());
+    std::pair<bool, int32_t> pair = context_->GetPointerIdByKeyCode(KEY_CODE_OBSERVATION);
+    ASSERT_FALSE(pair.first);
 }
 
 /**
@@ -167,15 +176,12 @@ HWTEST_F(MouseObservationToTouchHandlerTest, HandlePointerEvent_003, TestSize.Le
  */
 HWTEST_F(MouseObservationToTouchHandlerTest, HandlePointerEvent_004, TestSize.Level1)
 {
-    pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_DOWN);
-    pointerEvent_->SetButtonId(1);
-    handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
-
+    int32_t pointerId = SendMouseRightDownEvent();
     context_->isPerspectiveObserving = false;
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_UP);
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(OBSERVATION_POINT_ID) != context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
 }
 
 /**
@@ -187,15 +193,12 @@ HWTEST_F(MouseObservationToTouchHandlerTest, HandlePointerEvent_004, TestSize.Le
  */
 HWTEST_F(MouseObservationToTouchHandlerTest, HandlePointerEvent_005, TestSize.Level1)
 {
-    pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_DOWN);
-    pointerEvent_->SetButtonId(1);
-    handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
-
+    int32_t pointerId = SendMouseRightDownEvent();
     context_->currentPerspectiveObserving.mappingType = OBSERVATION_KEY_TO_TOUCH;
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_UP);
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
-    ASSERT_TRUE(context_->pointerItems.find(OBSERVATION_POINT_ID) != context_->pointerItems.end());
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
 }
 
 /**
@@ -207,10 +210,7 @@ HWTEST_F(MouseObservationToTouchHandlerTest, HandlePointerEvent_005, TestSize.Le
  */
 HWTEST_F(MouseObservationToTouchHandlerTest, HandlePointerEvent_006, TestSize.Level0)
 {
-    pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_DOWN);
-    pointerEvent_->SetButtonId(1);
-    handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
-
+    int32_t pointerId = SendMouseRightDownEvent();
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_MOVE);
     pointerEvent_->RemoveAllPointerItems();
     PointerEvent::PointerItem pointerItem = BuildPointerItem(MOUSE_X_VALUE + MOUSE_MOVE_DISTANCE,
@@ -220,7 +220,7 @@ HWTEST_F(MouseObservationToTouchHandlerTest, HandlePointerEvent_006, TestSize.Le
 
     ASSERT_EQ(context_->lastMousePointer.GetWindowX(), pointerItem.GetWindowX());
     ASSERT_EQ(context_->lastMousePointer.GetWindowY(), pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerId, OBSERVATION_POINT_ID);
+    ASSERT_EQ(handler_->touchEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
     ASSERT_EQ(handler_->touchEntity_.xValue, X_VALUE + X_STEP);
     ASSERT_EQ(handler_->touchEntity_.yValue, Y_VALUE + Y_STEP);
@@ -229,10 +229,10 @@ HWTEST_F(MouseObservationToTouchHandlerTest, HandlePointerEvent_006, TestSize.Le
      * touch event's x cannot more than maxWidth
      * touch event's y cannot more than maxHeight
      */
-    PointerEvent::PointerItem lastMovePoint = context_->pointerItems[OBSERVATION_POINT_ID];
+    PointerEvent::PointerItem lastMovePoint = context_->pointerItems[pointerId];
     lastMovePoint.SetWindowX(MAX_WIDTH);
     lastMovePoint.SetWindowY(MAX_HEIGHT);
-    context_->pointerItems[OBSERVATION_POINT_ID] = lastMovePoint;
+    context_->pointerItems[pointerId] = lastMovePoint;
     pointerEvent_->RemoveAllPointerItems();
     pointerItem = BuildPointerItem(MOUSE_X_VALUE + MOUSE_MOVE_DISTANCE + MOUSE_MOVE_DISTANCE,
                                    MOUSE_Y_VALUE + MOUSE_MOVE_DISTANCE + MOUSE_MOVE_DISTANCE);
@@ -251,10 +251,7 @@ HWTEST_F(MouseObservationToTouchHandlerTest, HandlePointerEvent_006, TestSize.Le
  */
 HWTEST_F(MouseObservationToTouchHandlerTest, HandlePointerEvent_007, TestSize.Level0)
 {
-    pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_DOWN);
-    pointerEvent_->SetButtonId(1);
-    handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
-
+    int32_t pointerId = SendMouseRightDownEvent();
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_MOVE);
     pointerEvent_->RemoveAllPointerItems();
     PointerEvent::PointerItem pointerItem = BuildPointerItem(MOUSE_X_VALUE - MOUSE_MOVE_DISTANCE,
@@ -264,7 +261,7 @@ HWTEST_F(MouseObservationToTouchHandlerTest, HandlePointerEvent_007, TestSize.Le
 
     ASSERT_EQ(context_->lastMousePointer.GetWindowX(), pointerItem.GetWindowX());
     ASSERT_EQ(context_->lastMousePointer.GetWindowY(), pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerId, OBSERVATION_POINT_ID);
+    ASSERT_EQ(handler_->touchEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
     ASSERT_EQ(handler_->touchEntity_.xValue, X_VALUE - X_STEP);
     ASSERT_EQ(handler_->touchEntity_.yValue, Y_VALUE - Y_STEP);
@@ -273,10 +270,10 @@ HWTEST_F(MouseObservationToTouchHandlerTest, HandlePointerEvent_007, TestSize.Le
      * touch event's x cannot be less than MIN_EDGE
      * touch event's y cannot be less than MIN_EDGE
      */
-    PointerEvent::PointerItem lastMovePoint = context_->pointerItems[OBSERVATION_POINT_ID];
+    PointerEvent::PointerItem lastMovePoint = context_->pointerItems[pointerId];
     lastMovePoint.SetWindowX(0);
     lastMovePoint.SetWindowY(0);
-    context_->pointerItems[OBSERVATION_POINT_ID] = lastMovePoint;
+    context_->pointerItems[pointerId] = lastMovePoint;
     pointerEvent_->RemoveAllPointerItems();
     pointerItem = BuildPointerItem(MOUSE_X_VALUE - MOUSE_MOVE_DISTANCE - MOUSE_MOVE_DISTANCE,
                                    MOUSE_Y_VALUE - MOUSE_MOVE_DISTANCE - MOUSE_MOVE_DISTANCE);
@@ -296,10 +293,7 @@ HWTEST_F(MouseObservationToTouchHandlerTest, HandlePointerEvent_007, TestSize.Le
  */
 HWTEST_F(MouseObservationToTouchHandlerTest, HandlePointerEvent_008, TestSize.Level0)
 {
-    pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_DOWN);
-    pointerEvent_->SetButtonId(1);
-    handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
-
+    int32_t pointerId = SendMouseRightDownEvent();
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_MOVE);
     pointerEvent_->RemoveAllPointerItems();
     PointerEvent::PointerItem pointerItem = BuildPointerItem(MAX_WIDTH, MAX_HEIGHT);
@@ -310,7 +304,7 @@ HWTEST_F(MouseObservationToTouchHandlerTest, HandlePointerEvent_008, TestSize.Le
 
     ASSERT_EQ(context_->lastMousePointer.GetWindowX(), pointerItem.GetWindowX());
     ASSERT_EQ(context_->lastMousePointer.GetWindowY(), pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerId, OBSERVATION_POINT_ID);
+    ASSERT_EQ(handler_->touchEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
     ASSERT_EQ(handler_->touchEntity_.xValue, X_VALUE + X_STEP);
     ASSERT_EQ(handler_->touchEntity_.yValue, Y_VALUE + Y_STEP);
@@ -319,10 +313,10 @@ HWTEST_F(MouseObservationToTouchHandlerTest, HandlePointerEvent_008, TestSize.Le
      * touch event's x cannot be more than maxWidth
      * touch event's y cannot be more than maxHeight
      */
-    PointerEvent::PointerItem lastMovePoint = context_->pointerItems[OBSERVATION_POINT_ID];
+    PointerEvent::PointerItem lastMovePoint = context_->pointerItems[pointerId];
     lastMovePoint.SetWindowX(MAX_WIDTH);
     lastMovePoint.SetWindowY(MAX_HEIGHT);
-    context_->pointerItems[OBSERVATION_POINT_ID] = lastMovePoint;
+    context_->pointerItems[pointerId] = lastMovePoint;
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
     ASSERT_EQ(handler_->touchEntity_.xValue, MAX_WIDTH);
@@ -339,10 +333,7 @@ HWTEST_F(MouseObservationToTouchHandlerTest, HandlePointerEvent_008, TestSize.Le
  */
 HWTEST_F(MouseObservationToTouchHandlerTest, HandlePointerEvent_009, TestSize.Level0)
 {
-    pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_DOWN);
-    pointerEvent_->SetButtonId(1);
-    handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
-
+    int32_t pointerId = SendMouseRightDownEvent();
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_MOVE);
     pointerEvent_->RemoveAllPointerItems();
     PointerEvent::PointerItem pointerItem = BuildPointerItem(MIN_EDGE, MIN_EDGE);
@@ -353,7 +344,7 @@ HWTEST_F(MouseObservationToTouchHandlerTest, HandlePointerEvent_009, TestSize.Le
 
     ASSERT_EQ(context_->lastMousePointer.GetWindowX(), pointerItem.GetWindowX());
     ASSERT_EQ(context_->lastMousePointer.GetWindowY(), pointerItem.GetWindowY());
-    ASSERT_EQ(handler_->touchEntity_.pointerId, OBSERVATION_POINT_ID);
+    ASSERT_EQ(handler_->touchEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
     ASSERT_EQ(handler_->touchEntity_.xValue, X_VALUE - X_STEP);
     ASSERT_EQ(handler_->touchEntity_.yValue, Y_VALUE - Y_STEP);
@@ -362,10 +353,10 @@ HWTEST_F(MouseObservationToTouchHandlerTest, HandlePointerEvent_009, TestSize.Le
      * touch event's x cannot less than MIN_EDGE
      * touch event's y cannot less than MIN_EDGE
      */
-    PointerEvent::PointerItem lastMovePoint = context_->pointerItems[OBSERVATION_POINT_ID];
+    PointerEvent::PointerItem lastMovePoint = context_->pointerItems[pointerId];
     lastMovePoint.SetWindowX(MIN_EDGE);
     lastMovePoint.SetWindowY(MIN_EDGE);
-    context_->pointerItems[OBSERVATION_POINT_ID] = lastMovePoint;
+    context_->pointerItems[pointerId] = lastMovePoint;
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
     ASSERT_EQ(handler_->touchEntity_.xValue, MIN_EDGE);

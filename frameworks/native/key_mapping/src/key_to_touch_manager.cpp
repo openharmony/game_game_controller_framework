@@ -57,23 +57,21 @@ KeyToTouchManager::~KeyToTouchManager()
 {
 }
 
-void KeyToTouchManager::SetSupportKeyMapping(bool isSupportKeyMapping)
+void KeyToTouchManager::SetSupportKeyMapping(bool isSupportKeyMapping,
+                                             const std::unordered_set<int32_t> &deviceTypeSet)
 {
+    std::lock_guard<ffrt::mutex> lock(checkMutex_);
     isSupportKeyMapping_ = isSupportKeyMapping;
+    supportDeviceTypeSet_ = deviceTypeSet;
 }
 
 bool KeyToTouchManager::DispatchKeyEvent(const std::shared_ptr<MMI::KeyEvent> &keyEvent)
 {
-    if (!isSupportKeyMapping_) {
-        return false;
-    }
-
     if (keyEvent->GetKeyAction() != KeyEvent::KEY_ACTION_DOWN
         && keyEvent->GetKeyAction() != KeyEvent::KEY_ACTION_UP
         && keyEvent->GetKeyAction() != KeyEvent::KEY_ACTION_CANCEL) {
         return false;
     }
-
     std::lock_guard<ffrt::mutex> lock(checkMutex_);
     if (!IsCanEnableKeyMapping()) {
         return false;
@@ -107,6 +105,9 @@ bool KeyToTouchManager::DispatchKeyEvent(const std::shared_ptr<MMI::KeyEvent> &k
             return false;
         }
     }
+    if (!DeviceIsSupportKeyMapping(deviceType)) {
+        return false;
+    }
     handleQueue_->submit([keyEvent, deviceType, deviceInfo, this] {
         HandleKeyEvent(keyEvent, deviceType, deviceInfo);
     });
@@ -115,10 +116,6 @@ bool KeyToTouchManager::DispatchKeyEvent(const std::shared_ptr<MMI::KeyEvent> &k
 
 bool KeyToTouchManager::DispatchPointerEvent(const std::shared_ptr<MMI::PointerEvent> &pointerEvent)
 {
-    if (!isSupportKeyMapping_) {
-        return false;
-    }
-
     // current only handle mouse event
     if (!BaseKeyToTouchHandler::IsMouseLeftButtonEvent(pointerEvent)
         && !BaseKeyToTouchHandler::IsMouseRightButtonEvent(pointerEvent)
@@ -128,6 +125,9 @@ bool KeyToTouchManager::DispatchPointerEvent(const std::shared_ptr<MMI::PointerE
 
     std::lock_guard<ffrt::mutex> lock(checkMutex_);
     if (!IsCanEnableKeyMapping()) {
+        return false;
+    }
+    if (!DeviceIsSupportKeyMapping(GAME_KEY_BOARD)) {
         return false;
     }
     if (!isMonitorMouse_) {
@@ -573,7 +573,19 @@ void KeyToTouchManager::ResetContext(std::shared_ptr<InputToTouchContext> &conte
 
 bool KeyToTouchManager::IsCanEnableKeyMapping()
 {
-    return isEnableKeyMapping_ && windowInfoEntity_.isFullScreen;
+    return isSupportKeyMapping_ && isEnableKeyMapping_ && windowInfoEntity_.isFullScreen;
+}
+
+bool KeyToTouchManager::DeviceIsSupportKeyMapping(DeviceTypeEnum deviceTypeEnum)
+{
+    if (supportDeviceTypeSet_.empty()) {
+        // Compatibility processing, older versions does not have supportDeviceType
+        return true;
+    }
+    if (supportDeviceTypeSet_.count(deviceTypeEnum) == 0) {
+        return false;
+    }
+    return true;
 }
 
 }

@@ -26,12 +26,14 @@
 namespace OHOS {
 namespace GameController {
 const size_t MAX_COMBINATION_KEYS = 2;
+
 const size_t COMBINATION_FIRST_KEYCODE_IDX = 0;
 const size_t COMBINATION_LAST_KEYCODE_IDX = 1;
 const int32_t MAX_KEY_MAPPING_SIZE = 100;
 const size_t MAX_BUNDLE_NAME_LENGTH = 256;
 const size_t MAX_VERSION_LENGTH = 50;
 const size_t SUM_OF_MAPPING_TYPE = 11;
+const int32_t MAX_SUPPORT_DEVICE_TYPES = 2;
 
 struct ParameterByCheck {
     std::vector<size_t> keyMappingNumber = std::vector<size_t>(SUM_OF_MAPPING_TYPE, 0);
@@ -396,6 +398,8 @@ struct GameInfo : public Parcelable {
 
     bool isSupportKeyMapping;
 
+    std::vector<int32_t> supportedDeviceTypes;
+
     bool Marshalling(Parcel &parcel) const
     {
         if (!parcel.WriteString(bundleName)) {
@@ -406,6 +410,14 @@ struct GameInfo : public Parcelable {
         }
         if (!parcel.WriteBool(isSupportKeyMapping)) {
             return false;
+        }
+        if (!parcel.WriteInt32(supportedDeviceTypes.size())) {
+            return false;
+        }
+        for (int32_t deviceType: supportedDeviceTypes) {
+            if (!parcel.WriteInt32(deviceType)) {
+                return false;
+            }
         }
         return true;
     }
@@ -427,11 +439,38 @@ struct GameInfo : public Parcelable {
         if (!parcel.ReadBool(ret->isSupportKeyMapping)) {
             goto error;
         }
+
+        if (!ReadSupportedDeviceTypes(parcel, ret)) {
+            goto error;
+        }
+
         return ret;
         error:
         delete ret;
         ret = nullptr;
         return nullptr;
+    }
+
+    static bool ReadSupportedDeviceTypes(Parcel &parcel, GameInfo* ret)
+    {
+        int32_t size = parcel.ReadInt32();
+        if (size > MAX_SUPPORT_DEVICE_TYPES) {
+            return false;
+        }
+        int32_t deviceType;
+        DeviceTypeEnum deviceTypeEnum;
+        for (int i = 0; i < size; i++) {
+            if (!parcel.ReadInt32(deviceType)) {
+                return false;
+            }
+            deviceTypeEnum = static_cast<DeviceTypeEnum>(deviceType);
+            if (deviceTypeEnum != DeviceTypeEnum::GAME_KEY_BOARD
+                && deviceTypeEnum != DeviceTypeEnum::HOVER_TOUCH_PAD) {
+                return false;
+            }
+            ret->supportedDeviceTypes.push_back(deviceType);
+        }
+        return true;
     }
 
     /**

@@ -42,7 +42,7 @@ GameControllerServerAbility::GameControllerServerAbility(int32_t saId, bool runO
 
 GameControllerServerAbility::~GameControllerServerAbility()
 {
-    HILOGI("GameControllerServerAbilityity()");
+    HILOGI("GameControllerServerAbility()");
 }
 
 void GameControllerServerAbility::OnStart(const SystemAbilityOnDemandReason &startReason)

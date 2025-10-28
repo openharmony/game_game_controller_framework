@@ -19,9 +19,11 @@
 #include <unordered_map>
 #include <key_event.h>
 #include <window.h>
+#include <singleton.h>
 
 #include "gamecontroller_keymapping_model.h"
 #include "gamecontroller_log.h"
+#include "ffrt.h"
 
 namespace OHOS {
 namespace GameController {
@@ -55,13 +57,14 @@ struct DpadKeyItem {
     }
 };
 
-enum TouchPointId {
-    SINGLE_POINT_ID = 3,
-    WALK_POINT_ID = 4,
-    SKILL_POINT_ID = 5,
-    OBSERVATION_POINT_ID = 6,
-    CROSSHAIR_POINT_ID = 7,
-    COMBINATION_POINT_ID = 8,
+enum KeyCodeForPointer : int32_t {
+    KEY_CODE_COMBINATION = 100000000,
+    KEY_CODE_WALK = 100000001,
+    KEY_CODE_SKILL = 100000002,
+    KEY_CODE_OBSERVATION = 100000003,
+    KEY_CODE_CROSSHAIR = 100000004,
+    KEY_CODE_MOUSE_LEFT = 100000005,
+    KEY_CODE_MOUSE_RIGHT = 100000006,
 };
 
 /**
@@ -116,8 +119,10 @@ struct InputToTouchContext {
     std::unordered_map<int32_t, KeyToTouchMappingInfo> mouseBtnKeyMappings;
     WindowInfoEntity windowInfoEntity;
 
-    bool isSingleKeyOperating = false;
-    KeyToTouchMappingInfo currentSingleKey;
+    /**
+     * key is keycode
+     */
+    std::unordered_map<int32_t, KeyToTouchMappingInfo> currentSingleKeyMap;
 
     bool isCombinationKeyOperating = false;
     KeyToTouchMappingInfo currentCombinationKey;
@@ -134,84 +139,77 @@ struct InputToTouchContext {
     KeyToTouchMappingInfo currentCrosshairInfo;
 
     bool isMouseRightClickOperating = false;
-    KeyToTouchMappingInfo currentMouseRightClick;
 
     bool isWalking = false;
     KeyToTouchMappingInfo currentWalking;
 
+    /**
+     * Used to store the last pointer information
+     * key is pointerId, value is last pointer
+     */
     std::unordered_map<int32_t, PointerEvent::PointerItem> pointerItems;
     PointerEvent::PointerItem lastMousePointer;
+
+    /**
+     * PointerId caching applied by keyCode
+     * key is keycode, value is pointerId of keycode
+     */
+    std::unordered_map<int32_t, int32_t> pointerIdWithKeyCodeMap;
 
     InputToTouchContext() = default;
 
     InputToTouchContext(const DeviceTypeEnum &type, const WindowInfoEntity &windowInfo,
                         const std::vector<KeyToTouchMappingInfo> &mappingInfos);
 
-    void ResetCurrentSingleKeyInfo()
-    {
-        currentSingleKey = KeyToTouchMappingInfo();
-        isSingleKeyOperating = false;
-    };
+    void SetCurrentSingleKeyInfo(const KeyToTouchMappingInfo &mappingInfo, const int32_t pointerId);
 
-    void ResetCurrentCombinationKey()
-    {
-        currentCombinationKey = KeyToTouchMappingInfo();
-        isCombinationKeyOperating = false;
-    };
+    bool HasSingleKeyDown(int32_t keyCode);
 
-    void ResetCurrentSkillKeyInfo()
-    {
-        currentSkillKeyInfo = KeyToTouchMappingInfo();
-        isSkillOperating = false;
-    };
+    void ResetCurrentSingleKeyInfo(int32_t keyCode);
 
-    void ResetCurrentPerspectiveObserving()
-    {
-        currentPerspectiveObserving = KeyToTouchMappingInfo();
-        isPerspectiveObserving = false;
-        lastMousePointer = PointerEvent::PointerItem();
-    };
+    void SetCurrentCombinationKey(const KeyToTouchMappingInfo &mappingInfo, const int32_t pointerId);
 
-    void ResetCrosshairInfo()
-    {
-        currentCrosshairInfo = KeyToTouchMappingInfo();
-        isEnterCrosshairInfo = false;
-        isCrosshairMode = false;
-        lastMousePointer = PointerEvent::PointerItem();
-    };
+    void ResetCurrentCombinationKey();
 
-    void ResetCurrentWalking()
-    {
-        currentWalking = KeyToTouchMappingInfo();
-        isWalking = false;
-    };
+    void SetCurrentSkillKeyInfo(const KeyToTouchMappingInfo &mappingInfo, const int32_t pointerId);
 
-    bool IsMouseRightWalking()
-    {
-        return isWalking && currentWalking.mappingType == MOUSE_RIGHT_KEY_WALKING_TO_TOUCH;
-    }
+    void ResetCurrentSkillKeyInfo();
 
-    void ResetMouseRightClick()
-    {
-        isMouseRightClickOperating = false;
-        currentMouseRightClick = KeyToTouchMappingInfo();
-    }
+    void SetCurrentObserving(const KeyToTouchMappingInfo &mappingInfo, const int32_t pointerId);
+
+    void ResetCurrentObserving();
+
+    void SetCurrentCrosshairInfo(const KeyToTouchMappingInfo &mappingInfo, const int32_t pointerId);
+
+    void ResetCurrentCrosshairInfo();
+
+    void SetCurrentWalking(const KeyToTouchMappingInfo &mappingInfo, const int32_t pointerId);
+
+    void ResetCurrentWalking();
+
+    bool IsMouseRightWalking();
+
+    void SetCurrentMouseLeftClick(const int32_t pointerId);
+
+    void ResetCurrentMouseLeftClick();
+
+    void SetCurrentMouseRightClick(const int32_t pointerId);
+
+    void ResetCurrentMouseRightClick();
 
     /**
      * Reset Temporary Variables when disable key-mapping
      */
-    void ResetTempVariables()
-    {
-        pointerItems.clear();
-        ResetCurrentSingleKeyInfo();
-        ResetCurrentCombinationKey();
-        ResetCurrentSkillKeyInfo();
-        ResetCurrentPerspectiveObserving();
-        ResetCrosshairInfo();
-        ResetCurrentWalking();
-        ResetMouseRightClick();
-        isMouseLeftFireOperating = false;
-    }
+    void ResetTempVariables();
+
+    void ReleasePointerId(const int32_t keyCode);
+
+    /**
+     * Gey the applied pointerId by keycode
+     * @param keyCode keyCode
+     * @return first means whether pointerId exists
+     */
+    std::pair<bool, int32_t> GetPointerIdByKeyCode(const int32_t keyCode);
 };
 
 struct TouchEntity {
@@ -252,6 +250,31 @@ struct MouseMoveReq {
      * The step length of the mouse movement each time
      */
     int32_t step;
+};
+
+class PointerManager : public DelayedSingleton<PointerManager> {
+DECLARE_DELAYED_SINGLETON(PointerManager)
+
+public:
+    /**
+     * Apply pointerId
+     * @return pointerId
+     */
+    int32_t ApplyPointerId();
+
+    /**
+     * Release the pointerId
+     * @param pointerId pointerId
+     */
+    void ReleasePointerId(const int32_t pointerId);
+
+private:
+    ffrt::mutex locker;
+
+    /**
+     * The set of pointerId already are applied
+     */
+    std::unordered_set<int32_t> pointerIdCacheSet_;
 };
 
 class BaseKeyToTouchHandler {
@@ -315,16 +338,16 @@ protected:
     }
 
     TouchEntity BuildTouchEntity(const KeyToTouchMappingInfo &mappingInfo,
-                                 const TouchPointId touchPointId,
+                                 const int32_t touchPointId,
                                  const int32_t pointerAction,
                                  const int64_t actionTime);
 
-    TouchEntity BuildTouchUpEntity(const PointerEvent::PointerItem lastPointItem,
-                                   const TouchPointId touchPointId,
+    TouchEntity BuildTouchUpEntity(const PointerEvent::PointerItem &lastPointItem,
+                                   const int32_t touchPointId,
                                    const int32_t pointerAction,
                                    const int64_t actionTime);
 
-    TouchEntity BuildMoveTouchEntity(const TouchPointId touchPointId,
+    TouchEntity BuildMoveTouchEntity(const int32_t touchPointId,
                                      const Point &destPoint,
                                      const int64_t actionTime);
 
@@ -356,7 +379,7 @@ protected:
     void ComputeTouchPointByMouseMoveEvent(std::shared_ptr<InputToTouchContext> &context,
                                            const std::shared_ptr<MMI::PointerEvent> &pointerEvent,
                                            const KeyToTouchMappingInfo &mappingInfo,
-                                           const TouchPointId &touchPointId);
+                                           const int32_t &touchPointId);
 
     /**
      * Get all pressed valid dpad keys from KeyEvent. and sort by downTime asc
