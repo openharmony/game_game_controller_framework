@@ -484,8 +484,7 @@ void InputToTouchContext::SetCurrentWalking(const KeyToTouchMappingInfo &mapping
     pointerIdWithKeyCodeMap[KEY_CODE_WALK] = pointerId;
 }
 
-void
-InputToTouchContext::SetCurrentObserving(const KeyToTouchMappingInfo &mappingInfo, const int32_t pointerId)
+void InputToTouchContext::SetCurrentObserving(const KeyToTouchMappingInfo &mappingInfo, const int32_t pointerId)
 {
     isPerspectiveObserving = true;
     currentPerspectiveObserving = mappingInfo;

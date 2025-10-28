@@ -190,8 +190,6 @@ HWTEST_F(SingleKeyToTouchHandlerTest, HandleKeyDown_003, TestSize.Level0)
     ASSERT_EQ(handler_->touchEntity_.pointerId, pointerIdB);
 }
 
-
-
 /**
  * @tc.name: HandleKeyUp_001
  * @tc.desc: when key is up and context_->HasSingleKeyDown is true, can send touch command

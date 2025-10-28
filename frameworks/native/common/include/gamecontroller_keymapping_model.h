@@ -26,13 +26,14 @@
 namespace OHOS {
 namespace GameController {
 const size_t MAX_COMBINATION_KEYS = 2;
+
 const size_t COMBINATION_FIRST_KEYCODE_IDX = 0;
 const size_t COMBINATION_LAST_KEYCODE_IDX = 1;
 const int32_t MAX_KEY_MAPPING_SIZE = 100;
 const size_t MAX_BUNDLE_NAME_LENGTH = 256;
 const size_t MAX_VERSION_LENGTH = 50;
 const size_t SUM_OF_MAPPING_TYPE = 11;
-const size_t MAX_SUPPORT_DEVICE_TYPES = 2;
+const int32_t MAX_SUPPORT_DEVICE_TYPES = 2;
 
 struct ParameterByCheck {
     std::vector<size_t> keyMappingNumber = std::vector<size_t>(SUM_OF_MAPPING_TYPE, 0);
