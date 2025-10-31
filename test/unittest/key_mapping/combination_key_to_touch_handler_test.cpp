@@ -127,7 +127,7 @@ HWTEST_F(CombinationKeyToTouchHandlerTest, HandleKeyDown_001, TestSize.Level0)
 
 /**
  * @tc.name: HandleKeyDown_002
- * @tc.desc: when key is down and mappingInfoA_.combinationKeys's size is not equal to 2,
+ * @tc.desc: when key is down and mappingInfo_.combinationKeys's size is not equal to 2,
  * cannot send touch command
  * @tc.type: FUNC
  * @tc.require: issueNumber
