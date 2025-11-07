@@ -10,7 +10,8 @@
       "recycle-strategy": "low-memory",
       "start-on-demand": {
         "allow-update": false
-      }
+      },
+      "min_hdi_proxy_version": []
     }
   ]
 }
