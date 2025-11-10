@@ -515,7 +515,7 @@ void InputToTouchContext::ReleasePointerId(const int32_t keyCode)
         int32_t pointerId = pointerIdWithKeyCodeMap[keyCode];
         DelayedSingleton<PointerManager>::GetInstance()->ReleasePointerId(pointerId);
         pointerIdWithKeyCodeMap.erase(keyCode);
-        pointerItems.erase(keyCode);
+        pointerItems.erase(pointerId);
     }
 }
 
