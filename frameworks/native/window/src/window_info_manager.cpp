@@ -144,7 +144,8 @@ bool WindowInfoManager::InitWindowInfo(const std::string &bundleName)
     HILOGI("window rect is  [%{public}s]", rect.ToString().c_str());
     initWindowInfoEntity_.windowId = windowId;
     initWindowInfoEntity_.ParseRect(rect);
-    initWindowInfoEntity_.isFullScreen = mainWindow_->IsLayoutFullScreen();
+    WindowMode windowMode = mainWindow_->GetWindowMode();
+    initWindowInfoEntity_.isFullScreen = windowMode == Rosen::WindowMode::WINDOW_MODE_FULLSCREEN;
     HILOGI("window isFullScreen [%{public}d]", initWindowInfoEntity_.isFullScreen ? 1 : 0);
     initWindowInfoEntity_.maxWidth = static_cast<int32_t>(rect.width_);
     initWindowInfoEntity_.maxHeight = static_cast<int32_t>(rect.height_);
@@ -161,13 +162,17 @@ void WindowInfoManager::UpdateWindowInfo(const Rect &rect)
     WindowInfoEntity windowInfoEntity;
     windowInfoEntity.windowId = initWindowInfoEntity_.windowId;
     windowInfoEntity.ParseRect(rect);
-    if (mainWindow_->IsLayoutFullScreen()) {
+    WindowMode windowMode = mainWindow_->GetWindowMode();
+    HILOGI("windowMode is [%{public}d]", windowMode);
+    bool isFullScreen = false;
+    if (windowMode == Rosen::WindowMode::WINDOW_MODE_FULLSCREEN) {
         initWindowInfoEntity_.maxWidth = windowInfoEntity.currentWidth;
         initWindowInfoEntity_.maxHeight = windowInfoEntity.currentHeight;
+        isFullScreen = true;
     }
     windowInfoEntity.maxWidth = initWindowInfoEntity_.maxWidth;
     windowInfoEntity.maxHeight = initWindowInfoEntity_.maxHeight;
-    windowInfoEntity.isFullScreen = mainWindow_->IsLayoutFullScreen();
+    windowInfoEntity.isFullScreen = isFullScreen;
     DelayedSingleton<KeyToTouchManager>::GetInstance()->UpdateWindowInfo(windowInfoEntity);
 }
 
@@ -187,6 +192,41 @@ bool WindowInfoManager::IsForegroundAndFocus()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     return isForeground_ && isFocus_;
+}
+
+void WindowInfoManager::DisableGestureBack()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (mainWindow_ == nullptr) {
+        return;
+    }
+    bool currentIsEnable = false;
+    mainWindow_->GetGestureBackEnabled(currentIsEnable);
+    isEnableGestureBack_ = currentIsEnable;
+    HILOGI("the oriGestureBackEnabled is [%{public}d]", isEnableGestureBack_ ? 1 : 0);
+    mainWindow_->SetGestureBackEnabled(false);
+}
+
+void WindowInfoManager::EnableGestureBackEnabled()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (mainWindow_ == nullptr) {
+        return;
+    }
+    if (isEnableGestureBack_) {
+        HILOGI("EnableGestureBack");
+        mainWindow_->SetGestureBackEnabled(true);
+    }
+}
+
+void WindowInfoManager::SetTitleAndDockHoverShown()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    HILOGI("EnableGestureBack");
+    if (mainWindow_ == nullptr) {
+        return;
+    }
+    mainWindow_->SetTitleAndDockHoverShown(false, false);
 }
 }
 }

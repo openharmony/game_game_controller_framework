@@ -72,7 +72,6 @@ void CombinationKeyToTouchHandler::HandleKeyUp(std::shared_ptr<InputToTouchConte
         return;
     }
     int32_t pointerId = pair.second;
-
     HILOGI("keyCode [%{private}d] convert to up event of combination-to-touch", keyCode);
     PointerEvent::PointerItem lastMovePoint = context->pointerItems[pointerId];
     int64_t actionTime = keyEvent->GetActionTime();

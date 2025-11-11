@@ -89,8 +89,9 @@ void MouseObservationToTouchHandler::HandleMouseRightBtnUp(std::shared_ptr<Input
     }
     int32_t pointerId = pair.second;
     int64_t actionTime = pointerEvent->GetActionTime();
-    TouchEntity touchEntity = BuildTouchEntity(mappingInfo, pointerId,
-                                               PointerEvent::POINTER_ACTION_UP, actionTime);
+    PointerEvent::PointerItem lastMovePoint = context->pointerItems[pointerId];
+    TouchEntity touchEntity = BuildTouchUpEntity(lastMovePoint, pointerId,
+                                                 PointerEvent::POINTER_ACTION_UP, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
     context->ResetCurrentObserving();
 }

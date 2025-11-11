@@ -14,11 +14,13 @@
  */
 #include <input_manager.h>
 #include "crosshair_key_to_touch_handler.h"
+#include "window_info_manager.h"
 
 namespace OHOS {
 namespace GameController {
 namespace {
-const int32_t ONE_LOOP = 10;
+const int32_t TO_EDGE_DISTANCE = 40;
+const double MAX_MOVE_DISTANCE = 200.0;
 }
 
 void CrosshairKeyToTouchHandler::HandleKeyDown(std::shared_ptr<InputToTouchContext> &context,
@@ -63,6 +65,8 @@ void CrosshairKeyToTouchHandler::HandleKeyUp(std::shared_ptr<InputToTouchContext
     context->isEnterCrosshairInfo = true;
     HILOGI("keyCode [%{private}d] hide mouse pointer", keyCode);
     InputManager::GetInstance()->SetPointerVisible(false, 0);
+    DelayedSingleton<WindowInfoManager>::GetInstance()->DisableGestureBack();
+    DelayedSingleton<WindowInfoManager>::GetInstance()->SetTitleAndDockHoverShown();
 }
 
 void CrosshairKeyToTouchHandler::HandlePointerEvent(std::shared_ptr<InputToTouchContext> &context,
@@ -77,11 +81,13 @@ void CrosshairKeyToTouchHandler::HandlePointerEvent(std::shared_ptr<InputToTouch
         return;
     }
 
-    if (currentIdx_ == 0) {
+    if (isSendDownTouch_) {
         SendDownTouch(context, pointerEvent->GetActionTime());
         SetLastMousePoint(context, pointerEvent);
-    } else if (currentIdx_ == ONE_LOOP) {
-        SendUpTouch(context, pointerEvent->GetActionTime());
+        return;
+    }
+
+    if (IsSendUpTouch(context, pointerEvent->GetActionTime())) {
         SetLastMousePoint(context, pointerEvent);
     } else {
         SendMoveTouch(context, pointerEvent, mappingInfo);
@@ -98,7 +104,6 @@ void CrosshairKeyToTouchHandler::SendMoveTouch(std::shared_ptr<InputToTouchConte
         return;
     }
     int32_t pointerId = pair.second;
-    currentIdx_++;
     ComputeTouchPointByMouseMoveEvent(context, pointerEvent, mappingInfo, pointerId);
 }
 
@@ -109,11 +114,62 @@ void CrosshairKeyToTouchHandler::SendDownTouch(std::shared_ptr<InputToTouchConte
         HILOGW("discard send down touch. because cannot find the pointerId");
         return;
     }
+    HILOGW("Send down touch in Crosshair");
     int32_t pointerId = pair.second;
     TouchEntity touchEntity = BuildTouchEntity(context->currentCrosshairInfo, pointerId,
                                                PointerEvent::POINTER_ACTION_DOWN, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
-    currentIdx_ = 1;
+    isSendDownTouch_ = false;
+}
+
+bool CrosshairKeyToTouchHandler::IsSendUpTouch(std::shared_ptr<InputToTouchContext> &context, int64_t actionTime)
+{
+    std::pair<bool, int32_t> pair = context->GetPointerIdByKeyCode(KEY_CODE_CROSSHAIR);
+    if (!pair.first) {
+        HILOGW("discard send up touch. because cannot find the pointerId");
+        return false;
+    }
+    int32_t pointerId = pair.second;
+    if (context->pointerItems.find(pointerId) == context->pointerItems.end()) {
+        return false;
+    }
+
+    PointerEvent::PointerItem lastMovePoint = context->pointerItems[pointerId];
+    Point centerPoint;
+    centerPoint.x = context->currentCrosshairInfo.xValue;
+    centerPoint.y = context->currentCrosshairInfo.yValue;
+    Point targetPoint;
+    targetPoint.x = lastMovePoint.GetWindowX();
+    targetPoint.y = lastMovePoint.GetWindowY();
+    if ((lastMovePoint.GetWindowY() + TO_EDGE_DISTANCE) >= context->windowInfoEntity.maxHeight
+        || (lastMovePoint.GetWindowX() + TO_EDGE_DISTANCE) >= context->windowInfoEntity.maxWidth
+        || (lastMovePoint.GetWindowY() - TO_EDGE_DISTANCE) <= 0
+        || (lastMovePoint.GetWindowX() - TO_EDGE_DISTANCE) <= 0
+        || CalculateDistance(centerPoint, targetPoint) >= MAX_MOVE_DISTANCE) {
+        HILOGI("Send up touch in Crosshair");
+        TouchEntity touchEntity = BuildTouchUpEntity(lastMovePoint, pointerId,
+                                                     PointerEvent::POINTER_ACTION_UP, actionTime);
+        BuildAndSendPointerEvent(context, touchEntity);
+        isSendDownTouch_ = true;
+        return true;
+    }
+
+    return false;
+}
+
+void CrosshairKeyToTouchHandler::ExitCrosshairKeyStatus()
+{
+    InputManager::GetInstance()->SetPointerVisible(true, 0);
+    DelayedSingleton<WindowInfoManager>::GetInstance()->EnableGestureBackEnabled();
+    isSendDownTouch_ = true;
+}
+
+void CrosshairKeyToTouchHandler::SetLastMousePoint(std::shared_ptr<InputToTouchContext> &context,
+                                                   const std::shared_ptr<MMI::PointerEvent> &pointerEvent)
+{
+    PointerEvent::PointerItem currentPointItem;
+    pointerEvent->GetPointerItem(pointerEvent->GetPointerId(), currentPointItem);
+    context->lastMousePointer = currentPointItem;
 }
 
 void CrosshairKeyToTouchHandler::SendUpTouch(std::shared_ptr<InputToTouchContext> &context, int64_t actionTime)
@@ -124,27 +180,15 @@ void CrosshairKeyToTouchHandler::SendUpTouch(std::shared_ptr<InputToTouchContext
         return;
     }
     int32_t pointerId = pair.second;
-    if (context->pointerItems.find(pointerId) != context->pointerItems.end()) {
-        PointerEvent::PointerItem lastMovePoint = context->pointerItems[pointerId];
-        TouchEntity touchEntity = BuildTouchUpEntity(lastMovePoint, pointerId,
-                                                     PointerEvent::POINTER_ACTION_UP, actionTime);
-        BuildAndSendPointerEvent(context, touchEntity);
+    if (context->pointerItems.find(pointerId) == context->pointerItems.end()) {
+        return;
     }
-    currentIdx_ = 0;
-}
-
-void CrosshairKeyToTouchHandler::ExitCrosshairKeyStatus()
-{
-    InputManager::GetInstance()->SetPointerVisible(true, 0);
-    currentIdx_ = 0;
-}
-
-void CrosshairKeyToTouchHandler::SetLastMousePoint(std::shared_ptr<InputToTouchContext> &context,
-                                                   const std::shared_ptr<MMI::PointerEvent> &pointerEvent)
-{
-    PointerEvent::PointerItem currentPointItem;
-    pointerEvent->GetPointerItem(pointerEvent->GetPointerId(), currentPointItem);
-    context->lastMousePointer = currentPointItem;
+    HILOGI("Send up touch in Crosshair");
+    PointerEvent::PointerItem lastMovePoint = context->pointerItems[pointerId];
+    TouchEntity touchEntity = BuildTouchUpEntity(lastMovePoint, pointerId,
+                                                 PointerEvent::POINTER_ACTION_UP, actionTime);
+    BuildAndSendPointerEvent(context, touchEntity);
+    isSendDownTouch_ = true;
 }
 
 }

@@ -26,7 +26,6 @@
 namespace OHOS {
 namespace GameController {
 const size_t MAX_COMBINATION_KEYS = 2;
-
 const size_t COMBINATION_FIRST_KEYCODE_IDX = 0;
 const size_t COMBINATION_LAST_KEYCODE_IDX = 1;
 const int32_t MAX_KEY_MAPPING_SIZE = 100;
