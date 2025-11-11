@@ -335,7 +335,7 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_003, TestSize.Level0
 /**
  * @tc.name: HandlePointerEvent_004
  * @tc.desc: when it's mouse move event and context->isEnterCrosshairInfo is true,
- * and handler->isSendDownTouch_ is false, and not move to edge ,then send move event
+ * and handler_->isSendDownTouch_ is false, and not move to edge ,then send move event
  * @tc.type: FUNC
  * @tc.require: issueNumber
  */

@@ -114,7 +114,7 @@ void CrosshairKeyToTouchHandler::SendDownTouch(std::shared_ptr<InputToTouchConte
         HILOGW("discard send down touch. because cannot find the pointerId");
         return;
     }
-    HILOGW("Send down touch in Crosshair");
+    HILOGI("Send down touch in Crosshair");
     int32_t pointerId = pair.second;
     TouchEntity touchEntity = BuildTouchEntity(context->currentCrosshairInfo, pointerId,
                                                PointerEvent::POINTER_ACTION_DOWN, actionTime);

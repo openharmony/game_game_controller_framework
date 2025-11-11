@@ -44,7 +44,7 @@ protected:
     void SendDownTouch(std::shared_ptr<InputToTouchContext> &context, int64_t actionTime);
 
     bool IsSendUpTouch(std::shared_ptr<InputToTouchContext> &context, int64_t actionTime);
-    
+
     void SendUpTouch(std::shared_ptr<InputToTouchContext> &context, int64_t actionTime);
 
     void SetLastMousePoint(std::shared_ptr<InputToTouchContext> &context,

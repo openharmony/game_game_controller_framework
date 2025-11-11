@@ -222,7 +222,7 @@ void WindowInfoManager::EnableGestureBackEnabled()
 void WindowInfoManager::SetTitleAndDockHoverShown()
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    HILOGI("EnableGestureBack");
+    HILOGI("Call SetTitleAndDockHoverShown");
     if (mainWindow_ == nullptr) {
         return;
     }
