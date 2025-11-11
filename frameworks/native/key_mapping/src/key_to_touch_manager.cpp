@@ -280,6 +280,7 @@ void KeyToTouchManager::ReleaseContext(const std::shared_ptr<InputToTouchContext
             pointerEvent->SetSourceType(PointerEvent::SOURCE_TYPE_TOUCHSCREEN);
             HILOGI("ReleaseContext pointer is [%{public}s].", pointerEvent->ToString().c_str());
             Rosen::WindowInputInterceptClient::SendInputEvent(pointerEvent);
+            DelayedSingleton<PointerManager>::GetInstance()->ReleasePointerId(pointerItem.GetPointerId());
         }
     }
     if (inputToTouchContext->isEnterCrosshairInfo) {
@@ -538,8 +539,20 @@ bool KeyToTouchManager::IsHandleMouseLeftButtonEvent(std::shared_ptr<InputToTouc
         return false;
     }
 
-    if (context->isCrosshairMode &&
-        context->mouseBtnKeyMappings.find(MOUSE_LEFT_BUTTON_KEYCODE) != context->mouseBtnKeyMappings.end()) {
+    if (context->isCrosshairMode
+        && context->mouseBtnKeyMappings.find(MOUSE_LEFT_BUTTON_KEYCODE) != context->mouseBtnKeyMappings.end()) {
+        // Perform mouse left button events in crosshair-mode
+        ExecuteHandle(context, context->mouseBtnKeyMappings[MOUSE_LEFT_BUTTON_KEYCODE], pointerEvent);
+        return true;
+    }
+
+    if (pointerEvent->GetPointerAction() == PointerEvent::POINTER_ACTION_BUTTON_UP
+        && context->isMouseLeftFireOperating
+        && context->mouseBtnKeyMappings.find(MOUSE_LEFT_BUTTON_KEYCODE) != context->mouseBtnKeyMappings.end()) {
+        /*
+         * When it's not in crosshair-mode, if it is a up event and the mouse leftButton was pressed,
+         * perform mouse left button events.
+         */
         ExecuteHandle(context, context->mouseBtnKeyMappings[MOUSE_LEFT_BUTTON_KEYCODE], pointerEvent);
         return true;
     }

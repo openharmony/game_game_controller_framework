@@ -85,9 +85,10 @@ void KeyboardObservationToTouchHandler::HandleKeyUp(std::shared_ptr<InputToTouch
     if (dpadKeys.empty()) {
         HILOGI("keyCode[%{private}d] convert to up event of keyboard_observation_to_touch", keyCode);
         DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->StopTask();
+        PointerEvent::PointerItem lastMovePoint = context->pointerItems[pointerId];
         int64_t actionTime = keyEvent->GetActionTime();
-        TouchEntity touchEntity = BuildTouchEntity(mapping, pointerId,
-                                                   PointerEvent::POINTER_ACTION_UP, actionTime);
+        TouchEntity touchEntity = BuildTouchUpEntity(lastMovePoint, pointerId,
+                                                     PointerEvent::POINTER_ACTION_UP, actionTime);
         BuildAndSendPointerEvent(context, touchEntity);
         context->ResetCurrentObserving();
         return;

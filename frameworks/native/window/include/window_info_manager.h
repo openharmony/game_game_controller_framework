@@ -33,7 +33,7 @@ public:
      * @param reason Reason for window change.
      * @param rsTransaction Synchronization transaction for animation
      */
-    virtual void OnSizeChange(Rect rect, WindowSizeChangeReason reason,
+    virtual void OnSizeChange(OHOS::Rosen::Rect rect, WindowSizeChangeReason reason,
                               const std::shared_ptr<RSTransaction> &rsTransaction = nullptr) override;
 
     /**
@@ -131,7 +131,7 @@ public:
      * Update window information OnSizeChange
      * @param rect Rect
      */
-    void UpdateWindowInfo(const Rect &rect);
+    void UpdateWindowInfo(const OHOS::Rosen::Rect &rect);
 
     void SetForeground(bool isForeground);
 
@@ -143,6 +143,12 @@ public:
      */
     bool IsForegroundAndFocus();
 
+    void DisableGestureBack();
+
+    void EnableGestureBackEnabled();
+
+    void SetTitleAndDockHoverShown();
+
 private:
     std::mutex mutex_;
     sptr<Window> mainWindow_ = nullptr;
@@ -151,6 +157,7 @@ private:
     WindowInfoEntity initWindowInfoEntity_;
     bool isForeground_{true};
     bool isFocus_{true};
+    bool isEnableGestureBack_{true};
 };
 }
 }
