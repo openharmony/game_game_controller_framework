@@ -278,7 +278,7 @@ HWTEST_F(SkillKeyToTouchHandlerTest, HandlePointerEvent_003, TestSize.Level0)
 /**
  * @tc.name: HandlePointerEvent_005
  * @tc.desc: when The distance from the mouse to the center point exceeds the skill range,
- * the skill key movement radius is set to radius.
+ * the skill key movement radius is set to distance * radius / skillRange * skillRangeScale.
  * @tc.type: FUNC
  * @tc.require: issueNumber
  */
@@ -297,8 +297,8 @@ HWTEST_F(SkillKeyToTouchHandlerTest, HandlePointerEvent_005, TestSize.Level0)
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
     ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
-    ASSERT_EQ(handler_->touchEntity_.xValue, 2106);
-    ASSERT_EQ(handler_->touchEntity_.yValue, 823);
+    ASSERT_EQ(handler_->touchEntity_.xValue, 2120);
+    ASSERT_EQ(handler_->touchEntity_.yValue, 753);
     ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
     ASSERT_EQ(handler_->touchEntity_.pointerId, pointerId);
 }
@@ -306,7 +306,7 @@ HWTEST_F(SkillKeyToTouchHandlerTest, HandlePointerEvent_005, TestSize.Level0)
 /**
  * @tc.name: HandlePointerEvent_006
  * @tc.desc: when The distance from the mouse to the center point less than the skill range,
- * the skill key movement radius is set to distance * radius / skillRange.
+ * the skill key movement radius is set to distance * radius / (skillRange * skillRangeScale).
  * @tc.type: FUNC
  * @tc.require: issueNumber
  */
@@ -324,8 +324,8 @@ HWTEST_F(SkillKeyToTouchHandlerTest, HandlePointerEvent_006, TestSize.Level0)
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
     ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
-    ASSERT_EQ(handler_->touchEntity_.xValue, 2121);
-    ASSERT_EQ(handler_->touchEntity_.yValue, 834);
+    ASSERT_EQ(handler_->touchEntity_.xValue, 2120);
+    ASSERT_EQ(handler_->touchEntity_.yValue, 808);
     ASSERT_EQ(handler_->touchEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
     ASSERT_EQ(handler_->touchEntity_.pointerId, pointerId);
 }
