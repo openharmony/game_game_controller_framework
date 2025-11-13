@@ -306,7 +306,7 @@ HWTEST_F(SkillKeyToTouchHandlerTest, HandlePointerEvent_005, TestSize.Level0)
 /**
  * @tc.name: HandlePointerEvent_006
  * @tc.desc: when The distance from the mouse to the center point less than the skill range,
- * the skill key movement radius is set to distance * radius /  (skillRange * skillRangeScale).
+ * the skill key movement radius is set to distance * radius / (skillRange * skillRangeScale).
  * @tc.type: FUNC
  * @tc.require: issueNumber
  */
