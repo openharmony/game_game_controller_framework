@@ -232,14 +232,12 @@ ohos_unittest("GameControllerServiceTest") {
   use_exceptions = true
 
   external_deps = [
-    "ace_engine:ace_ndk",
     "bundle_framework:appexecfwk_core",
     "c_utils:utils",
     "ffrt:libffrt",
     "googletest:gmock_main",
     "googletest:gtest_main",
     "hilog:libhilog",
-    "input:libmmi-client",
     "ipc:ipc_core",
     "ipc:ipc_single",
     "safwk:system_ability_fwk",
