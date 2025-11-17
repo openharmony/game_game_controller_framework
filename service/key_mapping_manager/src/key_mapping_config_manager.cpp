@@ -43,6 +43,7 @@ constexpr const char* FIELD_UP = "up";
 constexpr const char* FIELD_DOWN = "down";
 constexpr const char* FIELD_LEFT = "left";
 constexpr const char* FIELD_RIGHT = "right";
+constexpr const char* FIELD_DELAY_TIME = "delayTime";
 constexpr const char* DEFAULT_KEY_MAPPING_CONFIG = "default_key_mapping.json";
 
 constexpr const char* CUSTOM_KEY_MAPPING_CONFIG = "custom_key_mapping.json";
@@ -76,6 +77,7 @@ KeyMapping::KeyMapping(const json &jsonObj)
     skillRange = JsonUtils::GetJsonInt32Value(jsonObj, FIELD_SKILL_RANGE, 0);
     xStep = JsonUtils::GetJsonInt32Value(jsonObj, FIELD_X_STEP, 0);
     yStep = JsonUtils::GetJsonInt32Value(jsonObj, FIELD_Y_STEP, 0);
+    delayTime = JsonUtils::GetJsonInt32Value(jsonObj, FIELD_DELAY_TIME, 0);
 
     if (jsonObj.contains(FIELD_COMBINATION_KEYS) && jsonObj.at(FIELD_COMBINATION_KEYS).is_array()) {
         combinationKeys = jsonObj.at(FIELD_COMBINATION_KEYS).get<std::vector<int32_t>>();
@@ -97,6 +99,7 @@ json KeyMapping::ConvertToJson() const
     jsonContent[FIELD_SKILL_RANGE] = this->skillRange;
     jsonContent[FIELD_X_STEP] = this->xStep;
     jsonContent[FIELD_Y_STEP] = this->yStep;
+    jsonContent[FIELD_DELAY_TIME] = this->delayTime;
     jsonContent[FIELD_DPAD] = this->dpadInfo.ConvertToJson();
     jsonContent[FIELD_COMBINATION_KEYS] = combinationKeys;
     return jsonContent;

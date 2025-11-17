@@ -158,6 +158,8 @@ struct KeyToTouchMappingInfo : public Parcelable {
 
     int32_t yStep = 0;
 
+    int32_t delayTime = 0;
+
     bool Marshalling(Parcel &parcel) const
     {
         if (!parcel.WriteInt32(keyCode)) {
@@ -185,6 +187,9 @@ struct KeyToTouchMappingInfo : public Parcelable {
             return false;
         }
         if (!parcel.WriteParcelable(&dpadKeyCodeEntity)) {
+            return false;
+        }
+        if (!parcel.WriteInt32(delayTime)) {
             return false;
         }
         return WriteCombinationKeys(parcel);
@@ -245,6 +250,9 @@ struct KeyToTouchMappingInfo : public Parcelable {
         if (!ReadCombinationKeys(parcel, ret)) {
             goto error;
         }
+        if (!parcel.ReadInt32(ret->delayTime)) {
+            goto error;
+        }
         return ret;
         error:
         delete ret;
@@ -301,6 +309,7 @@ struct KeyToTouchMappingInfo : public Parcelable {
         tmp.append(", skillRange:" + std::to_string(skillRange));
         tmp.append(", xStep:" + std::to_string(xStep));
         tmp.append(", yStep:" + std::to_string(yStep));
+        tmp.append(", delayTime:" + std::to_string(delayTime));
         tmp.append(", combinationKeys:");
         for (auto combinationKey: combinationKeys) {
             tmp.append(std::to_string(combinationKey) + "|");

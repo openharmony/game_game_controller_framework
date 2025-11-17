@@ -27,6 +27,7 @@ const size_t MAX_SINGLE_KEY_MAPPING_SIZE = 50;
 const size_t MAX_COMBINATION_KEY_MAPPING_SIZE = 30;
 const size_t MAX_SKILL_KEY_MAPPING_SIZE = 10;
 const size_t MAX_SINGLE_KEY_SIZE_FOR_HOVER_TOUCH_PAD = 2;
+const int32_t MAX_DELAY_TIME = 5;
 std::unordered_map<MappingTypeEnum, CheckHandler> checkKeyMappingHandlerMap = {
     {MappingTypeEnum::SINGE_KEY_TO_TOUCH,               &GameKeyMappingInfo::CheckSingleKey},
     {MappingTypeEnum::COMBINATION_KEY_TO_TOUCH,         &GameKeyMappingInfo::CheckCombinationKey},
@@ -124,6 +125,10 @@ bool GameKeyMappingInfo::CheckMouseRightKeyWalking(KeyToTouchMappingInfo &curren
     }
     if (parameter.uniqRightButtonMappingType != -1) {
         HILOGE("mouse right button has been used in MOUSE_OBSERVATION_TO_TOUCH or MOUSE_RIGHT_KEY_CLICK_TO_TOUCH");
+        return false;
+    }
+    if (currentKeyMapping.delayTime < 0 || currentKeyMapping.delayTime > MAX_DELAY_TIME) {
+        HILOGE("MOUSE_RIGHT_KEY_WALKING_TO_TOUCH's delayTime must be between 0 and 5");
         return false;
     }
     parameter.uniqRightButtonMappingType = MappingTypeEnum::MOUSE_RIGHT_KEY_WALKING_TO_TOUCH;
@@ -280,7 +285,6 @@ bool GameKeyMappingInfo::CheckMouseRightKeyClick(KeyToTouchMappingInfo &currentK
 bool GameKeyMappingInfo::CheckKeyMapping(std::vector<KeyToTouchMappingInfo> &KeyToTouchMappings)
 {
     ParameterByCheck parameter;
-
     for (size_t i = 0; i < KeyToTouchMappings.size(); ++i) {
         MappingTypeEnum currentMappingType = KeyToTouchMappings[i].mappingType;
         if (checkKeyMappingHandlerMap.find(currentMappingType) != checkKeyMappingHandlerMap.end()) {
