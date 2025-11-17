@@ -18,7 +18,12 @@
 #include <gmock/gmock-spec-builders.h>
 #include <gtest/gtest.h>
 #include "refbase.h"
+
+#define private public
+
 #include "mouse_right_key_walking_to_touch_handler.h"
+
+#undef private
 
 using ::testing::Return;
 using namespace testing::ext;
@@ -32,6 +37,7 @@ const int32_t MOUSE_Y_VALUE = 825;
 const int32_t RADIUS = 230;
 const int32_t MAX_WIDTH = 2720;
 const int32_t MAX_HEIGHT = 1260;
+const int32_t SLEEP_TIME = 1500;
 }
 
 class MouseRightKeyWalkingToTouchHandlerEx : public MouseRightKeyWalkingToTouchHandler {
@@ -86,14 +92,6 @@ public:
         return info;
     }
 
-    static PointerEvent::PointerItem BuildPointerItem(int32_t xVal, int32_t yVal)
-    {
-        PointerEvent::PointerItem pointerItem;
-        pointerItem.SetWindowX(xVal);
-        pointerItem.SetWindowY(yVal);
-        return pointerItem;
-    }
-
     void TearDown() override
     {
         context_->ResetCurrentWalking();
@@ -118,7 +116,8 @@ public:
 
 /**
  * @tc.name: HandlePointerEvent_001
- * @tc.desc: when it's mouse right-button down event and isWalking is false, send touch event
+ * @tc.desc: when it's mouse right-button down event and isWalking is false
+ * and hasDelayTask_ is false, send down and move touch event
  * @tc.type: FUNC
  * @tc.require: issueNumber
  */
@@ -161,7 +160,7 @@ HWTEST_F(MouseRightKeyWalkingToTouchHandlerTest, HandlePointerEvent_002, TestSiz
  * @tc.name: HandlePointerEvent_003
  * @tc.desc: when it's mouse right-button up event and isWalking is true,
  * and currentWalking.mappingType is MOUSE_RIGHT_KEY_WALKING_TO_TOUCH
- * send touch event
+ * and delayTime is 0, send up touch event immediately
  * @tc.type: FUNC
  * @tc.require: issueNumber
  */
@@ -171,10 +170,11 @@ HWTEST_F(MouseRightKeyWalkingToTouchHandlerTest, HandlePointerEvent_003, TestSiz
 
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_UP);
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
+
+    ASSERT_FALSE(DelayedSingleton<MouseRightKeyWalkingDelayHandleTask>::GetInstance()->hasDelayTask_);
     ASSERT_TRUE(context_->pointerItems.find(pointerId) == context_->pointerItems.end());
     ASSERT_FALSE(context_->isWalking);
     ASSERT_EQ(context_->currentWalking.mappingType, 0);
-
     ASSERT_EQ(handler_->touchUpEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchUpEntity_.pointerAction, PointerEvent::POINTER_ACTION_UP);
     ASSERT_EQ(handler_->touchUpEntity_.xValue, X_VALUE);
@@ -201,7 +201,7 @@ HWTEST_F(MouseRightKeyWalkingToTouchHandlerTest, HandlePointerEvent_004, TestSiz
 
 /**
  * @tc.name: HandlePointerEvent_005
- * @tc.desc: when it's mouse right-button up event and isWalking is true,
+ * @tc.desc: when it's mouse right-button up event and isWalking is true
  * and currentWalking.mappingType is MOUSE_RIGHT_KEY_WALKING_TO_TOUCH,
  * discard the event
  * @tc.type: FUNC
@@ -222,7 +222,7 @@ HWTEST_F(MouseRightKeyWalkingToTouchHandlerTest, HandlePointerEvent_005, TestSiz
 /**
  * @tc.name: HandlePointerEvent_006
  * @tc.desc: when it's mouse move event and isWalking is false
- * and currentWalking.mappingType is MOUSE_RIGHT_KEY_WALKING_TO_TOUCH
+ * and currentWalking.mappingType is MOUSE_RIGHT_KEY_WALKING_TO_TOUCH,
  * send touch event
  * @tc.type: FUNC
  * @tc.require: issueNumber
@@ -243,7 +243,7 @@ HWTEST_F(MouseRightKeyWalkingToTouchHandlerTest, HandlePointerEvent_006, TestSiz
 /**
  * @tc.name: HandlePointerEvent_007
  * @tc.desc: when it's mouse move event and isWalking is true
- * and currentWalking.mappingType is not MOUSE_RIGHT_KEY_WALKING_TO_TOUCH
+ * and currentWalking.mappingType is not MOUSE_RIGHT_KEY_WALKING_TO_TOUCH,
  * send touch event
  * @tc.type: FUNC
  * @tc.require: issueNumber
@@ -257,6 +257,56 @@ HWTEST_F(MouseRightKeyWalkingToTouchHandlerTest, HandlePointerEvent_007, TestSiz
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
     ASSERT_FALSE(handler_->hasTouchEvent_);
+}
+
+/**
+ * @tc.name: HandlePointerEvent_008
+ * @tc.desc: when it's mouse right-button up event and isWalking is true,
+ * and currentWalking.mappingType is MOUSE_RIGHT_KEY_WALKING_TO_TOUCH
+ * and delayTime is 1, delay sending touch up event
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(MouseRightKeyWalkingToTouchHandlerTest, HandlePointerEvent_008, TestSize.Level1)
+{
+    int32_t pointerId = SendMouseRightDownEvent();
+    pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_UP);
+
+    handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
+    ASSERT_FALSE(context_->isWalking);
+    ASSERT_EQ(context_->currentWalking.mappingType, 0);
+    ASSERT_TRUE(DelayedSingleton<MouseRightKeyWalkingDelayHandleTask>::GetInstance()->hasDelayTask_);
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
+    ASSERT_FALSE(DelayedSingleton<MouseRightKeyWalkingDelayHandleTask>::GetInstance()->hasDelayTask_);
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) == context_->pointerItems.end());
+    ASSERT_EQ(handler_->touchUpEntity_.pointerId, pointerId);
+    ASSERT_EQ(handler_->touchUpEntity_.pointerAction, PointerEvent::POINTER_ACTION_UP);
+    ASSERT_EQ(handler_->touchUpEntity_.xValue, X_VALUE);
+    ASSERT_EQ(handler_->touchUpEntity_.yValue, Y_VALUE);
+}
+
+/**
+ * @tc.name: HandlePointerEvent_009
+ * @tc.desc: when it's mouse right-button down event and isWalking is false
+ * and hasDelayTask_ is true, only send move touch event
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(MouseRightKeyWalkingToTouchHandlerTest, HandlePointerEvent_009, TestSize.Level0)
+{
+    DelayedSingleton<MouseRightKeyWalkingDelayHandleTask>::GetInstance()->hasDelayTask_ = true;
+
+    int32_t pointerId = SendMouseRightDownEvent();
+
+    ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
+    ASSERT_TRUE(context_->isWalking);
+    ASSERT_EQ(context_->currentWalking.mappingType, MappingTypeEnum::MOUSE_RIGHT_KEY_WALKING_TO_TOUCH);
+    ASSERT_EQ(handler_->touchDownEntity_.pointerId, 0);
+
+    ASSERT_EQ(handler_->touchMoveEntity_.pointerId, pointerId);
+    ASSERT_EQ(handler_->touchMoveEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
+    ASSERT_EQ(handler_->touchMoveEntity_.xValue, 459);
+    ASSERT_EQ(handler_->touchMoveEntity_.yValue, 1216);
 }
 }
 }

@@ -21,6 +21,28 @@
 
 namespace OHOS {
 namespace GameController {
+class MouseRightKeyWalkingDelayHandleTask
+    : public DelayedSingleton<MouseRightKeyWalkingDelayHandleTask>, BaseKeyToTouchHandler {
+DECLARE_DELAYED_SINGLETON(MouseRightKeyWalkingDelayHandleTask)
+
+public:
+    void StartDelayHandle(std::shared_ptr<InputToTouchContext> &context);
+
+    bool CancelDelayHandle(bool isSendUpEvent);
+
+private:
+    void DoDelayHandle();
+
+    void SendUpEvent(std::shared_ptr<InputToTouchContext> &context);
+
+private:
+    ffrt::mutex taskLock_;
+    std::unique_ptr<ffrt::queue> taskQueue_{nullptr};
+    ffrt::task_handle curTaskHandler_;
+    bool hasDelayTask_{false};
+    std::shared_ptr<InputToTouchContext> context_{nullptr};
+};
+
 class MouseRightKeyWalkingToTouchHandler : public BaseKeyToTouchHandler {
 public:
     void HandlePointerEvent(std::shared_ptr<InputToTouchContext> &context,

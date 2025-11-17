@@ -13,9 +13,93 @@
  * limitations under the License.
  */
 #include "mouse_right_key_walking_to_touch_handler.h"
+#include "gamecontroller_utils.h"
 
 namespace OHOS {
 namespace GameController {
+namespace {
+const int32_t DELAY_TIME_UNIT = 1000000; // 1s = 1000ms = 1000000μs
+const int32_t SLEEP_TIME = 40;
+}
+
+MouseRightKeyWalkingDelayHandleTask::MouseRightKeyWalkingDelayHandleTask()
+{
+    taskQueue_ = std::make_unique<ffrt::queue>("mouse-right-walking-thread",
+                                               ffrt::queue_attr().qos(ffrt::qos_background));
+}
+
+MouseRightKeyWalkingDelayHandleTask::~MouseRightKeyWalkingDelayHandleTask()
+{
+}
+
+void MouseRightKeyWalkingDelayHandleTask::StartDelayHandle(std::shared_ptr<InputToTouchContext> &context)
+{
+    std::lock_guard<ffrt::mutex> lock(taskLock_);
+    int32_t delayTime = context->currentWalking.delayTime;
+    if (delayTime <= 0) {
+        SendUpEvent(context);
+        return;
+    }
+    HILOGI("Start MouseRightKeyWalkingDelayHandleTask");
+    hasDelayTask_ = true;
+    context->isWalking = false;
+    context->currentWalking = KeyToTouchMappingInfo();
+    context_ = context;
+    curTaskHandler_ = taskQueue_->submit_h([this] {
+        DoDelayHandle();
+    }, ffrt::task_attr().name("keyboard-observation-task").delay(delayTime * DELAY_TIME_UNIT));
+}
+
+bool MouseRightKeyWalkingDelayHandleTask::CancelDelayHandle(bool isSendUpEvent)
+{
+    std::lock_guard<ffrt::mutex> lock(taskLock_);
+    HILOGI("Cancel MouseRightKeyWalkingDelayHandleTask. hasDelayTask is [${public}d]", hasDelayTask_ ? 1 : 0);
+    if (hasDelayTask_) {
+        hasDelayTask_ = false;
+        taskQueue_->cancel(curTaskHandler_);
+        if (isSendUpEvent) {
+            SendUpEvent(context_);
+        }
+        context_ = nullptr;
+        return true;
+    }
+    context_ = nullptr;
+    return false;
+}
+
+void MouseRightKeyWalkingDelayHandleTask::DoDelayHandle()
+{
+    std::lock_guard<ffrt::mutex> lock(taskLock_);
+    HILOGI("Execute MouseRightKeyWalkingDelayHandleTask");
+    if (!hasDelayTask_) {
+        HILOGI("The MouseRightKeyWalkingDelayHandleTask has been canceled, so not send up event");
+        return;
+    }
+    if (context_ == nullptr) {
+        HILOGW("The MouseRightKeyWalkingDelayHandleTask's context_ is null, so not send up event");
+        return;
+    }
+    hasDelayTask_ = false;
+    SendUpEvent(context_);
+    context_ = nullptr;
+}
+
+void MouseRightKeyWalkingDelayHandleTask::SendUpEvent(std::shared_ptr<InputToTouchContext> &context)
+{
+    HILOGI("Exit walking by mouse-right-key-walking");
+    std::pair<bool, int32_t> pair = context->GetPointerIdByKeyCode(KEY_CODE_WALK);
+    if (!pair.first) {
+        HILOGW("discard mouse-right up event. because cannot find the pointerId");
+        return;
+    }
+    int32_t pointerId = pair.second;
+    int64_t actionTime = StringUtils::GetSysClockTime();
+    PointerEvent::PointerItem lastMovePoint = context->pointerItems[pointerId];
+    TouchEntity touchEntity = BuildTouchUpEntity(lastMovePoint, pointerId,
+                                                 PointerEvent::POINTER_ACTION_UP, actionTime);
+    BuildAndSendPointerEvent(context, touchEntity);
+    context->ResetCurrentWalking();
+}
 
 void MouseRightKeyWalkingToTouchHandler::HandlePointerEvent(std::shared_ptr<InputToTouchContext> &context,
                                                             const std::shared_ptr<MMI::PointerEvent> &pointerEvent,
@@ -44,6 +128,11 @@ bool MouseRightKeyWalkingToTouchHandler::HandleMouseRightBtnDown(std::shared_ptr
     if (context->isWalking) {
         return true;
     }
+
+    if (DelayedSingleton<MouseRightKeyWalkingDelayHandleTask>::GetInstance()->CancelDelayHandle(false)) {
+        HandleMouseMove(context, pointerEvent);
+        return true;
+    }
     HILOGI("Enter walking by mouse-right-key-walking");
     int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
     context->SetCurrentWalking(mappingInfo, pointerId);
@@ -51,6 +140,12 @@ bool MouseRightKeyWalkingToTouchHandler::HandleMouseRightBtnDown(std::shared_ptr
     TouchEntity touchEntity = BuildTouchEntity(mappingInfo, pointerId,
                                                PointerEvent::POINTER_ACTION_DOWN, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
+    
+    /**
+     * 增加40ms的延迟,解决决胜巅峰中方向盘不固定时，由于第一个DOWN和MOVE间隔太短，
+     * 导致游戏中的第一个手指按下的位置概率变为MOVE的坐标位置
+     */
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
     HandleMouseMove(context, pointerEvent);
     return true;
 }
@@ -70,12 +165,8 @@ void MouseRightKeyWalkingToTouchHandler::HandleMouseRightBtnUp(std::shared_ptr<I
         HILOGW("discard mouse-right up event. because cannot find the pointerId");
         return;
     }
-    int32_t pointerId = pair.second;
-    int64_t actionTime = pointerEvent->GetActionTime();
-    TouchEntity touchEntity = BuildTouchEntity(context->currentWalking, pointerId,
-                                               PointerEvent::POINTER_ACTION_UP, actionTime);
-    BuildAndSendPointerEvent(context, touchEntity);
-    context->ResetCurrentWalking();
+
+    DelayedSingleton<MouseRightKeyWalkingDelayHandleTask>::GetInstance()->StartDelayHandle(context);
 }
 
 void MouseRightKeyWalkingToTouchHandler::HandleMouseMove(std::shared_ptr<InputToTouchContext> &context,
