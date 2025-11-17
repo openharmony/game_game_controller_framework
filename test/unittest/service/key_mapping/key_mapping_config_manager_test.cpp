@@ -103,9 +103,10 @@ static KeyToTouchMappingInfo BuildMouseRightWalking()
 {
     KeyToTouchMappingInfo keyMapping;
     keyMapping.mappingType = MOUSE_RIGHT_KEY_WALKING_TO_TOUCH;
-    keyMapping.keyCode = DELAY_TIME;
+    keyMapping.delayTime = DELAY_TIME;
     keyMapping.yValue = Y_VALUE;
     keyMapping.xValue = X_VALUE;
+    keyMapping.radius = RADIUS;
     return keyMapping;
 }
 

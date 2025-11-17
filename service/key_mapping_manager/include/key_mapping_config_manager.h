@@ -74,6 +74,7 @@ struct KeyMapping {
         skillRange = keyToTouchMappingInfo.skillRange;
         xStep = keyToTouchMappingInfo.xStep;
         yStep = keyToTouchMappingInfo.yStep;
+        delayTime = keyToTouchMappingInfo.delayTime;
     }
 
     int32_t mappingType = 0;

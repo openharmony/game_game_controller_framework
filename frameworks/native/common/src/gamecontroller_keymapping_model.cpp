@@ -293,7 +293,7 @@ bool GameKeyMappingInfo::CheckKeyMapping(std::vector<KeyToTouchMappingInfo> &Key
             }
             return false;
         }
-        HILOGE("mapping type is invalid");
+        HILOGE("MappingTypeEnum [%{public}d] is invalid", currentMappingType);
         return false;
     }
     return true;
