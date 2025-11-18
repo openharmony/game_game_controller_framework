@@ -38,7 +38,21 @@ const int32_t RADIUS = 230;
 const int32_t MAX_WIDTH = 2720;
 const int32_t MAX_HEIGHT = 1260;
 const int32_t SLEEP_TIME = 1500;
+const int32_t MOVE_X_VALUE = 459;
+const int32_t MOVE_Y_VALUE = 1216;
 }
+
+class MouseRightKeyWalkingDelayHandleTaskEx : public MouseRightKeyWalkingDelayHandleTask {
+public:
+    void BuildAndSendPointerEvent(std::shared_ptr<InputToTouchContext> &context_,
+                                  const TouchEntity &touchEntity) override
+    {
+        touchUpEntity_ = touchEntity;
+    }
+
+public:
+    TouchEntity touchUpEntity_;
+};
 
 class MouseRightKeyWalkingToTouchHandlerEx : public MouseRightKeyWalkingToTouchHandler {
 public:
@@ -47,9 +61,6 @@ public:
     {
         hasTouchEvent_ = true;
         BaseKeyToTouchHandler::BuildAndSendPointerEvent(context_, touchEntity);
-        if (touchEntity.pointerAction == PointerEvent::POINTER_ACTION_UP) {
-            touchUpEntity_ = touchEntity;
-        }
         if (touchEntity.pointerAction == PointerEvent::POINTER_ACTION_DOWN) {
             touchDownEntity_ = touchEntity;
         }
@@ -59,7 +70,6 @@ public:
     }
 
 public:
-    TouchEntity touchUpEntity_;
     TouchEntity touchDownEntity_;
     TouchEntity touchMoveEntity_;
     bool hasTouchEvent_{false};
@@ -80,6 +90,9 @@ public:
         mappingInfo_ = BuildKeyToTouchMappingInfo();
         context_->windowInfoEntity.xCenter = MAX_WIDTH / HALF_LENGTH;
         context_->windowInfoEntity.yCenter = MAX_HEIGHT / HALF_LENGTH;
+
+        delayHandleTaskEx_ = std::make_shared<MouseRightKeyWalkingDelayHandleTaskEx>();
+        DelayedSingleton<MouseRightKeyWalkingDelayHandleTask>::instance_ = delayHandleTaskEx_;
     }
 
     static KeyToTouchMappingInfo BuildKeyToTouchMappingInfo()
@@ -95,6 +108,7 @@ public:
     void TearDown() override
     {
         context_->ResetCurrentWalking();
+        DelayedSingleton<MouseRightKeyWalkingDelayHandleTask>::instance_ = nullptr;
     }
 
     int32_t SendMouseRightDownEvent()
@@ -108,6 +122,7 @@ public:
 
 public:
     std::shared_ptr<MouseRightKeyWalkingToTouchHandlerEx> handler_;
+    std::shared_ptr<MouseRightKeyWalkingDelayHandleTaskEx> delayHandleTaskEx_;
     std::shared_ptr<InputToTouchContext> context_;
     std::shared_ptr<MMI::PointerEvent> pointerEvent_;
     KeyToTouchMappingInfo mappingInfo_;
@@ -135,8 +150,8 @@ HWTEST_F(MouseRightKeyWalkingToTouchHandlerTest, HandlePointerEvent_001, TestSiz
 
     ASSERT_EQ(handler_->touchMoveEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchMoveEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchMoveEntity_.xValue, 459);
-    ASSERT_EQ(handler_->touchMoveEntity_.yValue, 1216);
+    ASSERT_EQ(handler_->touchMoveEntity_.xValue, MOVE_X_VALUE);
+    ASSERT_EQ(handler_->touchMoveEntity_.yValue, MOVE_Y_VALUE);
 }
 
 /**
@@ -175,10 +190,10 @@ HWTEST_F(MouseRightKeyWalkingToTouchHandlerTest, HandlePointerEvent_003, TestSiz
     ASSERT_TRUE(context_->pointerItems.find(pointerId) == context_->pointerItems.end());
     ASSERT_FALSE(context_->isWalking);
     ASSERT_EQ(context_->currentWalking.mappingType, 0);
-    ASSERT_EQ(handler_->touchUpEntity_.pointerId, pointerId);
-    ASSERT_EQ(handler_->touchUpEntity_.pointerAction, PointerEvent::POINTER_ACTION_UP);
-    ASSERT_EQ(handler_->touchUpEntity_.xValue, X_VALUE);
-    ASSERT_EQ(handler_->touchUpEntity_.yValue, Y_VALUE);
+    ASSERT_EQ(delayHandleTaskEx_->touchUpEntity_.pointerId, pointerId);
+    ASSERT_EQ(delayHandleTaskEx_->touchUpEntity_.pointerAction, PointerEvent::POINTER_ACTION_UP);
+    ASSERT_EQ(delayHandleTaskEx_->touchUpEntity_.xValue, MOVE_X_VALUE);
+    ASSERT_EQ(delayHandleTaskEx_->touchUpEntity_.yValue, MOVE_Y_VALUE);
 }
 
 /**
@@ -236,8 +251,8 @@ HWTEST_F(MouseRightKeyWalkingToTouchHandlerTest, HandlePointerEvent_006, TestSiz
     ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
     ASSERT_EQ(handler_->touchMoveEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchMoveEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchMoveEntity_.xValue, 459);
-    ASSERT_EQ(handler_->touchMoveEntity_.yValue, 1216);
+    ASSERT_EQ(handler_->touchMoveEntity_.xValue, MOVE_X_VALUE);
+    ASSERT_EQ(handler_->touchMoveEntity_.yValue, MOVE_Y_VALUE);
 }
 
 /**
@@ -271,7 +286,7 @@ HWTEST_F(MouseRightKeyWalkingToTouchHandlerTest, HandlePointerEvent_008, TestSiz
 {
     int32_t pointerId = SendMouseRightDownEvent();
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_BUTTON_UP);
-
+    context_->currentWalking.delayTime = 1;
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
     ASSERT_FALSE(context_->isWalking);
     ASSERT_EQ(context_->currentWalking.mappingType, 0);
@@ -279,10 +294,10 @@ HWTEST_F(MouseRightKeyWalkingToTouchHandlerTest, HandlePointerEvent_008, TestSiz
     ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
     ASSERT_FALSE(DelayedSingleton<MouseRightKeyWalkingDelayHandleTask>::GetInstance()->hasDelayTask_);
     ASSERT_TRUE(context_->pointerItems.find(pointerId) == context_->pointerItems.end());
-    ASSERT_EQ(handler_->touchUpEntity_.pointerId, pointerId);
-    ASSERT_EQ(handler_->touchUpEntity_.pointerAction, PointerEvent::POINTER_ACTION_UP);
-    ASSERT_EQ(handler_->touchUpEntity_.xValue, X_VALUE);
-    ASSERT_EQ(handler_->touchUpEntity_.yValue, Y_VALUE);
+    ASSERT_EQ(delayHandleTaskEx_->touchUpEntity_.pointerId, pointerId);
+    ASSERT_EQ(delayHandleTaskEx_->touchUpEntity_.pointerAction, PointerEvent::POINTER_ACTION_UP);
+    ASSERT_EQ(delayHandleTaskEx_->touchUpEntity_.xValue, MOVE_X_VALUE);
+    ASSERT_EQ(delayHandleTaskEx_->touchUpEntity_.yValue, MOVE_Y_VALUE);
 }
 
 /**
@@ -297,9 +312,9 @@ HWTEST_F(MouseRightKeyWalkingToTouchHandlerTest, HandlePointerEvent_009, TestSiz
     DelayedSingleton<MouseRightKeyWalkingDelayHandleTask>::GetInstance()->hasDelayTask_ = true;
     int32_t applyPointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
     PointerEvent::PointerItem pointerItem;
-    context_->pointerItems[applyPointerId] = pointerItem;
     pointerItem.SetWindowX(X_VALUE);
     pointerItem.SetWindowY(Y_VALUE);
+    context_->pointerItems[applyPointerId] = pointerItem;
     context_->pointerIdWithKeyCodeMap[KEY_CODE_WALK] = applyPointerId;
     DelayedSingleton<MouseRightKeyWalkingDelayHandleTask>::GetInstance()->context_ = context_;
 
@@ -308,10 +323,10 @@ HWTEST_F(MouseRightKeyWalkingToTouchHandlerTest, HandlePointerEvent_009, TestSiz
     ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
     ASSERT_TRUE(context_->isWalking);
     ASSERT_EQ(context_->currentWalking.mappingType, MappingTypeEnum::MOUSE_RIGHT_KEY_WALKING_TO_TOUCH);
-    ASSERT_EQ(handler_->touchUpEntity_.pointerId, applyPointerId);
-    ASSERT_EQ(handler_->touchUpEntity_.pointerAction, PointerEvent::POINTER_ACTION_UP);
-    ASSERT_EQ(handler_->touchUpEntity_.xValue, X_VALUE);
-    ASSERT_EQ(handler_->touchUpEntity_.yValue, Y_VALUE);
+    ASSERT_EQ(delayHandleTaskEx_->touchUpEntity_.pointerId, applyPointerId);
+    ASSERT_EQ(delayHandleTaskEx_->touchUpEntity_.pointerAction, PointerEvent::POINTER_ACTION_UP);
+    ASSERT_EQ(delayHandleTaskEx_->touchUpEntity_.xValue, X_VALUE);
+    ASSERT_EQ(delayHandleTaskEx_->touchUpEntity_.yValue, Y_VALUE);
 
     ASSERT_EQ(handler_->touchDownEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchDownEntity_.pointerAction, PointerEvent::POINTER_ACTION_DOWN);
@@ -320,8 +335,8 @@ HWTEST_F(MouseRightKeyWalkingToTouchHandlerTest, HandlePointerEvent_009, TestSiz
 
     ASSERT_EQ(handler_->touchMoveEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchMoveEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
-    ASSERT_EQ(handler_->touchMoveEntity_.xValue, 459);
-    ASSERT_EQ(handler_->touchMoveEntity_.yValue, 1216);
+    ASSERT_EQ(handler_->touchMoveEntity_.xValue, MOVE_X_VALUE);
+    ASSERT_EQ(handler_->touchMoveEntity_.yValue, MOVE_Y_VALUE);
 }
 }
 }
