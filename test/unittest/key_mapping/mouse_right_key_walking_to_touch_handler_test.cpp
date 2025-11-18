@@ -288,20 +288,35 @@ HWTEST_F(MouseRightKeyWalkingToTouchHandlerTest, HandlePointerEvent_008, TestSiz
 /**
  * @tc.name: HandlePointerEvent_009
  * @tc.desc: when it's mouse right-button down event and isWalking is false
- * and hasDelayTask_ is true, only send move touch event
+ * and hasDelayTask_ is true, send up and down and move touch event
  * @tc.type: FUNC
  * @tc.require: issueNumber
  */
 HWTEST_F(MouseRightKeyWalkingToTouchHandlerTest, HandlePointerEvent_009, TestSize.Level0)
 {
     DelayedSingleton<MouseRightKeyWalkingDelayHandleTask>::GetInstance()->hasDelayTask_ = true;
+    int32_t applyPointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    PointerEvent::PointerItem pointerItem;
+    context_->pointerItems[applyPointerId] = pointerItem;
+    pointerItem.SetWindowX(X_VALUE);
+    pointerItem.SetWindowY(Y_VALUE);
+    context_->pointerIdWithKeyCodeMap[KEY_CODE_WALK] = applyPointerId;
+    DelayedSingleton<MouseRightKeyWalkingDelayHandleTask>::GetInstance()->context_ = context_;
 
     int32_t pointerId = SendMouseRightDownEvent();
 
     ASSERT_TRUE(context_->pointerItems.find(pointerId) != context_->pointerItems.end());
     ASSERT_TRUE(context_->isWalking);
     ASSERT_EQ(context_->currentWalking.mappingType, MappingTypeEnum::MOUSE_RIGHT_KEY_WALKING_TO_TOUCH);
-    ASSERT_EQ(handler_->touchDownEntity_.pointerId, 0);
+    ASSERT_EQ(handler_->touchUpEntity_.pointerId, applyPointerId);
+    ASSERT_EQ(handler_->touchUpEntity_.pointerAction, PointerEvent::POINTER_ACTION_UP);
+    ASSERT_EQ(handler_->touchUpEntity_.xValue, X_VALUE);
+    ASSERT_EQ(handler_->touchUpEntity_.yValue, Y_VALUE);
+
+    ASSERT_EQ(handler_->touchDownEntity_.pointerId, pointerId);
+    ASSERT_EQ(handler_->touchDownEntity_.pointerAction, PointerEvent::POINTER_ACTION_DOWN);
+    ASSERT_EQ(handler_->touchDownEntity_.xValue, X_VALUE);
+    ASSERT_EQ(handler_->touchDownEntity_.yValue, Y_VALUE);
 
     ASSERT_EQ(handler_->touchMoveEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchMoveEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);

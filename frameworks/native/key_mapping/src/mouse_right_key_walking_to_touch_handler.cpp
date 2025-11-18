@@ -50,16 +50,14 @@ void MouseRightKeyWalkingDelayHandleTask::StartDelayHandle(std::shared_ptr<Input
     }, ffrt::task_attr().name("keyboard-observation-task").delay(delayTime * DELAY_TIME_UNIT));
 }
 
-bool MouseRightKeyWalkingDelayHandleTask::CancelDelayHandle(bool isSendUpEvent)
+bool MouseRightKeyWalkingDelayHandleTask::CancelDelayHandle()
 {
     std::lock_guard<ffrt::mutex> lock(taskLock_);
-    HILOGI("Cancel MouseRightKeyWalkingDelayHandleTask. hasDelayTask is [${public}d]", hasDelayTask_ ? 1 : 0);
+    HILOGI("Cancel MouseRightKeyWalkingDelayHandleTask. hasDelayTask is [%{public}d]", hasDelayTask_ ? 1 : 0);
     if (hasDelayTask_) {
         hasDelayTask_ = false;
         taskQueue_->cancel(curTaskHandler_);
-        if (isSendUpEvent) {
-            SendUpEvent(context_);
-        }
+        SendUpEvent(context_);
         context_ = nullptr;
         return true;
     }
@@ -128,19 +126,15 @@ bool MouseRightKeyWalkingToTouchHandler::HandleMouseRightBtnDown(std::shared_ptr
     if (context->isWalking) {
         return true;
     }
-
-    if (DelayedSingleton<MouseRightKeyWalkingDelayHandleTask>::GetInstance()->CancelDelayHandle(false)) {
-        HandleMouseMove(context, pointerEvent);
-        return true;
-    }
     HILOGI("Enter walking by mouse-right-key-walking");
     int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    DelayedSingleton<MouseRightKeyWalkingDelayHandleTask>::GetInstance()->CancelDelayHandle();
     context->SetCurrentWalking(mappingInfo, pointerId);
     int64_t actionTime = pointerEvent->GetActionTime();
     TouchEntity touchEntity = BuildTouchEntity(mappingInfo, pointerId,
                                                PointerEvent::POINTER_ACTION_DOWN, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
-    
+
     /**
      * 增加40ms的延迟,解决决胜巅峰中方向盘不固定时，由于第一个DOWN和MOVE间隔太短，
      * 导致游戏中的第一个手指按下的位置概率变为MOVE的坐标位置
@@ -159,13 +153,6 @@ void MouseRightKeyWalkingToTouchHandler::HandleMouseRightBtnUp(std::shared_ptr<I
     if (!context->IsMouseRightWalking()) {
         return;
     }
-    HILOGI("Exit walking by mouse-right-key-walking");
-    std::pair<bool, int32_t> pair = context->GetPointerIdByKeyCode(KEY_CODE_WALK);
-    if (!pair.first) {
-        HILOGW("discard mouse-right up event. because cannot find the pointerId");
-        return;
-    }
-
     DelayedSingleton<MouseRightKeyWalkingDelayHandleTask>::GetInstance()->StartDelayHandle(context);
 }
 

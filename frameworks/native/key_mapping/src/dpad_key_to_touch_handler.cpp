@@ -63,7 +63,7 @@ void DpadKeyToTouchHandler::HandleKeyDown(std::shared_ptr<InputToTouchContext> &
     }
     HILOGI("Enter walking by dpad");
     int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
-    DelayedSingleton<MouseRightKeyWalkingDelayHandleTask>::GetInstance()->CancelDelayHandle(true);
+    DelayedSingleton<MouseRightKeyWalkingDelayHandleTask>::GetInstance()->CancelDelayHandle();
     context->SetCurrentWalking(mappingInfo, pointerId);
     int64_t actionTime = keyEvent->GetActionTime();
     TouchEntity touchEntity = BuildTouchEntity(mappingInfo, pointerId,

@@ -28,7 +28,7 @@ DECLARE_DELAYED_SINGLETON(MouseRightKeyWalkingDelayHandleTask)
 public:
     void StartDelayHandle(std::shared_ptr<InputToTouchContext> &context);
 
-    bool CancelDelayHandle(bool isSendUpEvent);
+    bool CancelDelayHandle();
 
 private:
     void DoDelayHandle();
