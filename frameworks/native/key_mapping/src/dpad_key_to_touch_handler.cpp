@@ -16,6 +16,7 @@
 #include <cstdint>
 #include "dpad_key_to_touch_handler.h"
 #include "ffrt.h"
+#include "mouse_right_key_walking_to_touch_handler.h"
 
 namespace OHOS {
 namespace GameController {
@@ -62,6 +63,7 @@ void DpadKeyToTouchHandler::HandleKeyDown(std::shared_ptr<InputToTouchContext> &
     }
     HILOGI("Enter walking by dpad");
     int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
+    DelayedSingleton<MouseRightKeyWalkingDelayHandleTask>::GetInstance()->CancelDelayHandle();
     context->SetCurrentWalking(mappingInfo, pointerId);
     int64_t actionTime = keyEvent->GetActionTime();
     TouchEntity touchEntity = BuildTouchEntity(mappingInfo, pointerId,

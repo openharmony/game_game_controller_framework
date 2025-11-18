@@ -236,6 +236,7 @@ void KeyToTouchManager::UpdateContextWindowInfo(const std::shared_ptr<InputToTou
 void KeyToTouchManager::InitGcKeyboardContext(const std::vector<KeyToTouchMappingInfo> &mappingInfos)
 {
     if (gcKeyboardContext_ != nullptr) {
+        DelayedSingleton<MouseRightKeyWalkingDelayHandleTask>::GetInstance()->CancelDelayHandle();
         DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->StopTask();
         ReleaseContext(gcKeyboardContext_);
     }

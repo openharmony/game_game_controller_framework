@@ -39,6 +39,7 @@ const int32_t KEYBOARD_OBSERVATION_DOWN = 2035;
 const int32_t KEYBOARD_OBSERVATION_LEFT = 2017;
 const int32_t KEYBOARD_OBSERVATION_RIGHT = 2020;
 const size_t MAX_SINGLE_KEY_SIZE_FOR_HOVER_TOUCH_PAD = 2;
+const int32_t MAX_DELAY_TIME = 5;
 }
 
 class GameControllerKeymappingModeTest : public testing::Test {
@@ -525,6 +526,37 @@ HWTEST_F(GameControllerKeymappingModeTest, GameKeyMappingInfo_CheckKeyMapping_00
         ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
         testKeyMappingInfos.clear();
     }
+}
+
+/**
+* @tc.name: GameKeyMappingInfo_CheckKeyMapping_007
+* @tc.desc: MOUSE_RIGHT_KEY_WALKING_TO_TOUCH's delayTime must be between 0 and 5
+* @tc.type: FUNC
+* @tc.require: issueNumber
+*/
+HWTEST_F(GameControllerKeymappingModeTest, GameKeyMappingInfo_CheckKeyMapping_007, TestSize.Level0)
+{
+    GameKeyMappingInfo config;
+    std::vector<KeyToTouchMappingInfo> testKeyMappingInfos;
+    KeyToTouchMappingInfo info = BuildKeyMapping(MOUSE_RIGHT_KEY_WALKING_TO_TOUCH);
+    info.delayTime = -1;
+    testKeyMappingInfos.push_back(info);
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
+
+    info.delayTime = 0;
+    testKeyMappingInfos.clear();
+    testKeyMappingInfos.push_back(info);
+    ASSERT_TRUE(config.CheckKeyMapping(testKeyMappingInfos));
+
+    info.delayTime = MAX_DELAY_TIME;
+    testKeyMappingInfos.clear();
+    testKeyMappingInfos.push_back(info);
+    ASSERT_TRUE(config.CheckKeyMapping(testKeyMappingInfos));
+
+    info.delayTime = MAX_DELAY_TIME + 1;
+    testKeyMappingInfos.clear();
+    testKeyMappingInfos.push_back(info);
+    ASSERT_FALSE(config.CheckKeyMapping(testKeyMappingInfos));
 }
 
 /**

@@ -67,7 +67,13 @@ const int32_t LEFT = 1006;
 const int32_t RIGHT = 1007;
 const int32_t COMBINATION_1 = 1008;
 const int32_t COMBINATION_2 = 1009;
+const int32_t DELAY_TIME = 5;
+const int32_t X_VALUE = 1400;
+const int32_t Y_VALUE = 1500;
+const int32_t KEY_MAPPING_SIZE = 4;
+
 }
+
 class KeyMappingConfigManagerTest : public testing::Test {
 public:
     void SetUp();
@@ -91,6 +97,17 @@ void KeyMappingConfigManagerTest::ClearCache()
 {
     DelayedSingleton<KeyMappingConfigManager>::GetInstance()->defaultKeyMappingInfoConfigMap_.clear();
     DelayedSingleton<KeyMappingConfigManager>::GetInstance()->customKeyMappingInfoConfigMap_.clear();
+}
+
+static KeyToTouchMappingInfo BuildMouseRightWalking()
+{
+    KeyToTouchMappingInfo keyMapping;
+    keyMapping.mappingType = MOUSE_RIGHT_KEY_WALKING_TO_TOUCH;
+    keyMapping.delayTime = DELAY_TIME;
+    keyMapping.yValue = Y_VALUE;
+    keyMapping.xValue = X_VALUE;
+    keyMapping.radius = RADIUS;
+    return keyMapping;
 }
 
 static KeyToTouchMappingInfo BuildSingleKeyMapping(int32_t keyCode, int32_t xValue, int32_t yValue)
@@ -154,6 +171,7 @@ static GameKeyMappingInfo BuildCustomKeyMappingConfig()
         BuildCombinationKeyMapping(CUSTOM_KEYCODE_B_X_VALUE, CUSTOM_KEYCODE_B_Y_VALUE));
     keyMappingInfoConfig.customKeyToTouchMappings.push_back(
         BuildKeyboardObservation(CUSTOM_KEYCODE_C_X_VALUE, CUSTOM_KEYCODE_C_Y_VALUE));
+    keyMappingInfoConfig.customKeyToTouchMappings.push_back(BuildMouseRightWalking());
     return keyMappingInfoConfig;
 }
 
@@ -168,6 +186,7 @@ static GameKeyMappingInfo BuildDefaultKeyMappingConfig()
         BuildCombinationKeyMapping(DEFAULT_KEYCODE_E_X_VALUE, DEFAULT_KEYCODE_E_Y_VALUE));
     keyMappingInfoConfig.defaultKeyToTouchMappings.push_back(
         BuildKeyboardObservation(DEFAULT_KEYCODE_F_X_VALUE, DEFAULT_KEYCODE_F_Y_VALUE));
+    keyMappingInfoConfig.defaultKeyToTouchMappings.push_back(BuildMouseRightWalking());
     return keyMappingInfoConfig;
 }
 
@@ -198,6 +217,7 @@ static void CheckKeyMapping(const std::vector<KeyToTouchMappingInfo> &exceptConf
         ASSERT_EQ(exceptMapping.dpadKeyCodeEntity.left, realMapping.dpadInfo.left);
         ASSERT_EQ(exceptMapping.dpadKeyCodeEntity.right, realMapping.dpadInfo.right);
         ASSERT_EQ(exceptMapping.yStep, realMapping.yStep);
+        ASSERT_EQ(exceptMapping.delayTime, realMapping.delayTime);
     }
 }
 
@@ -220,8 +240,8 @@ HWTEST_F(KeyMappingConfigManagerTest, SetCustomGameKeyMappingConfig_001, TestSiz
         ->customKeyMappingInfoConfigMap_.at(keyMappingInfoConfig.bundleName + "_"
         + std::to_string(keyMappingInfoConfig.deviceType));
     ASSERT_EQ(keyMappingInfoConfig.bundleName, result.bundleName);
-    ASSERT_EQ(3, result.deviceType);
-    ASSERT_EQ(3, result.customKeyMappings.size());
+    ASSERT_EQ(GAME_KEY_BOARD, result.deviceType);
+    ASSERT_EQ(KEY_MAPPING_SIZE, result.customKeyMappings.size());
     CheckKeyMapping(keyMappingInfoConfig.customKeyToTouchMappings, result.customKeyMappings);
 }
 
@@ -324,8 +344,8 @@ HWTEST_F(KeyMappingConfigManagerTest, SetDefaultGameKeyMappingConfig_001, TestSi
     KeyMappingInfoConfig result = DelayedSingleton<KeyMappingConfigManager>::GetInstance()
         ->defaultKeyMappingInfoConfigMap_.at(BUNDLE_NAME + "_" + std::to_string(keyMappingInfoConfig.deviceType));
     ASSERT_EQ(keyMappingInfoConfig.bundleName, result.bundleName);
-    ASSERT_EQ(3, result.deviceType);
-    ASSERT_EQ(3, result.defaultKeyMappings.size());
+    ASSERT_EQ(GAME_KEY_BOARD, result.deviceType);
+    ASSERT_EQ(KEY_MAPPING_SIZE, result.defaultKeyMappings.size());
     CheckKeyMapping(keyMappingInfoConfig.defaultKeyToTouchMappings, result.defaultKeyMappings);
 }
 
@@ -357,7 +377,7 @@ HWTEST_F(KeyMappingConfigManagerTest, SetDefaultGameKeyMappingConfig_002, TestSi
     ASSERT_EQ(1, DelayedSingleton<KeyMappingConfigManager>::GetInstance()->defaultKeyMappingInfoConfigMap_.size());
     KeyMappingInfoConfig result = DelayedSingleton<KeyMappingConfigManager>::GetInstance()
         ->defaultKeyMappingInfoConfigMap_.at(keyMappingInfoConfigNew.bundleName + "_3");
-    ASSERT_EQ(3, result.deviceType);
+    ASSERT_EQ(GAME_KEY_BOARD, result.deviceType);
 }
 
 /**
@@ -434,14 +454,14 @@ HWTEST_F(KeyMappingConfigManagerTest, LoadConfigFromJsonFile_001, TestSize.Level
     ASSERT_EQ(1, DelayedSingleton<KeyMappingConfigManager>::GetInstance()->defaultKeyMappingInfoConfigMap_.size());
     KeyMappingInfoConfig defaultResult = DelayedSingleton<KeyMappingConfigManager>::GetInstance()
         ->defaultKeyMappingInfoConfigMap_.at(defaultKeyMappingInfoConfig.bundleName + "_3");
-    ASSERT_EQ(3, defaultResult.defaultKeyMappings.size());
+    ASSERT_EQ(KEY_MAPPING_SIZE, defaultResult.defaultKeyMappings.size());
     CheckKeyMapping(defaultKeyMappingInfoConfig.defaultKeyToTouchMappings, defaultResult.defaultKeyMappings);
 
     ASSERT_EQ(1, DelayedSingleton<KeyMappingConfigManager>::GetInstance()->customKeyMappingInfoConfigMap_.size());
     KeyMappingInfoConfig customResult = DelayedSingleton<KeyMappingConfigManager>::GetInstance()
         ->customKeyMappingInfoConfigMap_.at(
         customKeyMappingInfoConfig.bundleName + "_" + std::to_string(customKeyMappingInfoConfig.deviceType));
-    ASSERT_EQ(3, customResult.customKeyMappings.size());
+    ASSERT_EQ(KEY_MAPPING_SIZE, customResult.customKeyMappings.size());
     CheckKeyMapping(customKeyMappingInfoConfig.customKeyToTouchMappings, customResult.customKeyMappings);
 }
 
@@ -471,7 +491,7 @@ HWTEST_F(KeyMappingConfigManagerTest, GetGameKeyMappingConfig_001, TestSize.Leve
 
     // check data
     ASSERT_EQ(GAME_CONTROLLER_SUCCESS, result);
-    ASSERT_EQ(3, gameKeyMappingInfo.defaultKeyToTouchMappings.size());
+    ASSERT_EQ(KEY_MAPPING_SIZE, gameKeyMappingInfo.defaultKeyToTouchMappings.size());
     ASSERT_EQ(0, gameKeyMappingInfo.customKeyToTouchMappings.size());
     KeyMappingInfoConfig defaultConfig = DelayedSingleton<KeyMappingConfigManager>::GetInstance()
         ->defaultKeyMappingInfoConfigMap_.at(param.bundleName + "_3");
@@ -501,8 +521,8 @@ HWTEST_F(KeyMappingConfigManagerTest, GetGameKeyMappingConfig_002, TestSize.Leve
     DelayedSingleton<KeyMappingConfigManager>::GetInstance()->GetGameKeyMappingConfig(param, gameKeyMappingInfo);
 
     // check data
-    ASSERT_EQ(3, gameKeyMappingInfo.defaultKeyToTouchMappings.size());
-    ASSERT_EQ(3, gameKeyMappingInfo.customKeyToTouchMappings.size());
+    ASSERT_EQ(KEY_MAPPING_SIZE, gameKeyMappingInfo.defaultKeyToTouchMappings.size());
+    ASSERT_EQ(KEY_MAPPING_SIZE, gameKeyMappingInfo.customKeyToTouchMappings.size());
     KeyMappingInfoConfig customConfig = DelayedSingleton<KeyMappingConfigManager>::GetInstance()
         ->customKeyMappingInfoConfigMap_.at(param.bundleName + "_" + std::to_string(param.deviceType));
     CheckKeyMapping(gameKeyMappingInfo.customKeyToTouchMappings, customConfig.customKeyMappings);

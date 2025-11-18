@@ -59,8 +59,6 @@ private:
      */
     void RunTask();
 
-    bool IsValidTask();
-
     /**
      * Compute and send the move pointer.
      */
