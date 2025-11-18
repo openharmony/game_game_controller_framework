@@ -186,10 +186,10 @@ struct KeyToTouchMappingInfo : public Parcelable {
         if (!parcel.WriteInt32(yStep)) {
             return false;
         }
-        if (!parcel.WriteParcelable(&dpadKeyCodeEntity)) {
+        if (!parcel.WriteInt32(delayTime)) {
             return false;
         }
-        if (!parcel.WriteInt32(delayTime)) {
+        if (!parcel.WriteParcelable(&dpadKeyCodeEntity)) {
             return false;
         }
         return WriteCombinationKeys(parcel);
@@ -244,13 +244,13 @@ struct KeyToTouchMappingInfo : public Parcelable {
         if (!parcel.ReadInt32(ret->yStep)) {
             goto error;
         }
+        if (!parcel.ReadInt32(ret->delayTime)) {
+            goto error;
+        }
         if (!ReadDpadInfo(parcel, ret)) {
             goto error;
         }
         if (!ReadCombinationKeys(parcel, ret)) {
-            goto error;
-        }
-        if (!parcel.ReadInt32(ret->delayTime)) {
             goto error;
         }
         return ret;
