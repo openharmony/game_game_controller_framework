@@ -83,6 +83,7 @@ bool KeyMappingService::IsSupportGameKeyMapping(const std::string &bundleName, c
 
 void KeyMappingService::BroadCastDeviceInfo(const DeviceInfo &deviceInfo)
 {
+    DelayedSingleton<KeyToTouchManager>::GetInstance()->UpdateByDeviceStatusChanged(deviceInfo);
     if (deviceInfo.deviceType == DeviceTypeEnum::GAME_MOUSE) {
         HILOGI("[BroadCastDeviceInfo] Device type is [%{public}d]. No key-mapping and broadcast. ",
                deviceInfo.deviceType);

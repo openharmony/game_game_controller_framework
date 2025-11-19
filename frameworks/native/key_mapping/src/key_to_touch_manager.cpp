@@ -602,5 +602,21 @@ bool KeyToTouchManager::DeviceIsSupportKeyMapping(DeviceTypeEnum deviceTypeEnum)
     return true;
 }
 
+void KeyToTouchManager::UpdateByDeviceStatusChanged(const DeviceInfo &deviceInfo)
+{
+    if (deviceInfo.status == 0
+        && deviceInfo.sourceTypeSet.count(MOUSE) != 0) {
+        handleQueue_->submit([this] {
+            if (gcKeyboardContext_ == nullptr) {
+                return;
+            }
+
+            if (gcKeyboardContext_->isEnterCrosshairInfo) {
+                InputManager::GetInstance()->SetPointerVisible(false, 0);
+            }
+        });
+    }
+}
+
 }
 }

@@ -40,6 +40,8 @@ public:
 
     void EnableKeyMapping(bool isEnable);
 
+    void UpdateByDeviceStatusChanged(const DeviceInfo &deviceInfo);
+
 private:
 
     bool IsCanEnableKeyMapping();
