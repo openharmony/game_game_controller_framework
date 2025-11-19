@@ -604,7 +604,8 @@ bool KeyToTouchManager::DeviceIsSupportKeyMapping(DeviceTypeEnum deviceTypeEnum)
 
 void KeyToTouchManager::UpdateByDeviceStatusChanged(const DeviceInfo &deviceInfo)
 {
-    if (deviceInfo.sourceTypeSet.count(MOUSE) != 0) {
+    if (deviceInfo.status == 0
+        && deviceInfo.sourceTypeSet.count(MOUSE) != 0) {
         handleQueue_->submit([this] {
             if (gcKeyboardContext_ == nullptr) {
                 return;
