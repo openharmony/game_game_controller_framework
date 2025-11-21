@@ -26,7 +26,7 @@ class MouseRightKeyWalkingDelayHandleTask
 DECLARE_DELAYED_SINGLETON(MouseRightKeyWalkingDelayHandleTask)
 
 public:
-    void StartDelayHandle(std::shared_ptr<InputToTouchContext> &context);
+    void StartDelayHandle(std::shared_ptr<InputToTouchContext> &context, const int32_t delayTime);
 
     bool CancelDelayHandle();
 
@@ -59,6 +59,9 @@ private:
 
     void HandleMouseMove(std::shared_ptr<InputToTouchContext> &context,
                          const std::shared_ptr<MMI::PointerEvent> &pointerEvent);
+
+    int32_t ComputeDelayTime(std::shared_ptr<InputToTouchContext> &context,
+                             const std::shared_ptr<MMI::PointerEvent> &pointerEvent);
 };
 }
 }
