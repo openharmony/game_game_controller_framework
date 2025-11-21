@@ -32,10 +32,10 @@ MouseRightKeyWalkingDelayHandleTask::~MouseRightKeyWalkingDelayHandleTask()
 {
 }
 
-void MouseRightKeyWalkingDelayHandleTask::StartDelayHandle(std::shared_ptr<InputToTouchContext> &context)
+void MouseRightKeyWalkingDelayHandleTask::StartDelayHandle(std::shared_ptr<InputToTouchContext> &context,
+                                                           const int32_t delayTime)
 {
     std::lock_guard<ffrt::mutex> lock(taskLock_);
-    int32_t delayTime = context->currentWalking.delayTime;
     if (delayTime <= 0) {
         SendUpEvent(context);
         return;
@@ -47,7 +47,7 @@ void MouseRightKeyWalkingDelayHandleTask::StartDelayHandle(std::shared_ptr<Input
     context_ = context;
     curTaskHandler_ = taskQueue_->submit_h([this] {
         DoDelayHandle();
-    }, ffrt::task_attr().name("keyboard-observation-task").delay(delayTime * DELAY_TIME_UNIT));
+    }, ffrt::task_attr().name("keyboard-observation-task").delay(delayTime));
 }
 
 bool MouseRightKeyWalkingDelayHandleTask::CancelDelayHandle()
@@ -153,7 +153,8 @@ void MouseRightKeyWalkingToTouchHandler::HandleMouseRightBtnUp(std::shared_ptr<I
     if (!context->IsMouseRightWalking()) {
         return;
     }
-    DelayedSingleton<MouseRightKeyWalkingDelayHandleTask>::GetInstance()->StartDelayHandle(context);
+    int32_t delayTime = ComputeDelayTime(context, pointerEvent);
+    DelayedSingleton<MouseRightKeyWalkingDelayHandleTask>::GetInstance()->StartDelayHandle(context, delayTime);
 }
 
 void MouseRightKeyWalkingToTouchHandler::HandleMouseMove(std::shared_ptr<InputToTouchContext> &context,
@@ -196,5 +197,29 @@ void MouseRightKeyWalkingToTouchHandler::HandleMouseMove(std::shared_ptr<InputTo
     TouchEntity touchEntity = BuildMoveTouchEntity(pointerId, targetPoint, actionTime);
     BuildAndSendPointerEvent(context, touchEntity);
 }
+
+int32_t MouseRightKeyWalkingToTouchHandler::ComputeDelayTime(std::shared_ptr<InputToTouchContext> &context,
+                                                             const std::shared_ptr<MMI::PointerEvent> &pointerEvent)
+{
+    if (context->currentWalking.delayTime == 0) {
+        return 0;
+    }
+    Point centerPoint;
+    centerPoint.x = static_cast<double>(context->windowInfoEntity.xCenter);
+    centerPoint.y = static_cast<double>(context->windowInfoEntity.yCenter);
+
+    Point mousePoint;
+    PointerEvent::PointerItem pointerItem;
+    pointerEvent->GetPointerItem(pointerEvent->GetPointerId(), pointerItem);
+    mousePoint.x = pointerItem.GetWindowX();
+    mousePoint.y = pointerItem.GetWindowY();
+
+    double distance = CalculateDistance(centerPoint, mousePoint);
+    double time = static_cast<double>(context->currentWalking.delayTime);
+    double delayTime = (distance / centerPoint.y) * time * DELAY_TIME_UNIT;
+
+    return static_cast<int32_t>(delayTime);
+}
+
 }
 }
