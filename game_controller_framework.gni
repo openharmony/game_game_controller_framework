@@ -47,5 +47,6 @@ fuzztest_external_deps = [
   "samgr:samgr_proxy",
   "access_token:libaccesstoken_sdk",
   "access_token:libtokenid_sdk",
+  "bundle_framework:appexecfwk_base",
   "bundle_framework:appexecfwk_core",
 ]
