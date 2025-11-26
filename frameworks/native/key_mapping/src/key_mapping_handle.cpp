@@ -83,6 +83,7 @@ bool KeyMappingHandle::IsNotifyOpenTemplateConfigPage(const std::shared_ptr<MMI:
             temp.name = deviceInfo.name;
             temp.deviceType = GAME_KEY_BOARD;
             temp.uniq = deviceInfo.uniq;
+            temp.onlineTime = deviceInfo.onlineTime;
             return (this->*isOpenTemplateValidHandlerMap_[GAME_KEY_BOARD])(keyEvent, temp);
         }
         return false;

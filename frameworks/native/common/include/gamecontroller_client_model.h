@@ -140,8 +140,8 @@ enum GamePadButtonTypeEnum {
  */
 struct IdentifiedDeviceInfo : public Parcelable {
     std::string name;
-    int32_t product;
-    int32_t vendor;
+    int32_t product = 0;
+    int32_t vendor = 0;
     DeviceTypeEnum deviceType = UNKNOWN;
 
     bool Marshalling(Parcel &parcel) const
@@ -206,9 +206,9 @@ struct IdentifiedDeviceInfo : public Parcelable {
 struct BasicDeviceInfo {
     std::string uniq;
     std::string name;
-    int32_t product;
-    int32_t vendor;
-    int32_t version;
+    int32_t product = 0;
+    int32_t vendor = 0;
+    int32_t version = 0;
     std::string phys;
     DeviceTypeEnum deviceType = UNKNOWN;
 };
@@ -219,23 +219,23 @@ struct BasicDeviceInfo {
 struct DeviceInfo : public Parcelable {
     std::string uniq;
     std::string name;
-    int32_t product;
-    int32_t vendor;
-    int32_t version;
+    int32_t product = 0;
+    int32_t vendor = 0;
+    int32_t version = 0;
     std::string phys;
     DeviceTypeEnum deviceType = UNKNOWN;
     std::unordered_set<int32_t> ids;
     std::unordered_set<std::string> names;
     std::unordered_set<InputSourceTypeEnum> sourceTypeSet;
     std::unordered_map<int32_t, std::unordered_set<InputSourceTypeEnum>> idSourceTypeMap;
-    int64_t onlineTime;
-    int32_t status; // 0-online;1-offline
+    int64_t onlineTime = 0;
+    int32_t status = 0; // 0-online;1-offline
 
     std::string vidPid;
 
     std::string anonymizationUniq;
 
-    bool hasFullKeyBoard;
+    bool hasFullKeyBoard = false;
 
     bool Marshalling(Parcel &parcel) const
     {
@@ -451,7 +451,7 @@ struct DeviceEvent {
     /**
      * Event type, which can be online or offline.
      */
-    int32_t changeType;
+    int32_t changeType = 0;
 
     /**
      * Device Information
@@ -463,46 +463,46 @@ struct DeviceEvent {
  * Axis Event
  */
 struct AxisEvent {
-    int32_t id;
+    int32_t id = 0;
     std::string uniq;
     GamePadAxisSourceTypeEnum axisSourceType;
-    int64_t actionTime;
+    int64_t actionTime = 0;
 };
 
 struct GamePadAxisEvent : AxisEvent {
-    double xValue;
-    double yValue;
-    double zValue;
-    double rzValue;
-    double brakeValue;
-    double gasValue;
-    double hatxValue;
-    double hatyValue;
+    double xValue = 0.0;
+    double yValue = 0.0;
+    double zValue = 0.0;
+    double rzValue = 0.0;
+    double brakeValue = 0.0;
+    double gasValue = 0.0;
+    double hatxValue = 0.0;
+    double hatyValue = 0.0;
 };
 
 /**
  * Key Information
  */
 struct KeyInfo {
-    int32_t keyCode;
+    int32_t keyCode = 0;
     std::string keyCodeName;
-    bool pressed;
-    int64_t downTime;
+    bool pressed = false;
+    int64_t downTime = 0;
 };
 
 struct ButtonEvent {
-    int32_t id;
+    int32_t id = 0;
     std::string uniq;
 
     /*
      * down：0
      * up：1
      */
-    int32_t keyAction;
-    int32_t keyCode;
+    int32_t keyAction = 0;
+    int32_t keyCode = 0;
     std::string keyCodeName;
     std::vector<KeyInfo> keys;
-    int64_t actionTime;
+    int64_t actionTime = 0;
 };
 
 struct GamePadButtonEvent : ButtonEvent {
