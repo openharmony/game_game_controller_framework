@@ -32,6 +32,9 @@
 
 namespace OHOS {
 namespace GameController {
+namespace {
+const int32_t DELAY_TIME_UNIT = 1000000;// 1s = 1000ms = 1000000μs
+}
 
 KeyToTouchManager::KeyToTouchManager()
 {
@@ -51,6 +54,9 @@ KeyToTouchManager::KeyToTouchManager()
     mappingHandler_[MappingTypeEnum::MOUSE_LEFT_FIRE_TO_TOUCH] = std::make_shared<MouseLeftFireToTouchHandler>();
     mappingHandler_[MappingTypeEnum::MOUSE_RIGHT_KEY_CLICK_TO_TOUCH]
         = std::make_shared<MouseRightKeyClickToTouchHandler>();
+    handleQueue_->submit([this] {
+        CheckPointerSendInterval();
+    }, ffrt::task_attr().name("pointer-check-task").delay(DELAY_TIME_UNIT));
 }
 
 KeyToTouchManager::~KeyToTouchManager()
@@ -275,7 +281,7 @@ void KeyToTouchManager::ReleaseContext(const std::shared_ptr<InputToTouchContext
             pointerEvent->SetAgentWindowId(inputToTouchContext->windowInfoEntity.windowId);
             pointerEvent->SetTargetWindowId(inputToTouchContext->windowInfoEntity.windowId);
 
-            pointerEvent->SetId(std::numeric_limits<int32_t>::max());
+            pointerEvent->SetId(inputToTouchContext->GetEventId());
             pointerEvent->SetPointerAction(PointerEvent::POINTER_ACTION_UP);
             pointerEvent->SetPointerId(pointerItem.GetPointerId());
             pointerEvent->SetSourceType(PointerEvent::SOURCE_TYPE_TOUCHSCREEN);
@@ -618,5 +624,14 @@ void KeyToTouchManager::UpdateByDeviceStatusChanged(const DeviceInfo &deviceInfo
     }
 }
 
+void KeyToTouchManager::CheckPointerSendInterval()
+{
+    if (gcKeyboardContext_ != nullptr) {
+        gcKeyboardContext_->CheckPointerSendInterval();
+    }
+    handleQueue_->submit([this] {
+        CheckPointerSendInterval();
+    }, ffrt::task_attr().name("pointer-check-task").delay(DELAY_TIME_UNIT));
+}
 }
 }

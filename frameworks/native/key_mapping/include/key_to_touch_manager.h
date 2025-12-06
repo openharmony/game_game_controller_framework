@@ -124,6 +124,8 @@ private:
 
     void ResetContext(std::shared_ptr<InputToTouchContext> &context);
 
+    void CheckPointerSendInterval();
+
 private:
     bool isSupportKeyMapping_{false};
     std::unordered_set<int32_t> supportDeviceTypeSet_;
