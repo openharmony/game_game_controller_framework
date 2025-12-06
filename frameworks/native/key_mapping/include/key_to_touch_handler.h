@@ -71,6 +71,7 @@ enum KeyCodeForPointer : int32_t {
  * the information of the current window
  */
 struct WindowInfoEntity {
+    std::string bundleName;
     int32_t windowId = 0;
     int32_t maxWidth = 0;
     int32_t maxHeight = 0;
@@ -81,6 +82,8 @@ struct WindowInfoEntity {
     bool isFullScreen = false;
     int32_t xCenter = 0;
     int32_t yCenter = 0;
+    int32_t displayId = 0;
+    bool isPluginMode = false;
 
     void ParseRect(const OHOS::Rosen::Rect &rect)
     {
@@ -210,46 +213,61 @@ struct InputToTouchContext {
      * @return first means whether pointerId exists
      */
     std::pair<bool, int32_t> GetPointerIdByKeyCode(const int32_t keyCode);
+
+    int32_t GetEventId();
+
+    /**
+     * 存在转触控时，检查发送间隔，如果500ms没有发送，则构建move指令，解决开启手势识别时，
+     * arkUI会检查前后两个事件的间隔，如果大于2s，则触发丢弃事件
+     */
+    void CheckPointerSendInterval();
+
+    /**
+     * Send pointerEvent
+     * @param pointerEvent pointerEvent
+     * @param pointerItem pointerItem
+     */
+    void SendPointerEvent(std::shared_ptr<MMI::PointerEvent> &pointerEvent, PointerEvent::PointerItem &pointerItem);
 };
 
 struct TouchEntity {
     int32_t pointerId = 0;
     int32_t pointerAction = 0;
-    int32_t xValue;
-    int32_t yValue;
-    int64_t actionTime;
+    int32_t xValue = 0;
+    int32_t yValue = 0;
+    int64_t actionTime = 0;
 };
 
 struct Point {
-    double x;
-    double y;
+    double x = 0.0;
+    double y = 0.0;
 };
 
 struct MouseMoveReq {
     /**
      * x position or y position of the current mouse  move point
      */
-    int32_t currentMousePosition;
+    int32_t currentMousePosition = 0;
 
     /**
      * x position or y position of the last mouse move point
      */
-    int32_t lastMousePosition;
+    int32_t lastMousePosition = 0;
 
     /**
      * x position or y position of the last touch
      */
-    int32_t lastMovePosition;
+    int32_t lastMovePosition = 0;
 
     /**
      * maxWidth of window or maxHeight of window
      */
-    int32_t maxEdge;
+    int32_t maxEdge = 0;
 
     /**
      * The step length of the mouse movement each time
      */
-    int32_t step;
+    int32_t step = 0;
 };
 
 class PointerManager : public DelayedSingleton<PointerManager> {
@@ -316,7 +334,7 @@ public:
     {
     };
 
-    virtual void ExitCrosshairKeyStatus()
+    virtual void ExitCrosshairKeyStatus(const std::shared_ptr<InputToTouchContext> &context)
     {
     };
 

@@ -400,7 +400,7 @@ struct DeviceInfo : public Parcelable {
             tmp.append("|");
         }
         tmp.append(", sourceTypeSet:");
-        for (auto sourceType: sourceTypeSet) {
+        for (auto &sourceType: sourceTypeSet) {
             tmp.append(std::to_string(sourceType));
             tmp.append("|");
         }

@@ -404,9 +404,11 @@ struct GameInfo : public Parcelable {
     // The version of game
     std::string version;
 
-    bool isSupportKeyMapping;
+    bool isSupportKeyMapping = false;
 
     std::vector<int32_t> supportedDeviceTypes;
+
+    int32_t pid = 0;
 
     bool Marshalling(Parcel &parcel) const
     {
@@ -426,6 +428,9 @@ struct GameInfo : public Parcelable {
             if (!parcel.WriteInt32(deviceType)) {
                 return false;
             }
+        }
+        if (!parcel.WriteInt32(pid)) {
+            return false;
         }
         return true;
     }
@@ -451,7 +456,9 @@ struct GameInfo : public Parcelable {
         if (!ReadSupportedDeviceTypes(parcel, ret)) {
             goto error;
         }
-
+        if (!parcel.ReadInt32(ret->pid)) {
+            goto error;
+        }
         return ret;
         error:
         delete ret;
@@ -490,7 +497,7 @@ struct GameInfo : public Parcelable {
         if (bundleName.empty() || bundleName.length() > MAX_BUNDLE_NAME_LENGTH) {
             return false;
         }
-        if (version.empty() || version.length() > MAX_VERSION_LENGTH) {
+        if (!version.empty() && version.length() > MAX_VERSION_LENGTH) {
             return false;
         }
         return true;

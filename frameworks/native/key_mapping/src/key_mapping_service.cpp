@@ -20,6 +20,7 @@
 #include "key_to_touch_manager.h"
 #include "gamecontroller_utils.h"
 #include "multi_modal_input_mgt_service.h"
+#include "plugin_callback_manager.h"
 #include <unistd.h>
 #include <fstream>
 #include <cstdlib>
@@ -64,21 +65,30 @@ KeyMappingService::~KeyMappingService()
 {
 }
 
-bool KeyMappingService::IsSupportGameKeyMapping(const std::string &bundleName, const std::string &version)
+bool KeyMappingService::IsSupportGameKeyMapping(const std::string &bundleName, const std::string &version, int32_t pid)
 {
     std::lock_guard<ffrt::mutex> lock(configMutex_);
-    if (bundleName.empty()) {
-        isSupportGameKeyMapping_ = false;
-        return false;
-    }
-
+    loadTemplateCache_.clear();
     bundleName_ = bundleName;
     bundleVersion_ = version;
-    std::pair<bool, KeyMappingSupportConfig> result = GetKeyMappingSupportConfig();
+    pid_ = pid;
+    std::pair<bool, KeyMappingSupportConfig> result = GetKeyMappingSupportConfig(bundleName);
     isSupportGameKeyMapping_ = result.first;
     keyMappingSupportConfig_ = result.second;
     SyncKeyMappingConfig();
     return isSupportGameKeyMapping_;
+}
+
+void KeyMappingService::ClearGameKeyMapping()
+{
+    std::lock_guard<ffrt::mutex> lock(configMutex_);
+    loadTemplateCache_.clear();
+    bundleName_ = "";
+    bundleVersion_ = "";
+    pid_ = 0;
+    isSupportGameKeyMapping_ = false;
+    keyMappingSupportConfig_ = KeyMappingSupportConfig{};
+    SyncKeyMappingConfig();
 }
 
 void KeyMappingService::BroadCastDeviceInfo(const DeviceInfo &deviceInfo)
@@ -99,6 +109,12 @@ void KeyMappingService::BroadCastDeviceInfo(const DeviceInfo &deviceInfo)
     }
 
     handleQueue_->submit([tempDeviceInfo, this] {
+        std::lock_guard<ffrt::mutex> lock(configMutex_);
+        if (bundleName_.empty()) {
+            HILOGW("discard BroadCastDeviceInfo. bundleName_ is empty.");
+            DelayedSingleton<PluginCallbackManager>::GetInstance()->OnDeviceStatusChanged(bundleName_, tempDeviceInfo);
+            return;
+        }
         if (!DeviceIsSupportKeyMapping(tempDeviceInfo.deviceType)) {
             return;
         }
@@ -130,6 +146,7 @@ void KeyMappingService::ExecuteGetGameKeyMapping(DeviceTypeEnum deviceType)
             gameKeyMappingInfo.defaultKeyToTouchMappings.empty()) {
             HILOGI("deviceType[%{public}d] doesn't have key-mapping config", deviceType);
             DelayedSingleton<KeyToTouchManager>::GetInstance()->UpdateTemplateConfig(deviceType,
+                                                                                     bundleName_,
                                                                                      mappingInfos);
             return;
         }
@@ -144,6 +161,7 @@ void KeyMappingService::ExecuteGetGameKeyMapping(DeviceTypeEnum deviceType)
         }
 
         DelayedSingleton<KeyToTouchManager>::GetInstance()->UpdateTemplateConfig(deviceType,
+                                                                                 bundleName_,
                                                                                  mappingInfos);
         return;
     }
@@ -156,20 +174,28 @@ void KeyMappingService::ExecuteBroadCastDeviceInfo(const DeviceInfo &deviceInfo)
     GameInfo gameInfo;
     gameInfo.bundleName = bundleName_;
     gameInfo.version = bundleVersion_;
-    HILOGI("ExecuteBroadCastDeviceInfo");
+    gameInfo.pid = pid_;
+    HILOGI("ExecuteBroadCastDeviceInfo: bundleName is [%{public}s], deviceType is [%{public}d], pid is [%{public}d]",
+           bundleName_.c_str(), deviceInfo.deviceType, pid_);
     DelayedSingleton<GameControllerServerClient>::GetInstance()->BroadcastDeviceInfo(gameInfo,
                                                                                      deviceInfo);
+    DelayedSingleton<PluginCallbackManager>::GetInstance()->OnDeviceStatusChanged(bundleName_, deviceInfo);
 }
 
 void KeyMappingService::BroadcastOpenTemplateConfig(const DeviceInfo &deviceInfo)
 {
     handleQueue_->submit([deviceInfo, this] {
+        std::lock_guard<ffrt::mutex> lock(configMutex_);
         ExecuteOpenTemplateConfig(deviceInfo);
     });
 }
 
 void KeyMappingService::ExecuteOpenTemplateConfig(const DeviceInfo &deviceInfo)
 {
+    if (bundleName_.empty()) {
+        HILOGW("discard ExecuteOpenTemplateConfig. bundleName_ is empty");
+        return;
+    }
     if (!DeviceIsSupportKeyMapping(deviceInfo.deviceType)) {
         HILOGW("deviceType[%{public}d] cannot open template config. isSupportGameKeyMapping is %{public}d",
                deviceInfo.deviceType, isSupportGameKeyMapping_);
@@ -216,9 +242,15 @@ std::pair<bool, nlohmann::json> KeyMappingService::ReadJsonFromFile(const std::s
     return std::make_pair(true, content);
 }
 
-void KeyMappingService::UpdateGameKeyMappingWhenTemplateChange(DeviceTypeEnum deviceType)
+void KeyMappingService::UpdateGameKeyMappingWhenTemplateChange(const std::string &bundleName, DeviceTypeEnum deviceType)
 {
-    handleQueue_->submit([deviceType, this] {
+    handleQueue_->submit([bundleName, deviceType, this] {
+        std::lock_guard<ffrt::mutex> lock(configMutex_);
+        if (bundleName != bundleName_) {
+            HILOGW("discard UpdateGameKeyMappingWhenTemplateChange. bundleName [%{public}s] is "
+                   "not same with bundleName [%{public}s]", bundleName.c_str(), bundleName_.c_str());
+            return;
+        }
         if (!DeviceIsSupportKeyMapping(deviceType)) {
             return;
         }
@@ -226,7 +258,7 @@ void KeyMappingService::UpdateGameKeyMappingWhenTemplateChange(DeviceTypeEnum de
     });
 }
 
-std::pair<bool, KeyMappingSupportConfig> KeyMappingService::GetKeyMappingSupportConfig()
+std::pair<bool, KeyMappingSupportConfig> KeyMappingService::GetKeyMappingSupportConfig(const std::string &bundleName)
 {
     std::pair<bool, KeyMappingSupportConfig> result;
     result.first = false;
@@ -246,10 +278,10 @@ std::pair<bool, KeyMappingSupportConfig> KeyMappingService::GetKeyMappingSupport
     }
     for (const auto &jsonObj: config) {
         KeyMappingSupportConfig gameConfig(jsonObj);
-        if (gameConfig.bundleName == bundleName_) {
+        if (gameConfig.bundleName == bundleName) {
             result.first = true;
             result.second = gameConfig;
-            HILOGI("bundleName[%{public}s] is support keymapping", bundleName_.c_str());
+            HILOGI("bundleName[%{public}s] is support keymapping", bundleName.c_str());
             return result;
         }
     }
@@ -263,7 +295,7 @@ void KeyMappingService::ReloadKeyMappingSupportConfig()
         return;
     }
     HILOGI("ReloadKeyMappingSupportConfig");
-    std::pair<bool, KeyMappingSupportConfig> result = GetKeyMappingSupportConfig();
+    std::pair<bool, KeyMappingSupportConfig> result = GetKeyMappingSupportConfig(bundleName_);
     if (result.first) {
         std::unordered_set<int32_t> newDeviceTypes = result.second.deviceTypes;
         std::unordered_set<int32_t> oldDeviceTypes = keyMappingSupportConfig_.deviceTypes;
@@ -287,18 +319,19 @@ void KeyMappingService::SyncKeyMappingConfig()
 void KeyMappingService::HandleDeviceTypeChanged(const std::unordered_set<int32_t> &newDeviceTypes,
                                                 const std::unordered_set<int32_t> &oldDeviceTypes)
 {
-    for (auto deviceType: oldDeviceTypes) {
+    for (const auto &deviceType: oldDeviceTypes) {
         if (newDeviceTypes.count(deviceType) == 0) {
             // The deviceType is deleted.
             HILOGI("HandleDeviceTypeChangedForRemove deviceType[%{public}d]", deviceType);
             DeviceTypeEnum deviceTypeEnum = static_cast<DeviceTypeEnum>(deviceType);
             DelayedSingleton<KeyToTouchManager>::GetInstance()->UpdateTemplateConfig(
                 deviceTypeEnum,
+                bundleName_,
                 std::vector<KeyToTouchMappingInfo>());
             loadTemplateCache_[deviceTypeEnum] = false;
         }
     }
-    for (auto deviceType: newDeviceTypes) {
+    for (const auto &deviceType: newDeviceTypes) {
         if (oldDeviceTypes.count(deviceType) == 0) {
             // The deviceType is added.
             HILOGI("HandleDeviceTypeChangedForAdd deviceType[%{public}d]", deviceType);
@@ -315,7 +348,6 @@ void KeyMappingService::HandleDeviceTypeChanged(const std::unordered_set<int32_t
 
 bool KeyMappingService::DeviceIsSupportKeyMapping(DeviceTypeEnum deviceTypeEnum)
 {
-    std::lock_guard<ffrt::mutex> lock(configMutex_);
     if (!isSupportGameKeyMapping_) {
         // the game not support keymapping.
         return false;
@@ -331,5 +363,11 @@ bool KeyMappingService::DeviceIsSupportKeyMapping(DeviceTypeEnum deviceTypeEnum)
     return true;
 }
 
+bool KeyMappingService::CheckSupportKeyMapping(const std::string &bundleName)
+{
+    std::lock_guard<ffrt::mutex> lock(configMutex_);
+    std::pair<bool, KeyMappingSupportConfig> result = GetKeyMappingSupportConfig(bundleName);
+    return result.first;
+}
 }
 }

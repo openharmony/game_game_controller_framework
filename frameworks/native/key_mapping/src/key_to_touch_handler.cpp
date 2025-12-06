@@ -17,6 +17,8 @@
 #include <window_input_intercept_client.h>
 #include "key_to_touch_handler.h"
 #include "gamecontroller_log.h"
+#include "plugin_callback_manager.h"
+#include "gamecontroller_utils.h"
 
 namespace OHOS {
 namespace GameController {
@@ -27,6 +29,9 @@ const int32_t DEVICE_ID = 3;
 const double ANGLE = 180.0;
 const int32_t TOUCH_RANGE = 10;
 const int32_t START_POINTER_ID = 3;
+const int64_t SEND_DURATION = 500000;
+static int32_t g_eventId = 0;
+static int32_t g_lastSendTime = 0;
 }
 
 void BaseKeyToTouchHandler::BuildAndSendPointerEvent(std::shared_ptr<InputToTouchContext> &context,
@@ -48,18 +53,15 @@ void BaseKeyToTouchHandler::BuildAndSendPointerEvent(std::shared_ptr<InputToTouc
     } else {
         context->pointerItems[touchEntity.pointerId] = pointerItem;
     }
-    pointerEvent->AddPointerItem(pointerItem);
-    pointerEvent->SetDeviceId(DEVICE_ID);
-    pointerEvent->SetActionTime(touchEntity.actionTime);
-    pointerEvent->SetAgentWindowId(context->windowInfoEntity.windowId);
-    pointerEvent->SetTargetWindowId(context->windowInfoEntity.windowId);
 
-    pointerEvent->SetId(std::numeric_limits<int32_t>::max());
+    for (auto &pointerPair: context->pointerItems) {
+        pointerEvent->AddPointerItem(pointerPair.second);
+    }
+    if (touchEntity.pointerAction == PointerEvent::POINTER_ACTION_UP) {
+        pointerEvent->AddPointerItem(pointerItem);
+    }
     pointerEvent->SetPointerAction(touchEntity.pointerAction);
-    pointerEvent->SetPointerId(touchEntity.pointerId);
-    pointerEvent->SetSourceType(PointerEvent::SOURCE_TYPE_TOUCHSCREEN);
-    HILOGD("pointer is [%{public}s].", pointerEvent->ToString().c_str());
-    Rosen::WindowInputInterceptClient::SendInputEvent(pointerEvent);
+    context->SendPointerEvent(pointerEvent, pointerItem);
 }
 
 PointerEvent::PointerItem BaseKeyToTouchHandler::BuildPointerItem(std::shared_ptr<InputToTouchContext> &context,
@@ -70,6 +72,8 @@ PointerEvent::PointerItem BaseKeyToTouchHandler::BuildPointerItem(std::shared_pt
     pointerItem.SetOriginPointerId(touchEntity.pointerId);
     pointerItem.SetWindowX(touchEntity.xValue);
     pointerItem.SetWindowY(touchEntity.yValue);
+    pointerItem.SetDisplayX(context->windowInfoEntity.xPosition + touchEntity.xValue);
+    pointerItem.SetDisplayY(context->windowInfoEntity.yPosition + touchEntity.yValue);
     pointerItem.SetDeviceId(DEVICE_ID);
     pointerItem.SetDownTime(touchEntity.actionTime);
     pointerItem.SetPressure(1);
@@ -137,7 +141,7 @@ double BaseKeyToTouchHandler::CalculateDistance(const Point &centerPoint, const 
 Point BaseKeyToTouchHandler::ComputeTargetPoint(const Point &centerPoint, const double radius, const double angle)
 {
     double thetaRadians = angle * (M_PI / ANGLE);
-    Point point;
+    Point point{};
     point.x = centerPoint.x + radius * cos(thetaRadians);
     point.y = centerPoint.y + radius * sin(thetaRadians);
     return point;
@@ -162,7 +166,7 @@ void BaseKeyToTouchHandler::ComputeTouchPointByMouseMoveEvent(std::shared_ptr<In
     PointerEvent::PointerItem currentPointItem;
     pointerEvent->GetPointerItem(pointerEvent->GetPointerId(), currentPointItem);
 
-    Point targetPoint;
+    Point targetPoint{};
     targetPoint.x = ComputeMovePositionForX(context, currentPointItem, lastMovePoint, mappingInfo);
     targetPoint.y = ComputeMovePositionForY(context, currentPointItem, lastMovePoint, mappingInfo);
     int64_t actionTime = pointerEvent->GetActionTime();
@@ -176,7 +180,7 @@ int32_t BaseKeyToTouchHandler::ComputeMovePositionForX(std::shared_ptr<InputToTo
                                                        const PointerEvent::PointerItem &lastMovePoint,
                                                        const KeyToTouchMappingInfo &mappingInfo)
 {
-    MouseMoveReq mouseMoveReqForX;
+    MouseMoveReq mouseMoveReqForX{};
     mouseMoveReqForX.currentMousePosition = currentPointItem.GetWindowX();
     mouseMoveReqForX.lastMousePosition = context->lastMousePointer.GetWindowX();
     mouseMoveReqForX.lastMovePosition = lastMovePoint.GetWindowX();
@@ -190,7 +194,7 @@ int32_t BaseKeyToTouchHandler::ComputeMovePositionForY(std::shared_ptr<InputToTo
                                                        const PointerEvent::PointerItem &lastMovePoint,
                                                        const KeyToTouchMappingInfo &mappingInfo)
 {
-    MouseMoveReq mouseMoveReqForY;
+    MouseMoveReq mouseMoveReqForY{};
     mouseMoveReqForY.currentMousePosition = currentPointItem.GetWindowY();
     mouseMoveReqForY.lastMousePosition = context->lastMousePointer.GetWindowY();
     mouseMoveReqForY.lastMovePosition = lastMovePoint.GetWindowY();
@@ -322,7 +326,7 @@ InputToTouchContext::InputToTouchContext(const DeviceTypeEnum &type,
     windowInfoEntity = windowInfo;
     int32_t lastKeyCode;
     int32_t firstKeyCode;
-    for (auto &mappingInfo: mappingInfos) {
+    for (const auto &mappingInfo: mappingInfos) {
         if (mappingInfo.mappingType == COMBINATION_KEY_TO_TOUCH) {
             if (mappingInfo.combinationKeys.size() != MAX_COMBINATION_KEYS) {
                 HILOGW("discard the combinationKeys because the combinationKeys.size is less than max");
@@ -517,6 +521,56 @@ void InputToTouchContext::ReleasePointerId(const int32_t keyCode)
         pointerIdWithKeyCodeMap.erase(keyCode);
         pointerItems.erase(pointerId);
     }
+}
+
+void InputToTouchContext::SendPointerEvent(std::shared_ptr<MMI::PointerEvent> &pointerEvent,
+                                           PointerEvent::PointerItem &pointerItem)
+{
+    pointerItem.SetDownTime(StringUtils::GetSysClockTime());
+    pointerEvent->AddPointerItem(pointerItem);
+    pointerEvent->SetDeviceId(DEVICE_ID);
+    pointerEvent->SetActionTime(pointerItem.GetDownTime());
+    pointerEvent->SetAgentWindowId(windowInfoEntity.windowId);
+    pointerEvent->SetTargetWindowId(windowInfoEntity.windowId);
+    pointerEvent->SetId(GetEventId());
+    pointerEvent->SetPointerId(pointerItem.GetPointerId());
+    pointerEvent->SetSourceType(PointerEvent::SOURCE_TYPE_TOUCHSCREEN);
+    HILOGD("pointer is [%{public}s].", pointerEvent->ToString().c_str());
+    DelayedSingleton<PluginCallbackManager>::GetInstance()->SendInputEvent(windowInfoEntity.bundleName,
+                                                                           pointerEvent, true);
+    g_lastSendTime = pointerItem.GetDownTime();
+}
+
+int32_t InputToTouchContext::GetEventId()
+{
+    g_eventId++;
+    if (g_eventId == std::numeric_limits<int32_t>::max()) {
+        g_eventId = 1;
+    }
+    return g_eventId;
+}
+
+void InputToTouchContext::CheckPointerSendInterval()
+{
+    if (pointerItems.size() == 0) {
+        return;
+    }
+    if ((StringUtils::GetSysClockTime() - g_lastSendTime) <= SEND_DURATION) {
+        return;
+    }
+    std::shared_ptr<PointerEvent> pointerEvent = PointerEvent::Create();
+    if (pointerEvent == nullptr) {
+        HILOGE("Create PointerEvent failed.");
+        return;
+    }
+
+    PointerEvent::PointerItem pointerItem;
+    for (auto &pointerPair: pointerItems) {
+        pointerItem = pointerPair.second;
+        pointerEvent->AddPointerItem(pointerPair.second);
+    }
+    pointerEvent->SetPointerAction(PointerEvent::POINTER_ACTION_MOVE);
+    SendPointerEvent(pointerEvent, pointerItem);
 }
 
 PointerManager::PointerManager()

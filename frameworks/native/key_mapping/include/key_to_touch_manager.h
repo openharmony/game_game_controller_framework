@@ -34,13 +34,21 @@ public:
 
     bool DispatchPointerEvent(const std::shared_ptr<MMI::PointerEvent> &pointerEvent);
 
-    void UpdateTemplateConfig(const DeviceTypeEnum &deviceType, const std::vector<KeyToTouchMappingInfo> &mappingInfos);
+    void UpdateTemplateConfig(const DeviceTypeEnum &deviceType, const std::string &bundleName,
+                              const std::vector<KeyToTouchMappingInfo> &mappingInfos);
 
     void UpdateWindowInfo(const WindowInfoEntity &windowInfoEntity);
 
-    void EnableKeyMapping(bool isEnable);
+    void EnableKeyMapping(const std::string &bundleName, bool isEnable);
 
     void UpdateByDeviceStatusChanged(const DeviceInfo &deviceInfo);
+
+    void SetCurrentBundleName(const std::string &bundleName, bool isEnable, bool isPluginMode);
+
+    /**
+     * Clear keymapping of the current game. It's only called by plugin-mode
+     */
+    void ClearGameKeyMapping();
 
 private:
 
@@ -124,6 +132,8 @@ private:
 
     void ResetContext(std::shared_ptr<InputToTouchContext> &context);
 
+    void CheckPointerSendInterval();
+
 private:
     bool isSupportKeyMapping_{false};
     std::unordered_set<int32_t> supportDeviceTypeSet_;
@@ -133,10 +143,11 @@ private:
     std::shared_ptr<InputToTouchContext> gcKeyboardContext_{nullptr};
     std::shared_ptr<InputToTouchContext> hoverTouchPadContext_{nullptr};
     std::unordered_map<int32_t, std::unordered_set<DeviceTypeEnum>> allMonitorKeys_;
-    bool isMonitorMouse_ = false;
-    std::unordered_set<int32_t> allMonitorMousePointerActions_;
+    bool isMonitorMouse_{false};
     WindowInfoEntity windowInfoEntity_;
     bool isEnableKeyMapping_{true};
+    std::string bundleName_;
+    bool isPluginMode_{false};
 };
 }
 }

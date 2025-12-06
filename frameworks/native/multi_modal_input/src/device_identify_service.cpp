@@ -65,7 +65,7 @@ std::vector<DeviceInfo> DeviceIdentifyService::IdentifyDeviceType(const std::vec
         return result;
     }
     HILOGE("IdentifyDeviceType failed. the error is %{public}d", ret);
-    for (auto deviceInfo: deviceInfos) {
+    for (const auto &deviceInfo: deviceInfos) {
         result.push_back(deviceInfo);
     }
     return result;

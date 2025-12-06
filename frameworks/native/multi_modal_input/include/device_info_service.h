@@ -69,7 +69,7 @@ struct InputDeviceInfo {
         tmp.append(", version:" + std::to_string(version));
         tmp.append(", phys:" + phys);
         tmp.append(", sourceTypeSet:");
-        for (auto sourceType: sourceTypeSet) {
+        for (const auto &sourceType: sourceTypeSet) {
             tmp.append(std::to_string(sourceType));
             tmp.append("|");
         }

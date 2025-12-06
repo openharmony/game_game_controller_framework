@@ -25,6 +25,7 @@ gamecontroller_framework_include_dirs = [
   "${game_controller_framework_innerkits_path}/common/include",
   "${game_controller_framework_innerkits_path}/key_mapping/include",
   "${game_controller_framework_innerkits_path}/multi_modal_input/include",
+  "${game_controller_framework_innerkits_path}/plugin/include",
   "${game_controller_framework_innerkits_path}/window/include",
   "${game_controller_framework_path}/test/mock/multi_modal_input",
   "${game_controller_framework_path}/test/mock/gamecontroller_service",
@@ -76,12 +77,16 @@ ohos_static_library("gamecontroller_framework_static_test") {
     "${game_controller_framework_innerkits_path}/multi_modal_input/src/input_device_listener.cpp",
     "${game_controller_framework_innerkits_path}/multi_modal_input/src/multi_modal_input_mgt_service.cpp",
     "${game_controller_framework_innerkits_path}/multi_modal_input/src/multi_modal_input_monitor.cpp",
+    "${game_controller_framework_innerkits_path}/plugin/src/plugin_callback_manager.cpp",
+    "${game_controller_framework_innerkits_path}/plugin/src/plugin_client.cpp",
+    "${game_controller_framework_innerkits_path}/plugin/src/plugin_manager.cpp",
     "${game_controller_framework_innerkits_path}/sa_client/src/gamecontroller_server_client.cpp",
     "${game_controller_framework_innerkits_path}/sa_client/src/gamecontroller_server_client_proxy.cpp",
     "${game_controller_framework_innerkits_path}/window/src/input_event_callback.cpp",
     "${game_controller_framework_innerkits_path}/window/src/input_event_client.cpp",
     "${game_controller_framework_innerkits_path}/window/src/window_info_manager.cpp",
     "${game_controller_framework_innerkits_path}/window/src/window_input_intercept.cpp",
+    "${game_controller_framework_innerkits_path}/window/src/window_opr_handle.cpp",
   ]
 
   external_deps = [

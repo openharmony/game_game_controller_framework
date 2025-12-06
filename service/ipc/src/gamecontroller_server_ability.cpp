@@ -140,15 +140,23 @@ int32_t GameControllerServerAbility::SetDefaultGameKeyMappingConfig(const GameKe
 
 int32_t GameControllerServerAbility::BroadcastDeviceInfo(const GameInfo &gameInfo, const DeviceInfo &deviceInfo)
 {
-    // 1.check the gameInfo.bundleName is same with the caller.
-    if (!VerifyBundleNameIsValid(gameInfo.bundleName)) {
-        HILOGE("no sys permission");
-        return GAME_ERR_NO_SYS_PERMISSIONS;
+    bool isSystemAppCall = IsSystemAppCall();
+    if (!isSystemAppCall) {
+        // 1.check the gameInfo.bundleName is same with the caller.
+        if (!VerifyBundleNameIsValid(gameInfo.bundleName)) {
+            HILOGE("no sys permission");
+            return GAME_ERR_NO_SYS_PERMISSIONS;
+        }
     }
-    
+
     // 2. check the bundleName is in keyMapping trustlist.
     if (IsSupportGameKeyMapping(gameInfo)) {
-        int32_t gamePid = IPCSkeleton::GetCallingPid();
+        int32_t gamePid;
+        if (isSystemAppCall) {
+            gamePid = gameInfo.pid;
+        } else {
+            gamePid = IPCSkeleton::GetCallingPid();
+        }
         HILOGI("gamePid [%{public}d]", gamePid);
         return DelayedSingleton<EventPublisher>::GetInstance()->SendDeviceInfoNotify(gameInfo, deviceInfo, gamePid);
     }
@@ -157,10 +165,12 @@ int32_t GameControllerServerAbility::BroadcastDeviceInfo(const GameInfo &gameInf
 
 int32_t GameControllerServerAbility::BroadcastOpenTemplateConfig(const GameInfo &gameInfo, const DeviceInfo &deviceInfo)
 {
-    // 1. check the gameInfo.bundleName is same with the caller.
-    if (!VerifyBundleNameIsValid(gameInfo.bundleName)) {
-        HILOGE("no sys permission");
-        return GAME_ERR_NO_SYS_PERMISSIONS;
+    if (!IsSystemAppCall()) {
+        // 1. check the gameInfo.bundleName is same with the caller.
+        if (!VerifyBundleNameIsValid(gameInfo.bundleName)) {
+            HILOGE("no sys permission");
+            return GAME_ERR_NO_SYS_PERMISSIONS;
+        }
     }
 
     // 2. check the bundleName is in keyMapping trustlist.
@@ -173,6 +183,11 @@ int32_t GameControllerServerAbility::BroadcastOpenTemplateConfig(const GameInfo 
 bool GameControllerServerAbility::IsSystemServiceCall()
 {
     return DelayedSingleton<PermissionUtils>::GetInstance()->IsSACall();
+}
+
+bool GameControllerServerAbility::IsSystemAppCall()
+{
+    return DelayedSingleton<PermissionUtils>::GetInstance()->IsSystemAppCall();
 }
 
 bool GameControllerServerAbility::VerifyBundleNameIsValid(const std::string &bundleName)

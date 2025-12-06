@@ -29,9 +29,13 @@
 #include "dpad_key_to_touch_handler.h"
 #include "mouse_right_key_walking_to_touch_handler.h"
 #include "mouse_right_key_click_to_touch_handler.h"
+#include "plugin_callback_manager.h"
 
 namespace OHOS {
 namespace GameController {
+namespace {
+const int32_t DELAY_TIME_UNIT = 1000000;// 1s = 1000ms = 1000000μs
+}
 
 KeyToTouchManager::KeyToTouchManager()
 {
@@ -51,6 +55,9 @@ KeyToTouchManager::KeyToTouchManager()
     mappingHandler_[MappingTypeEnum::MOUSE_LEFT_FIRE_TO_TOUCH] = std::make_shared<MouseLeftFireToTouchHandler>();
     mappingHandler_[MappingTypeEnum::MOUSE_RIGHT_KEY_CLICK_TO_TOUCH]
         = std::make_shared<MouseRightKeyClickToTouchHandler>();
+    handleQueue_->submit([this] {
+        CheckPointerSendInterval();
+    }, ffrt::task_attr().name("pointer-check-task").delay(DELAY_TIME_UNIT));
 }
 
 KeyToTouchManager::~KeyToTouchManager()
@@ -61,6 +68,7 @@ void KeyToTouchManager::SetSupportKeyMapping(bool isSupportKeyMapping,
                                              const std::unordered_set<int32_t> &deviceTypeSet)
 {
     std::lock_guard<ffrt::mutex> lock(checkMutex_);
+    HILOGI("SetSupportKeyMapping. isSupportKeyMapping_ is [%{public}d]", isSupportKeyMapping);
     isSupportKeyMapping_ = isSupportKeyMapping;
     supportDeviceTypeSet_ = deviceTypeSet;
 }
@@ -124,26 +132,31 @@ bool KeyToTouchManager::DispatchPointerEvent(const std::shared_ptr<MMI::PointerE
     }
 
     std::lock_guard<ffrt::mutex> lock(checkMutex_);
-    if (!IsCanEnableKeyMapping()) {
-        return false;
-    }
-    if (!DeviceIsSupportKeyMapping(GAME_KEY_BOARD)) {
-        return false;
-    }
-    if (!isMonitorMouse_) {
-        return false;
+    if (IsCanEnableKeyMapping() && isMonitorMouse_ && DeviceIsSupportKeyMapping(GAME_KEY_BOARD)) {
+        handleQueue_->submit([pointerEvent, this] {
+            HandlePointerEvent(pointerEvent, GAME_MOUSE);
+        });
+        return true;
     }
 
-    handleQueue_->submit([pointerEvent, this] {
-        HandlePointerEvent(pointerEvent, GAME_MOUSE);
-    });
-    return true;
+    if (isPluginMode_) {
+        DelayedSingleton<PluginCallbackManager>::GetInstance()->SendInputEvent(bundleName_, pointerEvent, false);
+        return true;
+    }
+    return false;
 }
 
 void KeyToTouchManager::UpdateTemplateConfig(const DeviceTypeEnum &deviceType,
+                                             const std::string &bundleName,
                                              const std::vector<KeyToTouchMappingInfo> &mappingInfos)
 {
-    handleQueue_->submit([deviceType, mappingInfos, this] {
+    handleQueue_->submit([bundleName, deviceType, mappingInfos, this] {
+        if (bundleName != bundleName_) {
+            HILOGW("discard UpdateTemplateConfig. bundleName is [%{public}s]; bundleName_ is [%{public}s]",
+                   bundleName.c_str(), bundleName_.c_str());
+            return;
+        }
+
         HandleTemplateConfig(deviceType, mappingInfos);
     });
 }
@@ -151,6 +164,14 @@ void KeyToTouchManager::UpdateTemplateConfig(const DeviceTypeEnum &deviceType,
 void KeyToTouchManager::UpdateWindowInfo(const WindowInfoEntity &windowInfoEntity)
 {
     handleQueue_->submit([windowInfoEntity, this] {
+        if (isPluginMode_) {
+            if (windowInfoEntity.bundleName != bundleName_) {
+                HILOGW("discard windowInfo. bundleName is [%{public}s]; bundleName_ is [%{public}s]",
+                       windowInfoEntity.bundleName.c_str(), bundleName_.c_str());
+                return;
+            }
+        }
+
         HandleWindowInfo(windowInfoEntity);
     });
 }
@@ -160,7 +181,7 @@ void KeyToTouchManager::HandleKeyEvent(const std::shared_ptr<MMI::KeyEvent> &key
                                        const DeviceInfo &deviceInfo)
 {
     if (!isEnableKeyMapping_) {
-        Rosen::WindowInputInterceptClient::SendInputEvent(keyEvent);
+        DelayedSingleton<PluginCallbackManager>::GetInstance()->SendInputEvent(bundleName_, keyEvent, false);
         return;
     }
     std::shared_ptr<InputToTouchContext> context = nullptr;
@@ -170,7 +191,7 @@ void KeyToTouchManager::HandleKeyEvent(const std::shared_ptr<MMI::KeyEvent> &key
         context = hoverTouchPadContext_;
     }
     if (context == nullptr) {
-        Rosen::WindowInputInterceptClient::SendInputEvent(keyEvent);
+        DelayedSingleton<PluginCallbackManager>::GetInstance()->SendInputEvent(bundleName_, keyEvent, false);
         return;
     }
     KeyToTouchMappingInfo keyToTouchMappingInfo;
@@ -184,12 +205,8 @@ void KeyToTouchManager::HandleKeyEvent(const std::shared_ptr<MMI::KeyEvent> &key
 void KeyToTouchManager::HandlePointerEvent(const std::shared_ptr<MMI::PointerEvent> &pointerEvent,
                                            const DeviceTypeEnum &deviceType)
 {
-    if (!isEnableKeyMapping_) {
-        Rosen::WindowInputInterceptClient::SendInputEvent(pointerEvent);
-        return;
-    }
-    if (!isMonitorMouse_ || gcKeyboardContext_ == nullptr) {
-        Rosen::WindowInputInterceptClient::SendInputEvent(pointerEvent);
+    if (!isEnableKeyMapping_ || !isMonitorMouse_ || gcKeyboardContext_ == nullptr) {
+        DelayedSingleton<PluginCallbackManager>::GetInstance()->SendInputEvent(bundleName_, pointerEvent, false);
         return;
     }
 
@@ -198,7 +215,7 @@ void KeyToTouchManager::HandlePointerEvent(const std::shared_ptr<MMI::PointerEve
         IsHandleMouseLeftButtonEvent(gcKeyboardContext_, pointerEvent)) {
         return;
     }
-    Rosen::WindowInputInterceptClient::SendInputEvent(pointerEvent);
+    DelayedSingleton<PluginCallbackManager>::GetInstance()->SendInputEvent(bundleName_, pointerEvent, false);
 }
 
 void KeyToTouchManager::HandleTemplateConfig(const DeviceTypeEnum &deviceType,
@@ -220,7 +237,10 @@ void KeyToTouchManager::HandleTemplateConfig(const DeviceTypeEnum &deviceType,
 void KeyToTouchManager::HandleWindowInfo(const WindowInfoEntity &windowInfoEntity)
 {
     HILOGI("windowInfo is [%{public}s]", windowInfoEntity.ToString().c_str());
-    windowInfoEntity_ = windowInfoEntity;
+    {
+        std::lock_guard<ffrt::mutex> lock(checkMutex_);
+        windowInfoEntity_ = windowInfoEntity;
+    }
     UpdateContextWindowInfo(gcKeyboardContext_);
     UpdateContextWindowInfo(hoverTouchPadContext_);
 }
@@ -239,6 +259,10 @@ void KeyToTouchManager::InitGcKeyboardContext(const std::vector<KeyToTouchMappin
         DelayedSingleton<MouseRightKeyWalkingDelayHandleTask>::GetInstance()->CancelDelayHandle();
         DelayedSingleton<KeyboardObservationToTouchHandlerTask>::GetInstance()->StopTask();
         ReleaseContext(gcKeyboardContext_);
+    }
+    if (mappingInfos.empty()) {
+        gcKeyboardContext_ = nullptr;
+        return;
     }
     gcKeyboardContext_ = std::make_shared<InputToTouchContext>(GAME_KEY_BOARD,
                                                                windowInfoEntity_, mappingInfos);
@@ -262,7 +286,7 @@ void KeyToTouchManager::ReleaseContext(const std::shared_ptr<InputToTouchContext
     if (!inputToTouchContext->pointerItems.empty()) {
         // send pointer up event for all pointers
         PointerEvent::PointerItem pointerItem;
-        for (auto &pointer: inputToTouchContext->pointerItems) {
+        for (const auto &pointer: inputToTouchContext->pointerItems) {
             std::shared_ptr<PointerEvent> pointerEvent = PointerEvent::Create();
             if (pointerEvent == nullptr) {
                 HILOGE("Create PointerEvent failed.");
@@ -274,19 +298,19 @@ void KeyToTouchManager::ReleaseContext(const std::shared_ptr<InputToTouchContext
             pointerEvent->SetActionTime(pointerItem.GetDownTime());
             pointerEvent->SetAgentWindowId(inputToTouchContext->windowInfoEntity.windowId);
             pointerEvent->SetTargetWindowId(inputToTouchContext->windowInfoEntity.windowId);
-
-            pointerEvent->SetId(std::numeric_limits<int32_t>::max());
+            pointerEvent->SetTargetDisplayId(inputToTouchContext->windowInfoEntity.displayId);
+            pointerEvent->SetId(inputToTouchContext->GetEventId());
             pointerEvent->SetPointerAction(PointerEvent::POINTER_ACTION_UP);
             pointerEvent->SetPointerId(pointerItem.GetPointerId());
             pointerEvent->SetSourceType(PointerEvent::SOURCE_TYPE_TOUCHSCREEN);
             HILOGI("ReleaseContext pointer is [%{public}s].", pointerEvent->ToString().c_str());
-            Rosen::WindowInputInterceptClient::SendInputEvent(pointerEvent);
+            DelayedSingleton<PluginCallbackManager>::GetInstance()->SendInputEvent(bundleName_, pointerEvent, true);
             DelayedSingleton<PointerManager>::GetInstance()->ReleasePointerId(pointerItem.GetPointerId());
         }
     }
     if (inputToTouchContext->isEnterCrosshairInfo) {
         if (mappingHandler_.find(MappingTypeEnum::CROSSHAIR_KEY_TO_TOUCH) != mappingHandler_.end()) {
-            mappingHandler_[MappingTypeEnum::CROSSHAIR_KEY_TO_TOUCH]->ExitCrosshairKeyStatus();
+            mappingHandler_[MappingTypeEnum::CROSSHAIR_KEY_TO_TOUCH]->ExitCrosshairKeyStatus(inputToTouchContext);
         }
     }
 }
@@ -435,7 +459,7 @@ bool KeyToTouchManager::GetMappingInfoByKeyCodeFromCombinationKey(const std::sha
     bool isCombinationKey = false;
     int64_t combinationKeyDownTime = 0;
     std::unordered_map<int32_t, KeyToTouchMappingInfo> combinationMap = context->combinationKeyMappings[keycode];
-    for (auto &keyItem: keyEvent->GetKeyItems()) {
+    for (const auto &keyItem: keyEvent->GetKeyItems()) {
         if (keyItem.GetDeviceId() == deviceId
             && keyItem.GetDownTime() >= deviceInfo.onlineTime
             && keyItem.GetDownTime() < keyDownTime
@@ -560,18 +584,37 @@ bool KeyToTouchManager::IsHandleMouseLeftButtonEvent(std::shared_ptr<InputToTouc
     return false;
 }
 
-void KeyToTouchManager::EnableKeyMapping(bool isEnable)
+void KeyToTouchManager::SetCurrentBundleName(const std::string &bundleName, bool isEnable, bool isPluginMode)
 {
-    handleQueue_->submit([isEnable, this] {
+    handleQueue_->submit([bundleName, isEnable, isPluginMode, this] {
+        HILOGI("SetCurrentBundleName bundleName[%{public}s] isEnableKeyMapping[%{public}d]",
+               bundleName.c_str(), isEnable);
+        isPluginMode_ = isPluginMode;
+        bundleName_ = bundleName;
+        {
+            std::lock_guard<ffrt::mutex> lock(checkMutex_);
+            isEnableKeyMapping_ = isEnable;
+        }
+    });
+}
+
+void KeyToTouchManager::EnableKeyMapping(const std::string &bundleName, bool isEnable)
+{
+    handleQueue_->submit([bundleName, isEnable, this] {
+        std::lock_guard<ffrt::mutex> lock(checkMutex_);
+        if (bundleName != bundleName_) {
+            HILOGW("Discard the EnableKeyMapping Operate. Because the bundleName[%{public}s] is not same "
+                   "with bundleName_[%{public}s]", bundleName.c_str(), bundleName_.c_str());
+            return;
+        }
         HandleEnableKeyMapping(isEnable);
     });
 }
 
 void KeyToTouchManager::HandleEnableKeyMapping(bool isEnable)
 {
-    std::lock_guard<ffrt::mutex> lock(checkMutex_);
     isEnableKeyMapping_ = isEnable;
-    HILOGI("EnableKeyMapping([%{public}d]). 1 is enable", isEnable ? 1 : 0);
+    HILOGI("EnableKeyMapping([%{public}d]). 1 is enable", isEnable);
     ResetContext(gcKeyboardContext_);
     ResetContext(hoverTouchPadContext_);
 }
@@ -612,11 +655,50 @@ void KeyToTouchManager::UpdateByDeviceStatusChanged(const DeviceInfo &deviceInfo
             }
 
             if (gcKeyboardContext_->isEnterCrosshairInfo) {
-                InputManager::GetInstance()->SetPointerVisible(false, 0);
+                DelayedSingleton<PluginCallbackManager>::GetInstance()->SetPointerVisible(
+                    gcKeyboardContext_->windowInfoEntity.bundleName,
+                    false);
             }
         });
     }
 }
 
+void KeyToTouchManager::ClearGameKeyMapping()
+{
+    std::lock_guard<ffrt::mutex> lock(checkMutex_);
+    HILOGI("do ClearGameKeyMapping. the currentBundleName is [%{public}s]", bundleName_.c_str());
+    isSupportKeyMapping_ = false;
+    supportDeviceTypeSet_.clear();
+    allMonitorKeys_.clear();
+    isMonitorMouse_ = false;
+    windowInfoEntity_ = WindowInfoEntity{};
+    isEnableKeyMapping_ = true;
+    bundleName_ = "";
+
+    handleQueue_->submit([this] {
+        if (!isPluginMode_) {
+            return;
+        }
+        HILOGI("do InitContext.");
+
+        // Context must be reInited first
+        std::vector<KeyToTouchMappingInfo> mappingInfos;
+        InitGcKeyboardContext(mappingInfos);
+        InitHoverTouchPadContext(mappingInfos);
+    });
+}
+
+void KeyToTouchManager::CheckPointerSendInterval()
+{
+    if (gcKeyboardContext_ != nullptr) {
+        gcKeyboardContext_->CheckPointerSendInterval();
+    }
+    if (hoverTouchPadContext_ != nullptr) {
+        hoverTouchPadContext_->CheckPointerSendInterval();
+    }
+    handleQueue_->submit([this] {
+        CheckPointerSendInterval();
+    }, ffrt::task_attr().name("pointer-check-task").delay(DELAY_TIME_UNIT));
+}
 }
 }

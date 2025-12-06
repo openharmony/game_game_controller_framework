@@ -129,6 +129,7 @@ WindowInfoManager::~WindowInfoManager()
 bool WindowInfoManager::InitWindowInfo(const std::string &bundleName)
 {
     std::lock_guard<std::mutex> lock(mutex_);
+    bundleName_ = bundleName;
     std::string windowName = bundleName + std::to_string(0);
     std::size_t pos = windowName.find_last_of('.');
     windowName = (pos == std::string::npos) ? windowName : windowName.substr(pos + 1);
@@ -139,16 +140,19 @@ bool WindowInfoManager::InitWindowInfo(const std::string &bundleName)
         return false;
     }
     int32_t windowId = static_cast<int32_t>(mainWindow_->GetWindowId());
-    HILOGI("windowId is [%{public}d]", windowId);
-    Rect rect = mainWindow_->GetRect();
-    HILOGI("window rect is  [%{public}s]", rect.ToString().c_str());
     initWindowInfoEntity_.windowId = windowId;
+    int32_t displayId = static_cast<int32_t>(mainWindow_->GetDisplayId());
+    initWindowInfoEntity_.displayId = displayId;
+    Rect rect = mainWindow_->GetRect();
     initWindowInfoEntity_.ParseRect(rect);
     WindowMode windowMode = mainWindow_->GetWindowMode();
     initWindowInfoEntity_.isFullScreen = windowMode == Rosen::WindowMode::WINDOW_MODE_FULLSCREEN;
-    HILOGI("window isFullScreen [%{public}d]", initWindowInfoEntity_.isFullScreen ? 1 : 0);
+    HILOGI("windowId is [%{public}d], displayId is [%{public}d], window rect is [%{public}s],"
+           " isFullScreen [%{public}d]",
+           windowId, displayId, rect.ToString().c_str(), initWindowInfoEntity_.isFullScreen ? 1 : 0);
     initWindowInfoEntity_.maxWidth = static_cast<int32_t>(rect.width_);
     initWindowInfoEntity_.maxHeight = static_cast<int32_t>(rect.height_);
+    initWindowInfoEntity_.bundleName = bundleName_;
     DelayedSingleton<KeyToTouchManager>::GetInstance()->UpdateWindowInfo(initWindowInfoEntity_);
     windowChangeListener_ = sptr<WindowChangeListener>::MakeSptr();
     mainWindow_->RegisterWindowChangeListener(windowChangeListener_);
@@ -161,6 +165,8 @@ void WindowInfoManager::UpdateWindowInfo(const Rect &rect)
 {
     WindowInfoEntity windowInfoEntity;
     windowInfoEntity.windowId = initWindowInfoEntity_.windowId;
+    int32_t displayId = static_cast<int32_t>(mainWindow_->GetDisplayId());
+    initWindowInfoEntity_.displayId = displayId;
     windowInfoEntity.ParseRect(rect);
     WindowMode windowMode = mainWindow_->GetWindowMode();
     HILOGI("windowMode is [%{public}d]", windowMode);
@@ -173,6 +179,7 @@ void WindowInfoManager::UpdateWindowInfo(const Rect &rect)
     windowInfoEntity.maxWidth = initWindowInfoEntity_.maxWidth;
     windowInfoEntity.maxHeight = initWindowInfoEntity_.maxHeight;
     windowInfoEntity.isFullScreen = isFullScreen;
+    windowInfoEntity.bundleName = bundleName_;
     DelayedSingleton<KeyToTouchManager>::GetInstance()->UpdateWindowInfo(windowInfoEntity);
 }
 
@@ -207,7 +214,7 @@ void WindowInfoManager::DisableGestureBack()
     mainWindow_->SetGestureBackEnabled(false);
 }
 
-void WindowInfoManager::EnableGestureBackEnabled()
+void WindowInfoManager::EnableGestureBack()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (mainWindow_ == nullptr) {

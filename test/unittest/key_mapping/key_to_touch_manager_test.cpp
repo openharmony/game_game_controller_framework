@@ -48,6 +48,7 @@ const int32_t SINGLE_KEYMAPPING_RESULT_SIZE = 4;
 const int32_t DEVICE_TYPE_KEYBOARD = 3;
 const int32_t DEVICE_TYPE_HOVER_TOUCH_PAD = 2;
 const size_t MAX_SINGLE_KEY_SIZE_FOR_HOVER_TOUCH_PAD = 2;
+const int32_t SLEEP_TIME = 50;
 }
 
 class KeyToTouchManagerTest : public testing::Test {
@@ -275,10 +276,13 @@ HWTEST_F(KeyToTouchManagerTest, SetSupportKeyMapping_001, TestSize.Level0)
     std::unordered_set<int32_t> deviceTypeSet;
     deviceTypeSet.insert(DEVICE_TYPE_KEYBOARD);
     handler_->SetSupportKeyMapping(true, deviceTypeSet);
+
     ASSERT_TRUE(handler_->isSupportKeyMapping_);
     ASSERT_TRUE(handler_->supportDeviceTypeSet_.count(DEVICE_TYPE_KEYBOARD) == 1);
+
     deviceTypeSet.clear();
     deviceTypeSet.insert(DEVICE_TYPE_HOVER_TOUCH_PAD);
+
     handler_->SetSupportKeyMapping(false, deviceTypeSet);
     ASSERT_TRUE(handler_->supportDeviceTypeSet_.count(DEVICE_TYPE_HOVER_TOUCH_PAD) == 1);
     ASSERT_FALSE(handler_->isSupportKeyMapping_);
@@ -567,53 +571,82 @@ HWTEST_F(KeyToTouchManagerTest, DispatchPointerEvent_003, TestSize.Level0)
 }
 
 /**
- * @tc.name: HandleWindowInfo_001
- * @tc.desc: when HandleWindowInfo function is called, window info is set to
- *           gcKeyboardContext_ and hoverTouchPadContext_;
+ * @tc.name: UpdateWindowInfo_001
+ * @tc.desc: when bundleName is same with bundleName_, gcKeyboardContext_ and hoverTouchPadContext_ is  nullptr
+ * windowInfoEntity_ is set;
  * @tc.type: FUNC
  * @tc.require: issueNumber
  */
-HWTEST_F(KeyToTouchManagerTest, HandleWindowInfo_001, TestSize.Level0)
+HWTEST_F(KeyToTouchManagerTest, UpdateWindowInfo_001, TestSize.Level0)
 {
     std::vector<KeyToTouchMappingInfo> testMappingInfos;
     testMappingInfos.push_back(BuildKeyMapping(MappingTypeEnum::SINGE_KEY_TO_TOUCH));
-    WindowInfoEntity window = {1, 100, 100, 100, 100, 10, 10, true, 25, 25};
+    WindowInfoEntity window = {"test", 1, 100, 100, 100, 100, 10, 10, true, 25, 25, 1, false};
+    handler_->bundleName_ = window.bundleName;
 
-    handler_->HandleWindowInfo(window);
+    handler_->UpdateWindowInfo(window);
+
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
     CheckWindowInfo(handler_->windowInfoEntity_, window);
+    ASSERT_EQ(handler_->gcKeyboardContext_, nullptr);
+    ASSERT_EQ(handler_->hoverTouchPadContext_, nullptr);
+}
 
+/**
+ * @tc.name: UpdateWindowInfo_002
+ * @tc.desc:  when bundleName is same with bundleName_, gcKeyboardContext_ and hoverTouchPadContext_ is not nullptr,
+ *  windowInfo is set to gcKeyboardContext_ and hoverTouchPadContext_
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(KeyToTouchManagerTest, UpdateWindowInfo_002, TestSize.Level0)
+{
+    std::vector<KeyToTouchMappingInfo> testMappingInfos;
+    testMappingInfos.push_back(BuildKeyMapping(MappingTypeEnum::SINGE_KEY_TO_TOUCH));
     handler_->InitGcKeyboardContext(testMappingInfos);
     handler_->InitHoverTouchPadContext(testMappingInfos);
-    handler_->HandleWindowInfo(window);
+    WindowInfoEntity window = {"test", 1, 100, 100, 100, 100, 10, 10, true, 25, 25, 1, false};
+    handler_->bundleName_ = window.bundleName;
 
+    handler_->UpdateWindowInfo(window);
+
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
+    CheckWindowInfo(handler_->windowInfoEntity_, window);
     CheckWindowInfo(handler_->gcKeyboardContext_->windowInfoEntity, window);
     CheckWindowInfo(handler_->hoverTouchPadContext_->windowInfoEntity, window);
 }
 
 /**
- * @tc.name: HandleEnableKeyMapping_001
- * @tc.desc: when HandleEnableKeyMapping function is called, isEnableKeyMapping_ is set
+ * @tc.name: UpdateWindowInfo_003
+ * @tc.desc: when bundleName is not same with bundleName_, windowInfoEntity_ is not set;
  * @tc.type: FUNC
  * @tc.require: issueNumber
  */
-HWTEST_F(KeyToTouchManagerTest, HandleEnableKeyMapping_001, TestSize.Level0)
+HWTEST_F(KeyToTouchManagerTest, UpdateWindowInfo_003, TestSize.Level0)
 {
-    ASSERT_TRUE(handler_->isEnableKeyMapping_);
-    handler_->HandleEnableKeyMapping(false);
-    ASSERT_FALSE(handler_->isEnableKeyMapping_);
+    std::vector<KeyToTouchMappingInfo> testMappingInfos;
+    testMappingInfos.push_back(BuildKeyMapping(MappingTypeEnum::SINGE_KEY_TO_TOUCH));
+    WindowInfoEntity window = {"test", 1, 100, 100, 100, 100, 10, 10, true, 25, 25, 1, false};
+
+    handler_->UpdateWindowInfo(window);
+
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
+    ASSERT_NE(handler_->windowInfoEntity_.bundleName, window.bundleName);
 }
 
 /**
- * @tc.name: HandleEnableKeyMapping_001
- * @tc.desc: when HandleEnableKeyMapping function is called, current TempVariables in context is reset
- *  to default
+ * @tc.name: EnableKeyMapping_001
+ * @tc.desc: bundleName is same with bundleName_, isEnableKeyMapping_ is set
  * @tc.type: FUNC
  * @tc.require: issueNumber
  */
-HWTEST_F(KeyToTouchManagerTest, HandleEnableKeyMapping_002, TestSize.Level0)
+HWTEST_F(KeyToTouchManagerTest, EnableKeyMapping_001, TestSize.Level0)
 {
+    ASSERT_TRUE(handler_->isEnableKeyMapping_);
+    handler_->bundleName_ = "test";
     std::vector<KeyToTouchMappingInfo> testMapping;
     KeyToTouchMappingInfo info = BuildKeyMapping(MappingTypeEnum::SINGE_KEY_TO_TOUCH);
+
     info.keyCode = KEY_CODE_UP;
     testMapping.push_back(info);
     handler_->InitGcKeyboardContext(testMapping);
@@ -625,13 +658,31 @@ HWTEST_F(KeyToTouchManagerTest, HandleEnableKeyMapping_002, TestSize.Level0)
     handler_->gcKeyboardContext_->isSkillOperating = true;
     handler_->gcKeyboardContext_->currentSkillKeyInfo = BuildKeyMapping(MappingTypeEnum::SKILL_KEY_TO_TOUCH);
 
-    handler_->HandleEnableKeyMapping(true);
+    handler_->EnableKeyMapping(handler_->bundleName_, false);
 
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
+    ASSERT_FALSE(handler_->isEnableKeyMapping_);
     ASSERT_FALSE(handler_->gcKeyboardContext_->isCombinationKeyOperating);
     ASSERT_EQ(handler_->gcKeyboardContext_->currentCombinationKey.combinationKeys.size(), 0);
     ASSERT_FALSE(handler_->gcKeyboardContext_->isSkillOperating);
     ASSERT_EQ(handler_->gcKeyboardContext_->currentSkillKeyInfo.skillRange, 0);
     ASSERT_EQ(handler_->gcKeyboardContext_->currentSkillKeyInfo.radius, 0);
+}
+
+/**
+ * @tc.name: EnableKeyMapping_002
+ * @tc.desc: bundleName is not same with bundleName_, isEnableKeyMapping_ is not set
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(KeyToTouchManagerTest, EnableKeyMapping_002, TestSize.Level0)
+{
+    ASSERT_TRUE(handler_->isEnableKeyMapping_);
+    handler_->bundleName_ = "test";
+    handler_->EnableKeyMapping("test1", false);
+
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
+    ASSERT_FALSE(handler_->isEnableKeyMapping_);
 }
 }
 }
