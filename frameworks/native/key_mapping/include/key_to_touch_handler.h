@@ -210,6 +210,21 @@ struct InputToTouchContext {
      * @return first means whether pointerId exists
      */
     std::pair<bool, int32_t> GetPointerIdByKeyCode(const int32_t keyCode);
+
+    int32_t GetEventId();
+
+    /**
+     * 存在转触控时，检查发送间隔，如果500ms没有发送，则构建move指令，解决开启手势识别时，
+     * arkUI会检查前后两个事件的间隔，如果大于2s，则触发丢弃事件
+     */
+    void CheckPointerSendInterval();
+
+    /**
+     * Send pointerEvent
+     * @param pointerEvent pointerEvent
+     * @param pointerItem pointerItem
+     */
+    void SendPointerEvent(std::shared_ptr<MMI::PointerEvent> &pointerEvent, PointerEvent::PointerItem &pointerItem);
 };
 
 struct TouchEntity {
