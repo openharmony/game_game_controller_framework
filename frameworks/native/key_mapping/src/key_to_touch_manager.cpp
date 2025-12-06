@@ -281,7 +281,7 @@ void KeyToTouchManager::ReleaseContext(const std::shared_ptr<InputToTouchContext
             pointerEvent->SetAgentWindowId(inputToTouchContext->windowInfoEntity.windowId);
             pointerEvent->SetTargetWindowId(inputToTouchContext->windowInfoEntity.windowId);
 
-            pointerEvent->SetId(std::numeric_limits<int32_t>::max());
+            pointerEvent->SetId(inputToTouchContext->GetEventId());
             pointerEvent->SetPointerAction(PointerEvent::POINTER_ACTION_UP);
             pointerEvent->SetPointerId(pointerItem.GetPointerId());
             pointerEvent->SetSourceType(PointerEvent::SOURCE_TYPE_TOUCHSCREEN);
