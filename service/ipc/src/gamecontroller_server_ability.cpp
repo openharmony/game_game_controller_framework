@@ -151,12 +151,8 @@ int32_t GameControllerServerAbility::BroadcastDeviceInfo(const GameInfo &gameInf
 
     // 2. check the bundleName is in keyMapping trustlist.
     if (IsSupportGameKeyMapping(gameInfo)) {
-        int32_t gamePid;
-        if (isSystemAppCall) {
-            gamePid = gameInfo.pid;
-        } else {
-            gamePid = IPCSkeleton::GetCallingPid();
-        }
+        int32_t gamePid = IPCSkeleton::GetCallingPid();
+
         HILOGI("gamePid [%{public}d]", gamePid);
         return DelayedSingleton<EventPublisher>::GetInstance()->SendDeviceInfoNotify(gameInfo, deviceInfo, gamePid);
     }
