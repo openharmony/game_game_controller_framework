@@ -57,9 +57,7 @@ void BaseKeyToTouchHandler::BuildAndSendPointerEvent(std::shared_ptr<InputToTouc
     for (auto &pointerPair: context->pointerItems) {
         pointerEvent->AddPointerItem(pointerPair.second);
     }
-    if (touchEntity.pointerAction == PointerEvent::POINTER_ACTION_UP) {
-        pointerEvent->AddPointerItem(pointerItem);
-    }
+
     pointerEvent->SetPointerAction(touchEntity.pointerAction);
     context->SendPointerEvent(pointerEvent, pointerItem);
 }
@@ -532,6 +530,7 @@ void InputToTouchContext::SendPointerEvent(std::shared_ptr<MMI::PointerEvent> &p
     pointerEvent->SetActionTime(pointerItem.GetDownTime());
     pointerEvent->SetAgentWindowId(windowInfoEntity.windowId);
     pointerEvent->SetTargetWindowId(windowInfoEntity.windowId);
+    pointerEvent->SetTargetDisplayId(windowInfoEntity.displayId);
     pointerEvent->SetId(GetEventId());
     pointerEvent->SetPointerId(pointerItem.GetPointerId());
     pointerEvent->SetSourceType(PointerEvent::SOURCE_TYPE_TOUCHSCREEN);
