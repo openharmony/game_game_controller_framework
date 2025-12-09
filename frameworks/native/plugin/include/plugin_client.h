@@ -25,7 +25,7 @@ namespace OHOS {
 namespace GameController {
 struct AncoGameInfo {
     std::string bundleName;
-    int32_t pid = 0;
+    int32_t windowId = 0;
     bool isEnableKeyMapping = true;
 };
 

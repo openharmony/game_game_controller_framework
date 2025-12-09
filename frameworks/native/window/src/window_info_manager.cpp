@@ -235,5 +235,11 @@ void WindowInfoManager::SetTitleAndDockHoverShown()
     }
     mainWindow_->SetTitleAndDockHoverShown(false, false);
 }
+
+int32_t WindowInfoManager::GetWindowId()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    return initWindowInfoEntity_.windowId;;
+}
 }
 }

@@ -31,6 +31,7 @@ constexpr char* EVENT_PARAM_BUNDLE_NAME = "bundleName";
 constexpr char* EVENT_PARAM_BUNDLE_VERSION = "version";
 constexpr char* EVENT_PARAM_UNIQ = "uniq";
 constexpr char* EVENT_PARAM_VID_PID = "vidPid";
+constexpr char* EVENT_PARAM_WINDOW_ID = "windowId";
 constexpr char* EVENT_PARAM_DEVICE_TYPE = "deviceType";
 constexpr char* EVENT_PARAM_DEVICE_STATUS = "deviceStatus";
 constexpr char* EVENT_PARAM_DEVICE_NAME = "deviceName";
@@ -83,8 +84,8 @@ int32_t EventPublisher::SendDeviceInfoNotify(const GameInfo &gameInfo,
     publishInfo.SetSubscriberType(SYSTEM_SUBSCRIBER_TYPE);
     EventFwk::CommonEventData event = BuildCommonEventData(COMMON_EVENT_DEVICE_STATUS_CHANGE, gameInfo, deviceInfo,
                                                            gamePid);
-    HILOGI("[PUB]DeviceInfoNotify, bundle[%{public}s], deviceName[%{public}s].",
-           gameInfo.bundleName.c_str(), deviceInfo.name.c_str());
+    HILOGI("[PUB]DeviceInfoNotify, bundle[%{public}s], deviceName[%{public}s], windowId[%{public}d].",
+           gameInfo.bundleName.c_str(), deviceInfo.name.c_str(), gameInfo.windowId);
     if (EventFwk::CommonEventManager::NewPublishCommonEvent(event, publishInfo) != 0) {
         HILOGE("[PUB]DeviceInfoNotify error, bundle[%{public}s].",
                gameInfo.bundleName.c_str());
@@ -127,6 +128,7 @@ EventFwk::CommonEventData EventPublisher::BuildCommonEventData(const std::string
     want.SetParam(EVENT_PARAM_UNIQ, deviceInfo.uniq);
     want.SetParam(EVENT_PARAM_VID_PID, deviceInfo.GetVidPid());
     if (gamePid != 0) {
+        want.SetParam(EVENT_PARAM_WINDOW_ID, gameInfo.windowId);
         want.SetParam(EVENT_PARAM_GAME_PID, gamePid);
     }
     EventFwk::CommonEventData event;

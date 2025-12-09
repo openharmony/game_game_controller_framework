@@ -149,6 +149,8 @@ public:
 
     void SetTitleAndDockHoverShown();
 
+    int32_t GetWindowId();
+
 private:
     std::mutex mutex_;
     std::string bundleName_;

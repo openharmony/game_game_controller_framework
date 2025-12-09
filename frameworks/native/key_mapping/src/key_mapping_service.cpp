@@ -65,18 +65,24 @@ KeyMappingService::~KeyMappingService()
 {
 }
 
-bool KeyMappingService::IsSupportGameKeyMapping(const std::string &bundleName, const std::string &version, int32_t pid)
+bool KeyMappingService::IsSupportGameKeyMapping(const std::string &bundleName,
+                                                const std::string &version)
 {
     std::lock_guard<ffrt::mutex> lock(configMutex_);
     loadTemplateCache_.clear();
     bundleName_ = bundleName;
     bundleVersion_ = version;
-    pid_ = pid;
     std::pair<bool, KeyMappingSupportConfig> result = GetKeyMappingSupportConfig(bundleName);
     isSupportGameKeyMapping_ = result.first;
     keyMappingSupportConfig_ = result.second;
     SyncKeyMappingConfig();
     return isSupportGameKeyMapping_;
+}
+
+void KeyMappingService::SetWindowId(int32_t windowId)
+{
+    std::lock_guard<ffrt::mutex> lock(configMutex_);
+    windowId_ = windowId;
 }
 
 void KeyMappingService::ClearGameKeyMapping()
@@ -85,7 +91,7 @@ void KeyMappingService::ClearGameKeyMapping()
     loadTemplateCache_.clear();
     bundleName_ = "";
     bundleVersion_ = "";
-    pid_ = 0;
+    windowId_ = 0;
     isSupportGameKeyMapping_ = false;
     keyMappingSupportConfig_ = KeyMappingSupportConfig{};
     SyncKeyMappingConfig();
@@ -174,9 +180,10 @@ void KeyMappingService::ExecuteBroadCastDeviceInfo(const DeviceInfo &deviceInfo)
     GameInfo gameInfo;
     gameInfo.bundleName = bundleName_;
     gameInfo.version = bundleVersion_;
-    gameInfo.pid = pid_;
-    HILOGI("ExecuteBroadCastDeviceInfo: bundleName is [%{public}s], deviceType is [%{public}d], pid is [%{public}d]",
-           bundleName_.c_str(), deviceInfo.deviceType, pid_);
+    gameInfo.windowId = windowId_;
+    HILOGI("ExecuteBroadCastDeviceInfo: bundleName is [%{public}s], deviceType is [%{public}d],"
+           " windowId_ is [%{public}d]",
+           bundleName_.c_str(), deviceInfo.deviceType, windowId_);
     DelayedSingleton<GameControllerServerClient>::GetInstance()->BroadcastDeviceInfo(gameInfo,
                                                                                      deviceInfo);
     DelayedSingleton<PluginCallbackManager>::GetInstance()->OnDeviceStatusChanged(bundleName_, deviceInfo);

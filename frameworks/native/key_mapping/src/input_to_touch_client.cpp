@@ -104,7 +104,7 @@ bool InputToTouchClient::IsCommonApp()
 bool InputToTouchClient::IsSupportKeyMapping()
 {
     return DelayedSingleton<KeyMappingService>::GetInstance()->IsSupportGameKeyMapping(g_bundleInfo.bundleName,
-                                                                                       g_bundleInfo.version, 0);
+                                                                                       g_bundleInfo.version);
 }
 
 void InputToTouchClient::StartInputMonitor()
@@ -112,6 +112,8 @@ void InputToTouchClient::StartInputMonitor()
     if (!g_isPluginMode) {
         DelayedSingleton<KeyToTouchManager>::GetInstance()->SetCurrentBundleName(g_bundleInfo.bundleName, true, false);
         DelayedSingleton<WindowInfoManager>::GetInstance()->InitWindowInfo(g_bundleInfo.bundleName);
+        DelayedSingleton<KeyMappingService>::GetInstance()->SetWindowId(
+            DelayedSingleton<WindowInfoManager>::GetInstance()->GetWindowId());
     }
     DelayedSingleton<PluginCallbackManager>::GetInstance()->SetPluginMode(g_isPluginMode);
     DelayedSingleton<MultiModalInputMonitor>::GetInstance()->RegisterMonitorBySystem();

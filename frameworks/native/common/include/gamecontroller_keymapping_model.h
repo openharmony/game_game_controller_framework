@@ -408,7 +408,7 @@ struct GameInfo : public Parcelable {
 
     std::vector<int32_t> supportedDeviceTypes;
 
-    int32_t pid = 0;
+    int32_t windowId = 0;
 
     bool Marshalling(Parcel &parcel) const
     {
@@ -429,7 +429,7 @@ struct GameInfo : public Parcelable {
                 return false;
             }
         }
-        if (!parcel.WriteInt32(pid)) {
+        if (!parcel.WriteInt32(windowId)) {
             return false;
         }
         return true;
@@ -456,7 +456,7 @@ struct GameInfo : public Parcelable {
         if (!ReadSupportedDeviceTypes(parcel, ret)) {
             goto error;
         }
-        if (!parcel.ReadInt32(ret->pid)) {
+        if (!parcel.ReadInt32(ret->windowId)) {
             goto error;
         }
         return ret;

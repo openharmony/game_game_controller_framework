@@ -35,7 +35,8 @@ void PluginManager::UpdateCurrentGameInfo(const GameInfo &gameInfo, bool isEnabl
     HILOGI("UpdateCurrentGameInfo: bundleName is [%{public}s], isEnableKeyMapping[%{public}d]",
            gameInfo.bundleName.c_str(), isEnableKeyMapping);
     bundleName_ = gameInfo.bundleName;
-    DelayedSingleton<KeyMappingService>::GetInstance()->IsSupportGameKeyMapping(bundleName_, "", gameInfo.pid);
+    DelayedSingleton<KeyMappingService>::GetInstance()->IsSupportGameKeyMapping(bundleName_, "");
+    DelayedSingleton<KeyMappingService>::GetInstance()->SetWindowId(gameInfo.windowId);
     DelayedSingleton<KeyToTouchManager>::GetInstance()->SetCurrentBundleName(bundleName_, isEnableKeyMapping, true);
     DelayedSingleton<KeyMappingService>::GetInstance()->UpdateGameKeyMappingWhenTemplateChange(
         bundleName_, DeviceTypeEnum::GAME_KEY_BOARD);

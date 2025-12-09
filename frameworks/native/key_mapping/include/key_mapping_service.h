@@ -44,10 +44,15 @@ public:
      * It's only called once.
      * @param bundleName bundleName
      * @param version version
-     * @param pid pid
      * @return true means the game supports input-to-touch control.
      */
-    bool IsSupportGameKeyMapping(const std::string &bundleName, const std::string &version, int32_t pid);
+    bool IsSupportGameKeyMapping(const std::string &bundleName, const std::string &version);
+
+    /**
+     * Set the windowId
+     * @param windowId windowId
+     */
+    void SetWindowId(int32_t windowId);
 
     /**
      * Clear the key mapping of the game
@@ -149,7 +154,7 @@ private:
 
     std::string bundleVersion_;
 
-    int32_t pid_{0};
+    int32_t windowId_{0};
 
     std::unordered_map<DeviceTypeEnum, bool> loadTemplateCache_;
 };
