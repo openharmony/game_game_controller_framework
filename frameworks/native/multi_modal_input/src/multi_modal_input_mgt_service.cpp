@@ -359,7 +359,6 @@ void MultiModalInputMgtService::IdentifyDeviceType(
         if (deviceInfoByUniqMap_.find(deviceInfo.uniq) == deviceInfoByUniqMap_.end()) {
             // The local cache does not exist. The online event needs to be sent.
             isNeedNotify = true;
-            deviceInfo.onlineTime = StringUtils::GetSysClockTime();
         } else {
             if (deviceInfoByUniqMap_[deviceInfo.uniq].deviceType == deviceInfo.deviceType) {
                 isNeedNotify = false;
@@ -368,6 +367,7 @@ void MultiModalInputMgtService::IdentifyDeviceType(
                 isNeedNotify = true;
             }
         }
+        deviceInfo.onlineTime = StringUtils::GetSysClockTime();
         deviceInfo.anonymizationUniq = StringUtils::AnonymizationUniq(deviceInfo.uniq);
         deviceInfo.vidPid = deviceInfo.GetVidPid();
         deviceInfoByUniqMap_[deviceInfo.uniq] = deviceInfo;
