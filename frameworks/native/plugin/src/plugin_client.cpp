@@ -24,7 +24,7 @@ void GameControllerPluginClient::UpdateCurrentAncoGameInfo(const AncoGameInfo &a
 {
     GameInfo gameInfo;
     gameInfo.bundleName = ancoGameInfo.bundleName;
-    gameInfo.pid = ancoGameInfo.pid;
+    gameInfo.windowId = ancoGameInfo.windowId;
     DelayedSingleton<PluginManager>::GetInstance()->UpdateCurrentGameInfo(gameInfo, ancoGameInfo.isEnableKeyMapping);
 }
 
