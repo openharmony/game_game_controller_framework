@@ -29,7 +29,6 @@ const double ANGLE = 180.0;
 const int32_t TOUCH_RANGE = 10;
 const int32_t START_POINTER_ID = 3;
 const int64_t SEND_DURATION = 500000;
-static int32_t g_eventId = 0;
 static int32_t g_lastSendTime = 0;
 }
 
@@ -56,9 +55,7 @@ void BaseKeyToTouchHandler::BuildAndSendPointerEvent(std::shared_ptr<InputToTouc
     for (auto &pointerPair: context->pointerItems) {
         pointerEvent->AddPointerItem(pointerPair.second);
     }
-    if (touchEntity.pointerAction == PointerEvent::POINTER_ACTION_UP) {
-        pointerEvent->AddPointerItem(pointerItem);
-    }
+
     pointerEvent->SetPointerAction(touchEntity.pointerAction);
     context->SendPointerEvent(pointerEvent, pointerItem);
 }
@@ -539,11 +536,7 @@ void InputToTouchContext::SendPointerEvent(std::shared_ptr<MMI::PointerEvent> &p
 
 int32_t InputToTouchContext::GetEventId()
 {
-    g_eventId++;
-    if (g_eventId == std::numeric_limits<int32_t>::max()) {
-        g_eventId = 1;
-    }
-    return g_eventId;
+    return std::numeric_limits<int32_t>::max();
 }
 
 void InputToTouchContext::CheckPointerSendInterval()
