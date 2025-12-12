@@ -37,6 +37,7 @@ namespace GameController {
 namespace {
 const int32_t CACHE_DEVICE_ID = 100;
 }
+
 class MultiModalInputMgtServiceTest : public testing::Test {
 public:
     void SetUp() override;
@@ -347,11 +348,11 @@ HWTEST_F(MultiModalInputMgtServiceTest, HandleDeviceChangeEvent_002, TestSize.Le
 }
 
 /**
-* @tc.name: HandleDeviceChangeEvent_003
-* @tc.desc: Receives two online events from the same device, aggregates them, and caches them locally.
-* @tc.type: FUNC
-* @tc.require: issueNumber
-*/
+ * @tc.name: HandleDeviceChangeEvent_003
+ * @tc.desc: Receives two online events from the same device, aggregates them, and caches them locally.
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
 HWTEST_F(MultiModalInputMgtServiceTest, HandleDeviceChangeEvent_003, TestSize.Level0)
 {
     // Construct two online events of the same device.
@@ -402,12 +403,12 @@ HWTEST_F(MultiModalInputMgtServiceTest, HandleDeviceChangeEvent_003, TestSize.Le
 }
 
 /**
-* @tc.name: HandleDeviceChangeEvent_004
-* @tc.desc: If the device online information is received and the device information fails to be queried,
+ * @tc.name: HandleDeviceChangeEvent_004
+ * @tc.desc: If the device online information is received and the device information fails to be queried,
  * the event is discarded.
-* @tc.type: FUNC
-* @tc.require: issueNumber
-*/
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
 HWTEST_F(MultiModalInputMgtServiceTest, HandleDeviceChangeEvent_004, TestSize.Level0)
 {
     ClearDeviceCache();
@@ -429,12 +430,12 @@ HWTEST_F(MultiModalInputMgtServiceTest, HandleDeviceChangeEvent_004, TestSize.Le
 }
 
 /**
-* @tc.name: HandleDeviceChangeEvent_005
-* @tc.desc: A device's online and offline messages are received at the same time,
+ * @tc.name: HandleDeviceChangeEvent_005
+ * @tc.desc: A device's online and offline messages are received at the same time,
  * and the event sequence is online > offline. Finally, the local cache is empty.
-* @tc.type: FUNC
-* @tc.require: issueNumber
-*/
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
 HWTEST_F(MultiModalInputMgtServiceTest, HandleDeviceChangeEvent_005, TestSize.Level0)
 {
     ClearDeviceCache();
@@ -466,12 +467,12 @@ HWTEST_F(MultiModalInputMgtServiceTest, HandleDeviceChangeEvent_005, TestSize.Le
 }
 
 /**
-* @tc.name: HandleDeviceChangeEvent_006
-* @tc.desc: The online and offline events of a device are received at the same time.
+ * @tc.name: HandleDeviceChangeEvent_006
+ * @tc.desc: The online and offline events of a device are received at the same time.
  * The event sequence is offline and then online. Finally, the local cache is generated.
-* @tc.type: FUNC
-* @tc.require: issueNumber
-*/
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
 HWTEST_F(MultiModalInputMgtServiceTest, HandleDeviceChangeEvent_006, TestSize.Level0)
 {
     ClearDeviceCache();
@@ -510,12 +511,12 @@ HWTEST_F(MultiModalInputMgtServiceTest, HandleDeviceChangeEvent_006, TestSize.Le
 }
 
 /**
-* @tc.name: HandleDeviceChangeEvent_007
-* @tc.desc: Receives virtual device event. if it's external device's virtual device event,
-* Construct uniq using vendor and product
-* @tc.type: FUNC
-* @tc.require: issueNumber
-*/
+ * @tc.name: HandleDeviceChangeEvent_007
+ * @tc.desc: Receives virtual device event. if it's external device's virtual device event,
+ * Construct uniq using vendor and product
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
 HWTEST_F(MultiModalInputMgtServiceTest, HandleDeviceChangeEvent_007, TestSize.Level0)
 {
     // Construct two online events of the same device.
@@ -563,17 +564,17 @@ HWTEST_F(MultiModalInputMgtServiceTest, HandleDeviceChangeEvent_007, TestSize.Le
         inputDeviceInfo1.uniq));
     ASSERT_EQ(2, DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceIdUniqMap_.size());
     ASSERT_EQ(inputDeviceInfo1.uniq,
-    DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceIdUniqMap_[inputDeviceInfo1.id]);
+              DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceIdUniqMap_[inputDeviceInfo1.id]);
     std::string uniq = std::to_string(inputDeviceInfo2.vendor) + "_" + std::to_string(inputDeviceInfo2.product);
     ASSERT_EQ(uniq, DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceIdUniqMap_[inputDeviceInfo2.id]);
 }
 
 /**
-* @tc.name: HandleDeviceChangeEvent_008
-* @tc.desc: Receives virtual device event. if it's system's virtual device event. it's will discard.
-* @tc.type: FUNC
-* @tc.require: issueNumber
-*/
+ * @tc.name: HandleDeviceChangeEvent_008
+ * @tc.desc: Receives virtual device event. if it's system's virtual device event. it's will discard.
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
 HWTEST_F(MultiModalInputMgtServiceTest, HandleDeviceChangeEvent_008, TestSize.Level0)
 {
     ClearDeviceCache();
@@ -603,6 +604,69 @@ HWTEST_F(MultiModalInputMgtServiceTest, HandleDeviceChangeEvent_008, TestSize.Le
     ASSERT_EQ(0, DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceChangeEventCache_.size());
     ASSERT_EQ(0, DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceInfoByUniqMap_.size());
     ASSERT_EQ(0, DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceIdUniqMap_.size());
+}
+
+static DeviceInfo BuildOldDeviceInfo()
+{
+    DeviceInfo oldDeviceInfo;
+    oldDeviceInfo.uniq = "11:22:33:44:1";
+    oldDeviceInfo.names.insert("test");
+    oldDeviceInfo.ids.insert(CACHE_DEVICE_ID);
+    oldDeviceInfo.hasFullKeyBoard = true;
+    oldDeviceInfo.sourceTypeSet.insert(InputSourceTypeEnum::KEYBOARD);
+    oldDeviceInfo.idSourceTypeMap[CACHE_DEVICE_ID] = {InputSourceTypeEnum::KEYBOARD};
+    oldDeviceInfo.onlineTime = 1;
+    DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceInfoByUniqMap_[oldDeviceInfo.uniq]
+        = oldDeviceInfo;
+    DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceIdUniqMap_[CACHE_DEVICE_ID] = oldDeviceInfo.uniq;
+    return oldDeviceInfo;
+}
+
+/**
+ * @tc.name: HandleDeviceChangeEvent_009
+ * @tc.desc: If the device information with the same unique ID already exists in the cache,
+ * it will be updated upon receiving the device online event
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(MultiModalInputMgtServiceTest, HandleDeviceChangeEvent_009, TestSize.Level0)
+{
+    DeviceInfo oldDeviceInfo = BuildOldDeviceInfo();
+    DelayedSingleton<MultiModalInputMgtService>::GetInstance()->needStartDelayHandle_ = false;
+    DeviceChangeEvent event{};
+    event.deviceChangeType = DeviceChangeType::ADD;
+    event.deviceId = 1;
+    DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceChangeEventCache_.push_back(event);
+    std::pair<int32_t, InputDeviceInfo> pair;
+    pair.first = 0;
+    InputDeviceInfo inputDeviceInfo = MultiModalInputMgtServiceTest::CreateInputDeviceInfo(event.deviceId);
+    inputDeviceInfo.sourceTypeSet.insert(InputSourceTypeEnum::JOYSTICK);
+    pair.second = inputDeviceInfo;
+    EXPECT_CALL(*(deviceInfoServiceMock_.get()), GetInputDeviceInfo(event.deviceId)).WillOnce(Return(pair));
+    EXPECT_CALL(*(gameControllerServerClientMock_.get()), IdentifyDevice(testing::_, testing::_)).WillOnce(Return(1));
+
+    DelayedSingleton<MultiModalInputMgtService>::GetInstance()->HandleDeviceChangeEvent();
+
+    ASSERT_EQ(1, DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceInfoByUniqMap_.size());
+    DeviceInfo deviceInfo = DelayedSingleton<MultiModalInputMgtService>::GetInstance()
+        ->deviceInfoByUniqMap_[oldDeviceInfo.uniq];
+    ASSERT_TRUE(deviceInfo.hasFullKeyBoard);
+    ASSERT_TRUE(deviceInfo.onlineTime != 0);
+    ASSERT_TRUE(deviceInfo.ids.count(CACHE_DEVICE_ID) && deviceInfo.ids.count(event.deviceId));
+    ASSERT_TRUE(deviceInfo.sourceTypeSet.count(InputSourceTypeEnum::KEYBOARD) &&
+                    deviceInfo.sourceTypeSet.count(InputSourceTypeEnum::JOYSTICK));
+    ASSERT_TRUE(deviceInfo.names.count("test") &&
+                    deviceInfo.names.count(inputDeviceInfo.name));
+    ASSERT_EQ(1, deviceInfo.idSourceTypeMap[CACHE_DEVICE_ID].count(InputSourceTypeEnum::KEYBOARD));
+    ASSERT_EQ(1, deviceInfo.idSourceTypeMap[event.deviceId].count(InputSourceTypeEnum::JOYSTICK));
+    ASSERT_EQ(GAME_PAD, deviceInfo.deviceType);
+    ASSERT_EQ(2, DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceIdUniqMap_.size());
+    ASSERT_EQ(oldDeviceInfo.uniq,
+              DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceIdUniqMap_[event.deviceId]);
+    ASSERT_EQ(oldDeviceInfo.uniq,
+              DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceIdUniqMap_[CACHE_DEVICE_ID]);
+    ASSERT_TRUE(DelayedSingleton<MultiModalInputMgtService>::GetInstance()->needStartDelayHandle_);
+    ASSERT_EQ(0, DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceChangeEventCache_.size());
 }
 
 }

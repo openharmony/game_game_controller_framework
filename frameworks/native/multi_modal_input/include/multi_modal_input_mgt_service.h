@@ -149,6 +149,8 @@ private:
 
     void ClearOfflineDeviceAndBroadcast(const int32_t deviceId);
 
+    void CheckDeviceType(DeviceInfo &deviceInfo);
+
 private:
 
     /**
