@@ -616,7 +616,8 @@ static DeviceInfo BuildOldDeviceInfo()
     oldDeviceInfo.sourceTypeSet.insert(InputSourceTypeEnum::KEYBOARD);
     oldDeviceInfo.idSourceTypeMap[CACHE_DEVICE_ID] = {InputSourceTypeEnum::KEYBOARD};
     oldDeviceInfo.onlineTime = 1;
-    DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceInfoByUniqMap_[oldDeviceInfo.uniq] = oldDeviceInfo;
+    DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceInfoByUniqMap_[oldDeviceInfo.uniq]
+        = oldDeviceInfo;
     DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceIdUniqMap_[CACHE_DEVICE_ID] = oldDeviceInfo.uniq;
     return oldDeviceInfo;
 }
@@ -647,7 +648,8 @@ HWTEST_F(MultiModalInputMgtServiceTest, HandleDeviceChangeEvent_009, TestSize.Le
     DelayedSingleton<MultiModalInputMgtService>::GetInstance()->HandleDeviceChangeEvent();
 
     ASSERT_EQ(1, DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceInfoByUniqMap_.size());
-    DeviceInfo deviceInfo = DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceInfoByUniqMap_[oldDeviceInfo.uniq];
+    DeviceInfo deviceInfo = DelayedSingleton<MultiModalInputMgtService>::GetInstance()
+        ->deviceInfoByUniqMap_[oldDeviceInfo.uniq];
     ASSERT_TRUE(deviceInfo.hasFullKeyBoard);
     ASSERT_TRUE(deviceInfo.onlineTime != 0);
     ASSERT_TRUE(deviceInfo.ids.count(CACHE_DEVICE_ID) && deviceInfo.ids.count(event.deviceId));
