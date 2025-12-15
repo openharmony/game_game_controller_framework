@@ -295,7 +295,7 @@ bool MultiModalInputMgtService::GetUniqOnDeviceAddEvent(
         return false;
     }
 
-    inputDeviceInfo.uniq = inputDeviceInfo.GenerateUniq();;
+    inputDeviceInfo.uniq = inputDeviceInfo.GenerateUniq();
     HILOGI("[GameController] HandleDeviceAddEvent: Embeded device. "
            "deviceId is %{public}d, vendor is %{public}d, product is %{public}d. "
            "Because uniq is empty,construct a new uniq. ",
