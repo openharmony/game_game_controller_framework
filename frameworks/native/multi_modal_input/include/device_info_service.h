@@ -93,6 +93,11 @@ struct InputDeviceInfo {
     {
         return UniqIsEmpty() && vendor != 0 && product != 0;
     }
+
+    std::string GenerateUniq()
+    {
+        return std::to_string(vendor) + "_" + std::to_string(product) + "_" + std::to_string(id);
+    }
 };
 
 /**
