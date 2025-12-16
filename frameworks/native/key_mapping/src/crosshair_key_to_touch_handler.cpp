@@ -15,6 +15,7 @@
 #include <input_manager.h>
 #include "crosshair_key_to_touch_handler.h"
 #include "window_info_manager.h"
+#include "plugin_callback_manager.h"
 
 namespace OHOS {
 namespace GameController {
@@ -57,16 +58,18 @@ void CrosshairKeyToTouchHandler::HandleKeyUp(std::shared_ptr<InputToTouchContext
         // exit the crosshair mode
         SendUpTouch(context, keyEvent->GetActionTime());
         HILOGI("exit CrosshairMode, and show mouse pointer");
-        ExitCrosshairKeyStatus();
+        ExitCrosshairKeyStatus(context);
         context->ResetCurrentCrosshairInfo();
         return;
     }
 
     context->isEnterCrosshairInfo = true;
     HILOGI("keyCode [%{private}d] hide mouse pointer", keyCode);
-    InputManager::GetInstance()->SetPointerVisible(false, 0);
-    DelayedSingleton<WindowInfoManager>::GetInstance()->DisableGestureBack();
-    DelayedSingleton<WindowInfoManager>::GetInstance()->SetTitleAndDockHoverShown();
+    DelayedSingleton<PluginCallbackManager>::GetInstance()->SetPointerVisible(context->windowInfoEntity.bundleName,
+                                                                              false);
+    DelayedSingleton<PluginCallbackManager>::GetInstance()->DisableGestureBack(context->windowInfoEntity.bundleName);
+    DelayedSingleton<PluginCallbackManager>::GetInstance()->SetTitleAndDockHoverHidden(
+        context->windowInfoEntity.bundleName);
 }
 
 void CrosshairKeyToTouchHandler::HandlePointerEvent(std::shared_ptr<InputToTouchContext> &context,
@@ -157,10 +160,13 @@ bool CrosshairKeyToTouchHandler::IsSendUpTouch(std::shared_ptr<InputToTouchConte
     return false;
 }
 
-void CrosshairKeyToTouchHandler::ExitCrosshairKeyStatus()
+void CrosshairKeyToTouchHandler::ExitCrosshairKeyStatus(const std::shared_ptr<InputToTouchContext> &context)
 {
-    InputManager::GetInstance()->SetPointerVisible(true, 0);
-    DelayedSingleton<WindowInfoManager>::GetInstance()->EnableGestureBackEnabled();
+    DelayedSingleton<PluginCallbackManager>::GetInstance()->SetPointerVisible(context->windowInfoEntity.bundleName,
+                                                                              true);
+    DelayedSingleton<PluginCallbackManager>::GetInstance()->RecoverGestureBackStatus(
+        context->windowInfoEntity.bundleName);
+
     isSendDownTouch_ = true;
 }
 

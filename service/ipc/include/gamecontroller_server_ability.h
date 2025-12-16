@@ -131,10 +131,16 @@ protected:
     void OnActive(const SystemAbilityOnDemandReason &activeReason) override;
 
     /**
-     * Indicates whether to invoke the system service.
+     * Indicates whether the call comes from a system service
      * @return true: it's system service call
      */
     virtual bool IsSystemServiceCall();
+
+    /**
+     * Indicates whether the call comes from a system app.
+     * @return true: it's system app call
+     */
+    virtual bool IsSystemAppCall();
 
     /**
      * Check whether bundleName is the same as bundleName of the current invoker.

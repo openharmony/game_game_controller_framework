@@ -145,12 +145,15 @@ public:
 
     void DisableGestureBack();
 
-    void EnableGestureBackEnabled();
+    void EnableGestureBack();
 
     void SetTitleAndDockHoverShown();
 
+    int32_t GetWindowId();
+
 private:
     std::mutex mutex_;
+    std::string bundleName_;
     sptr<Window> mainWindow_ = nullptr;
     sptr<IWindowChangeListener> windowChangeListener_ = nullptr;
     sptr<IWindowLifeCycle> windowLifeCycle_ = nullptr;

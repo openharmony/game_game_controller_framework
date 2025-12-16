@@ -15,7 +15,9 @@
 
 #include <ipc_skeleton.h>
 #include <accesstoken_kit.h>
+#include <tokenid_kit.h>
 #include <bundle_mgr_client.h>
+#include <errors.h>
 #include "permission_utils.h"
 #include "gamecontroller_log.h"
 
@@ -51,6 +53,12 @@ bool PermissionUtils::IsSACall() const
     auto callerToken = IPCSkeleton::GetCallingTokenID();
     auto tokenType = AccessTokenKit::GetTokenTypeFlag(callerToken);
     return tokenType == ATokenTypeEnum::TOKEN_NATIVE;
+}
+
+bool PermissionUtils::IsSystemAppCall() const
+{
+    auto callerToken = IPCSkeleton::GetCallingFullTokenID();
+    return TokenIdKit::IsSystemAppByFullTokenID(callerToken);
 }
 }
 }

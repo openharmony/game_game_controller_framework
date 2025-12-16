@@ -25,7 +25,7 @@ public:
                             const std::shared_ptr<MMI::PointerEvent> &pointerEvent,
                             const KeyToTouchMappingInfo &mappingInfo) override;
 
-    void ExitCrosshairKeyStatus() override;
+    void ExitCrosshairKeyStatus(const std::shared_ptr<InputToTouchContext> &context) override;
 
 protected:
     void HandleKeyDown(std::shared_ptr<InputToTouchContext> &context,

@@ -36,6 +36,12 @@ public:
      * @return true: Yes
      */
     virtual bool IsSACall() const;
+
+    /**
+     * Indicates whether the request is from the system app.
+     * @return true: Yes
+     */
+    virtual bool IsSystemAppCall() const;
 };
 }
 }

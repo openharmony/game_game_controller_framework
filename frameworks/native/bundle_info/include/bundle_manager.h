@@ -24,7 +24,6 @@ struct BundleBasicInfo {
     std::string bundleName;
     std::string version;
     bool isCommonApp;
-    bool isPC = false;
 
     void Convert(const AppExecFwk::BundleInfo &bundleInfo)
     {

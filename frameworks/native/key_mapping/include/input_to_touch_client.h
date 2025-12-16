@@ -40,7 +40,7 @@ public:
 private:
     void HandleTemplateChangeEvent(const std::string &bundleName, const EventFwk::CommonEventData &data);
 
-    void HandleKeyMappingEnableChangeEvent(const EventFwk::CommonEventData &data);
+    void HandleKeyMappingEnableChangeEvent(const std::string &bundleName, const EventFwk::CommonEventData &data);
 
     void HandleScbForwardKeyEvent(const EventFwk::CommonEventData &data);
 
@@ -64,13 +64,15 @@ private:
 
     static void StartPublicEventMonitor();
 
-private:
-    static std::shared_ptr<GameCommonEventListener> subscriber_;
-    static std::shared_ptr<GameCommonEventListener> subscriberForScb_;
-
     static void SubscribeScbEvent();
 
     static void SubscribeGameControllerSaEvent();
+
+    static void StartPluginMode();
+
+private:
+    static std::shared_ptr<GameCommonEventListener> subscriber_;
+    static std::shared_ptr<GameCommonEventListener> subscriberForScb_;
 };
 }
 }
