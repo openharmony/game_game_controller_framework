@@ -565,7 +565,7 @@ HWTEST_F(MultiModalInputMgtServiceTest, HandleDeviceChangeEvent_007, TestSize.Le
     ASSERT_EQ(2, DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceIdUniqMap_.size());
     ASSERT_EQ(inputDeviceInfo1.uniq,
               DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceIdUniqMap_[inputDeviceInfo1.id]);
-    std::string uniq = std::to_string(inputDeviceInfo2.vendor) + "_" + std::to_string(inputDeviceInfo2.product);
+    std::string uniq = inputDeviceInfo2.GenerateUniq();
     ASSERT_EQ(uniq, DelayedSingleton<MultiModalInputMgtService>::GetInstance()->deviceIdUniqMap_[inputDeviceInfo2.id]);
 }
 
