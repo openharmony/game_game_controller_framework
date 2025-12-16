@@ -22,7 +22,6 @@ namespace OHOS {
 namespace GameController {
 PluginManager::PluginManager()
 {
-
 }
 
 PluginManager::~PluginManager()

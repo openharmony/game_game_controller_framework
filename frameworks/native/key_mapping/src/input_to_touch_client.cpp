@@ -50,8 +50,6 @@ const std::string TV_DEVICE_TYPE = "tv";
 const int KEY_MAPPING_ENABLE = 1;
 const int KEYCODE_OPEN_TEMP_FOR_HOVER_TOUCH_CONTROLLER = 3107;
 const char* PLUGIN_LIB_PATH = "/system/lib64/libgamecontroller_anco_plugin.z.so";
-const char* PLUGIN_BUNDLE_NAME = "com.huawei.shell_assistant";
-
 static BundleBasicInfo g_bundleInfo;
 static bool g_isPluginMode = false;
 }
@@ -259,10 +257,11 @@ static std::unique_ptr<void, void (*)(void*)> pluginHandle_{nullptr, [](void* ha
 
 void InputToTouchClient::StartPluginMode()
 {
-    if (strcmp(g_bundleInfo.bundleName.c_str(), PLUGIN_BUNDLE_NAME) != 0) {
+    if (!DelayedSingleton<KeyMappingService>::GetInstance()->CheckSupportKeyMapping(g_bundleInfo.bundleName)) {
         return;
     }
 
+    HILOGW("the system bundleName[%{public}s] support by GameControllerAncoPlugin", g_bundleInfo.bundleName.c_str());
     void* handle = dlopen(PLUGIN_LIB_PATH, RTLD_LAZY | RTLD_GLOBAL);
     if (handle) {
         HILOGW("dlopen GameControllerAncoPlugin success");

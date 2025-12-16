@@ -239,7 +239,7 @@ void WindowInfoManager::SetTitleAndDockHoverShown()
 int32_t WindowInfoManager::GetWindowId()
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    return initWindowInfoEntity_.windowId;;
+    return initWindowInfoEntity_.windowId;
 }
 }
 }
