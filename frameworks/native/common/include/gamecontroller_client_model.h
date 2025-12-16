@@ -282,7 +282,7 @@ struct DeviceInfo : public Parcelable {
         if (!parcel.WriteInt32(names.size())) {
             return false;
         }
-        for (auto name: names) {
+        for (auto &name: names) {
             if (!parcel.WriteString(name)) {
                 return false;
             }

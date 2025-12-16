@@ -25,7 +25,10 @@ namespace GameController {
 class DeviceInfoServiceMock : public DeviceInfoService {
 public:
     MOCK_METHOD0(GetAllDeviceInfos, std::pair<int32_t, std::vector<InputDeviceInfo>>());
+    
     MOCK_METHOD1(GetInputDeviceInfo, std::pair<int32_t, InputDeviceInfo>(int32_t deviceId));
+
+    MOCK_METHOD1(GetKeyBoardType, std::pair<int32_t, int32_t>(int32_t id));
 };
 }
 }

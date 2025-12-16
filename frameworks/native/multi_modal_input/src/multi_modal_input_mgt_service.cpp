@@ -179,7 +179,7 @@ std::pair<bool, DeviceInfo> MultiModalInputMgtService::GetOneDeviceByDeviceType(
     std::lock_guard<ffrt::mutex> lock(deviceChangeEventMutex_);
     std::pair<bool, DeviceInfo> result;
     result.first = false;
-    for (const auto deviceInfo: deviceInfoByUniqMap_) {
+    for (const auto &deviceInfo: deviceInfoByUniqMap_) {
         if (deviceInfo.second.deviceType == deviceTypeEnum) {
             result.first = true;
             result.second = deviceInfo.second;
@@ -200,7 +200,7 @@ void MultiModalInputMgtService::HandleDeviceChangeEvent()
     std::lock_guard<ffrt::mutex> lock(deviceChangeEventMutex_);
     std::unordered_map<int32_t, std::string> tempDeviceIdUniqMap;
     std::unordered_map<std::string, DeviceInfo> tempDeviceInfoByUniqMap;
-    for (auto deviceChangeEvent: deviceChangeEventCache_) {
+    for (auto &deviceChangeEvent: deviceChangeEventCache_) {
         if (deviceChangeEvent.deviceChangeType == DeviceChangeType::REMOVE) {
             // Device offline
             HILOGI("[GameController]begin HandleDeviceRemoveEvent. deviceId[%{public}d]", deviceChangeEvent.deviceId);
@@ -295,8 +295,7 @@ bool MultiModalInputMgtService::GetUniqOnDeviceAddEvent(
         return false;
     }
 
-    inputDeviceInfo.uniq = std::to_string(inputDeviceInfo.vendor) + "_"
-        + std::to_string(inputDeviceInfo.product);
+    inputDeviceInfo.uniq = inputDeviceInfo.GenerateUniq();
     HILOGI("[GameController] HandleDeviceAddEvent: Embeded device. "
            "deviceId is %{public}d, vendor is %{public}d, product is %{public}d. "
            "Because uniq is empty,construct a new uniq. ",
@@ -355,21 +354,27 @@ void MultiModalInputMgtService::IdentifyDeviceType(
     }
 
     bool isNeedNotify; // 需要对本地缓存新增或更新设备类型时，需要发送一个设备上线事件
-    for (auto deviceInfo: result) {
+    for (auto &deviceInfo: result) {
+        deviceInfo.onlineTime = StringUtils::GetSysClockTime();
+        deviceInfo.anonymizationUniq = StringUtils::AnonymizationUniq(deviceInfo.uniq);
+        deviceInfo.vidPid = deviceInfo.GetVidPid();
         if (deviceInfoByUniqMap_.find(deviceInfo.uniq) == deviceInfoByUniqMap_.end()) {
             // The local cache does not exist. The online event needs to be sent.
             isNeedNotify = true;
-            deviceInfo.onlineTime = StringUtils::GetSysClockTime();
         } else {
-            if (deviceInfoByUniqMap_[deviceInfo.uniq].deviceType == deviceInfo.deviceType) {
-                isNeedNotify = false;
-            } else {
-                // When the device type changes, a notification needs to be sent to go online.
-                isNeedNotify = true;
-            }
+            DeviceInfo oriDeviceInfo = deviceInfoByUniqMap_[deviceInfo.uniq];
+
+            // When the device type changes, a notification needs to be sent to go online.
+            isNeedNotify = oriDeviceInfo.deviceType != deviceInfo.deviceType;
+            deviceInfo.ids.insert(oriDeviceInfo.ids.begin(), oriDeviceInfo.ids.end());
+            deviceInfo.names.insert(oriDeviceInfo.names.begin(), oriDeviceInfo.names.end());
+            deviceInfo.sourceTypeSet.insert(oriDeviceInfo.sourceTypeSet.begin(), oriDeviceInfo.sourceTypeSet.end());
+            deviceInfo.idSourceTypeMap.insert(oriDeviceInfo.idSourceTypeMap.begin(),
+                                              oriDeviceInfo.idSourceTypeMap.end());
+            deviceInfo.hasFullKeyBoard = oriDeviceInfo.hasFullKeyBoard || deviceInfo.hasFullKeyBoard;
         }
-        deviceInfo.anonymizationUniq = StringUtils::AnonymizationUniq(deviceInfo.uniq);
-        deviceInfo.vidPid = deviceInfo.GetVidPid();
+
+        CheckDeviceType(deviceInfo);
         deviceInfoByUniqMap_[deviceInfo.uniq] = deviceInfo;
         tempDeviceInfoByUniqMap[deviceInfo.uniq] = deviceInfo;
         for (auto id: deviceInfo.ids) {
@@ -381,7 +386,25 @@ void MultiModalInputMgtService::IdentifyDeviceType(
                    oprType, deviceInfo.GetDeviceInfoDesc().c_str());
             DelayedSingleton<KeyMappingService>::GetInstance()->BroadCastDeviceInfo(deviceInfo);
             DoDeviceEventCallback(deviceInfo, ADD);
+        } else {
+            HILOGI("[GameController]UpdateDeviceEvent. oprType is %{public}d, deviceInfo is %{public}s",
+                   oprType, deviceInfo.GetDeviceInfoDesc().c_str());
         }
+    }
+}
+
+void MultiModalInputMgtService::CheckDeviceType(DeviceInfo &deviceInfo)
+{
+    /**
+     * Check whether the unknown device is a gamepad
+     */
+    if (deviceInfo.deviceType != UNKNOWN) {
+        return;
+    }
+
+    if (deviceInfo.sourceTypeSet.count(JOYSTICK) != 0 &&
+        deviceInfo.sourceTypeSet.count(KEYBOARD) != 0) {
+        deviceInfo.deviceType = GAME_PAD;
     }
 }
 

@@ -43,7 +43,7 @@ std::vector<DeviceInfo> DeviceIdentifyService::IdentifyDeviceType(const std::vec
     for (const auto &deviceInfo: deviceInfos) {
         deviceMap[deviceInfo.uniq] = deviceInfo;
     }
-    std::vector<DeviceInfo> req;
+
     int32_t ret = DelayedSingleton<GameControllerServerClient>::GetInstance()->IdentifyDevice(deviceInfos, result);
     if (ret == GAME_CONTROLLER_SUCCESS) {
         for (auto &deviceInfo: result) {
@@ -65,7 +65,7 @@ std::vector<DeviceInfo> DeviceIdentifyService::IdentifyDeviceType(const std::vec
         return result;
     }
     HILOGE("IdentifyDeviceType failed. the error is %{public}d", ret);
-    for (const auto &deviceInfo: deviceInfos) {
+    for (auto &deviceInfo: deviceInfos) {
         result.push_back(deviceInfo);
     }
     return result;
