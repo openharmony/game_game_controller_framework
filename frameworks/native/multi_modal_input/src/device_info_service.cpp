@@ -149,8 +149,7 @@ bool DeviceInfoService::GetUniqOnGetAllDeviceInfos(std::vector<InputDeviceInfo> 
         return false;
     }
 
-    inputDeviceInfo.uniq = std::to_string(inputDeviceInfo.vendor) + "_"
-        + std::to_string(inputDeviceInfo.product);
+    inputDeviceInfo.uniq = inputDeviceInfo.GenerateUniq();
     HILOGI("[GameController] GetAllDeviceInfos: Embeded device. "
            "deviceId is %{public}d, vendor is %{public}d, product is %{public}d. "
            "Because uniq is empty,construct a new uniq. ",
