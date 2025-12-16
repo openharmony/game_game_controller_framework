@@ -103,6 +103,9 @@ void PluginCallbackManager::SendInputEvent(const std::string &bundleName,
         });
     } else {
         std::lock_guard<ffrt::mutex> lock(locker_);
+        if (windowOprCallbackPtr_ == nullptr) {
+            return;
+        }
         windowOprCallbackPtr_->SendInputEvent(bundleName, keyEvent, isSimulate);
     }
 }
@@ -123,6 +126,9 @@ void PluginCallbackManager::SendInputEvent(const std::string &bundleName,
         });
     } else {
         std::lock_guard<ffrt::mutex> lock(locker_);
+        if (windowOprCallbackPtr_ == nullptr) {
+            return;
+        }
         windowOprCallbackPtr_->SendInputEvent(bundleName, pointerEvent, isSimulate);
     }
 }
@@ -139,6 +145,9 @@ void PluginCallbackManager::RecoverGestureBackStatus(const std::string &bundleNa
         });
     } else {
         std::lock_guard<ffrt::mutex> lock(locker_);
+        if (windowOprCallbackPtr_ == nullptr) {
+            return;
+        }
         windowOprCallbackPtr_->RecoverGestureBackStatus(bundleName);
     }
 }
@@ -155,6 +164,9 @@ void PluginCallbackManager::DisableGestureBack(const std::string &bundleName)
         });
     } else {
         std::lock_guard<ffrt::mutex> lock(locker_);
+        if (windowOprCallbackPtr_ == nullptr) {
+            return;
+        }
         windowOprCallbackPtr_->DisableGestureBack(bundleName);
     }
 }
@@ -171,6 +183,9 @@ void PluginCallbackManager::SetTitleAndDockHoverHidden(const std::string &bundle
         });
     } else {
         std::lock_guard<ffrt::mutex> lock(locker_);
+        if (windowOprCallbackPtr_ == nullptr) {
+            return;
+        }
         windowOprCallbackPtr_->SetTitleAndDockHoverHidden(bundleName);
     }
 }
@@ -187,6 +202,9 @@ void PluginCallbackManager::SetPointerVisible(const std::string &bundleName, boo
         });
     } else {
         std::lock_guard<ffrt::mutex> lock(locker_);
+        if (windowOprCallbackPtr_ == nullptr) {
+            return;
+        }
         windowOprCallbackPtr_->SetPointerVisible(bundleName, visible);
     }
 }

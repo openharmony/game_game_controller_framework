@@ -587,14 +587,12 @@ bool KeyToTouchManager::IsHandleMouseLeftButtonEvent(std::shared_ptr<InputToTouc
 void KeyToTouchManager::SetCurrentBundleName(const std::string &bundleName, bool isEnable, bool isPluginMode)
 {
     handleQueue_->submit([bundleName, isEnable, isPluginMode, this] {
+        std::lock_guard<ffrt::mutex> lock(checkMutex_);
         HILOGI("SetCurrentBundleName bundleName[%{public}s] isEnableKeyMapping[%{public}d]",
                bundleName.c_str(), isEnable);
         isPluginMode_ = isPluginMode;
         bundleName_ = bundleName;
-        {
-            std::lock_guard<ffrt::mutex> lock(checkMutex_);
-            isEnableKeyMapping_ = isEnable;
-        }
+        isEnableKeyMapping_ = isEnable;
     });
 }
 

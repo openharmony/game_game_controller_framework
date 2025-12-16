@@ -35,7 +35,7 @@ public:
 
     bool IsSupportKeyMapping(const std::string &bundleName);
 
-    void BroadCastDeviceInfo(const DeviceInfo &deviceInfo);
+    void BroadcastDeviceInfo(const DeviceInfo &deviceInfo);
 
 private:
     ffrt::mutex locker_;

@@ -163,6 +163,7 @@ bool WindowInfoManager::InitWindowInfo(const std::string &bundleName)
 
 void WindowInfoManager::UpdateWindowInfo(const Rect &rect)
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     WindowInfoEntity windowInfoEntity;
     windowInfoEntity.windowId = initWindowInfoEntity_.windowId;
     int32_t displayId = static_cast<int32_t>(mainWindow_->GetDisplayId());

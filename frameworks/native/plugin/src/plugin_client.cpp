@@ -57,9 +57,9 @@ bool GameControllerPluginClient::IsSupportKeyMapping(const std::string &bundleNa
     return DelayedSingleton<PluginManager>::GetInstance()->IsSupportKeyMapping(bundleName);
 }
 
-void GameControllerPluginClient::BroadCastDeviceInfo(const DeviceInfo &deviceInfo)
+void GameControllerPluginClient::BroadcastDeviceInfo(const DeviceInfo &deviceInfo)
 {
-    DelayedSingleton<PluginManager>::GetInstance()->BroadCastDeviceInfo(deviceInfo);
+    DelayedSingleton<PluginManager>::GetInstance()->BroadcastDeviceInfo(deviceInfo);
 }
 
 void GameControllerPluginClient::RegisterDeviceCallBack(const std::shared_ptr<DeviceCallback> &deviceCallback)

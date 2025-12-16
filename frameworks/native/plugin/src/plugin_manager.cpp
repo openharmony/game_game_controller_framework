@@ -61,7 +61,7 @@ bool PluginManager::IsSupportKeyMapping(const std::string &bundleName)
     return DelayedSingleton<KeyMappingService>::GetInstance()->CheckSupportKeyMapping(bundleName);
 }
 
-void PluginManager::BroadCastDeviceInfo(const DeviceInfo &deviceInfo)
+void PluginManager::BroadcastDeviceInfo(const DeviceInfo &deviceInfo)
 {
     DelayedSingleton<KeyMappingService>::GetInstance()->BroadCastDeviceInfo(deviceInfo);
 }

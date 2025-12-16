@@ -52,7 +52,7 @@ public:
 
     static bool IsSupportKeyMapping(const std::string &bundleName);
 
-    static void BroadCastDeviceInfo(const DeviceInfo &deviceInfo);
+    static void BroadcastDeviceInfo(const DeviceInfo &deviceInfo);
 
     static void RegisterDeviceCallBack(const std::shared_ptr<DeviceCallback> &deviceCallback);
 

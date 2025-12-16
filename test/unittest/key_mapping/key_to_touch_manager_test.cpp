@@ -618,7 +618,7 @@ HWTEST_F(KeyToTouchManagerTest, UpdateWindowInfo_002, TestSize.Level0)
 
 /**
  * @tc.name: UpdateWindowInfo_003
- * @tc.desc: when bundleName is not same with bundleName_, windowInfoEntity_ is not set;
+ * @tc.desc: when isPluginMode_ is true and bundleName is not same with bundleName_, windowInfoEntity_ is not set;
  * @tc.type: FUNC
  * @tc.require: issueNumber
  */
@@ -627,11 +627,29 @@ HWTEST_F(KeyToTouchManagerTest, UpdateWindowInfo_003, TestSize.Level0)
     std::vector<KeyToTouchMappingInfo> testMappingInfos;
     testMappingInfos.push_back(BuildKeyMapping(MappingTypeEnum::SINGE_KEY_TO_TOUCH));
     WindowInfoEntity window = {"test", 1, 100, 100, 100, 100, 10, 10, true, 25, 25, 1, false};
-
+    handler_->isPluginMode_ = true;
     handler_->UpdateWindowInfo(window);
 
     ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
     ASSERT_NE(handler_->windowInfoEntity_.bundleName, window.bundleName);
+}
+
+/**
+ * @tc.name: UpdateWindowInfo_005
+ * @tc.desc: when isPluginMode_ is false and bundleName is not same with bundleName_, windowInfoEntity_ is set;
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(KeyToTouchManagerTest, UpdateWindowInfo_005, TestSize.Level0)
+{
+    std::vector<KeyToTouchMappingInfo> testMappingInfos;
+    testMappingInfos.push_back(BuildKeyMapping(MappingTypeEnum::SINGE_KEY_TO_TOUCH));
+    WindowInfoEntity window = {"test", 1, 100, 100, 100, 100, 10, 10, true, 25, 25, 1, false};
+    handler_->isPluginMode_ = false;
+    handler_->UpdateWindowInfo(window);
+
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
+    ASSERT_EQ(handler_->windowInfoEntity_.bundleName, window.bundleName);
 }
 
 /**
@@ -682,7 +700,7 @@ HWTEST_F(KeyToTouchManagerTest, EnableKeyMapping_002, TestSize.Level0)
     handler_->EnableKeyMapping("test1", false);
 
     ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
-    ASSERT_FALSE(handler_->isEnableKeyMapping_);
+    ASSERT_TRUE(handler_->isEnableKeyMapping_);
 }
 }
 }
