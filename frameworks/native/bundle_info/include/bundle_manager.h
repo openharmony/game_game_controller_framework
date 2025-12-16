@@ -55,12 +55,12 @@ public:
     BundleBasicInfo GetSelfBundleName();
 
 private:
-    sptr <AppExecFwk::IBundleMgr> GetBundleMgr();
+    sptr<AppExecFwk::IBundleMgr> GetBundleMgr();
 
 private:
     std::mutex createBundleMgrMute_;
 
-    sptr <AppExecFwk::IBundleMgr> bundleMgr_ = nullptr;
+    sptr<AppExecFwk::IBundleMgr> bundleMgr_ = nullptr;
 };
 }
 }
