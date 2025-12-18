@@ -36,7 +36,7 @@ DeviceIdentifyService::~DeviceIdentifyService()
 std::vector<DeviceInfo> DeviceIdentifyService::IdentifyDeviceType(const std::vector<DeviceInfo> &deviceInfos)
 {
     std::vector<DeviceInfo> result;
-    if (deviceInfos.size() == 0) {
+    if (deviceInfos.empty()) {
         return result;
     }
     std::unordered_map<std::string, DeviceInfo> deviceMap;
@@ -65,7 +65,8 @@ std::vector<DeviceInfo> DeviceIdentifyService::IdentifyDeviceType(const std::vec
         return result;
     }
     HILOGE("IdentifyDeviceType failed. the error is %{public}d", ret);
-    for (auto &deviceInfo: deviceInfos) {
+    for (auto deviceInfo: deviceInfos) {
+        deviceInfo.hasFullKeyBoard = HasFullKeyboard(deviceInfo);
         result.push_back(deviceInfo);
     }
     return result;
