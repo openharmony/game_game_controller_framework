@@ -49,6 +49,17 @@ public:
     bool IsSupportGameKeyMapping(const std::string &bundleName, const std::string &version);
 
     /**
+     * Set the windowId
+     * @param windowId windowId
+     */
+    void SetWindowId(int32_t windowId);
+
+    /**
+     * Clear the key mapping of the game
+     */
+    void ClearGameKeyMapping();
+
+    /**
      * Broadcast device status and get KeyMapping config from sa if online
      * @param deviceInfo DeviceInfo
      */
@@ -56,9 +67,10 @@ public:
 
     /**
      * When the template is changed, update the key mapping.
+     * @param bundleName bundleName
      * @param deviceType DeviceTypeEnum
      */
-    void UpdateGameKeyMappingWhenTemplateChange(DeviceTypeEnum deviceType);
+    void UpdateGameKeyMappingWhenTemplateChange(const std::string &bundleName, DeviceTypeEnum deviceType);
 
     /**
      * Broadcast Opening Template Configuration Page
@@ -71,6 +83,13 @@ public:
      * reload the keymapping support config
      */
     void ReloadKeyMappingSupportConfig();
+
+    /**
+     * Check whether key-to-mapping is supported by bundleName
+     * @param bundleName bundleName
+     * @return true means it is supported
+     */
+    bool CheckSupportKeyMapping(const std::string &bundleName);
 
 private:
 
@@ -105,7 +124,7 @@ private:
      * @return pair.first indicates whether it support input-to-touch conversion
      * and pair.second indicates KeyMappingSupportConfig.
      */
-    std::pair<bool, KeyMappingSupportConfig> GetKeyMappingSupportConfig();
+    std::pair<bool, KeyMappingSupportConfig> GetKeyMappingSupportConfig(const std::string &bundleName);
 
     /**
      * whether the device support keymapping
@@ -134,6 +153,8 @@ private:
     std::string bundleName_;
 
     std::string bundleVersion_;
+
+    int32_t windowId_{0};
 
     std::unordered_map<DeviceTypeEnum, bool> loadTemplateCache_;
 };

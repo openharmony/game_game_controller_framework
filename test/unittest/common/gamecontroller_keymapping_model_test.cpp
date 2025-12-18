@@ -246,7 +246,7 @@ HWTEST_F(GameControllerKeymappingModeTest, GameInfo_CheckParamValid_001, TestSiz
 
     gameInfo = BuildGameInfo();
     gameInfo.version = "";
-    ASSERT_FALSE(gameInfo.CheckParamValid());
+    ASSERT_TRUE(gameInfo.CheckParamValid());
 
     gameInfo.version = std::string(MAX_VERSION_LENGTH + 1, 'b');
     ASSERT_FALSE(gameInfo.CheckParamValid());

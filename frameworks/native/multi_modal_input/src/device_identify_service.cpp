@@ -43,7 +43,7 @@ std::vector<DeviceInfo> DeviceIdentifyService::IdentifyDeviceType(const std::vec
     for (const auto &deviceInfo: deviceInfos) {
         deviceMap[deviceInfo.uniq] = deviceInfo;
     }
-    
+
     int32_t ret = DelayedSingleton<GameControllerServerClient>::GetInstance()->IdentifyDevice(deviceInfos, result);
     if (ret == GAME_CONTROLLER_SUCCESS) {
         for (auto &deviceInfo: result) {

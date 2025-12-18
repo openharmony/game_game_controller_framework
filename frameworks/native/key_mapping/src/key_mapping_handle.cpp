@@ -65,11 +65,6 @@ void KeyMappingHandle::SetSupportKeyMapping(bool isSupportKeyMapping)
     isSupportKeyMapping_ = isSupportKeyMapping;
 }
 
-void KeyMappingHandle::SetIsPC(bool isPCDevice)
-{
-    isPc_ = isPCDevice;
-}
-
 bool KeyMappingHandle::IsNotifyOpenTemplateConfigPage(const std::shared_ptr<MMI::KeyEvent> &keyEvent,
                                                       const DeviceInfo &deviceInfo)
 {

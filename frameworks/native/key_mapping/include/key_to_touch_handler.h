@@ -71,6 +71,7 @@ enum KeyCodeForPointer : int32_t {
  * the information of the current window
  */
 struct WindowInfoEntity {
+    std::string bundleName;
     int32_t windowId = 0;
     int32_t maxWidth = 0;
     int32_t maxHeight = 0;
@@ -81,6 +82,8 @@ struct WindowInfoEntity {
     bool isFullScreen = false;
     int32_t xCenter = 0;
     int32_t yCenter = 0;
+    int32_t displayId = 0;
+    bool isPluginMode = false;
 
     void ParseRect(const OHOS::Rosen::Rect &rect)
     {
@@ -230,41 +233,41 @@ struct InputToTouchContext {
 struct TouchEntity {
     int32_t pointerId = 0;
     int32_t pointerAction = 0;
-    int32_t xValue;
-    int32_t yValue;
-    int64_t actionTime;
+    int32_t xValue = 0;
+    int32_t yValue = 0;
+    int64_t actionTime = 0;
 };
 
 struct Point {
-    double x;
-    double y;
+    double x = 0.0;
+    double y = 0.0;
 };
 
 struct MouseMoveReq {
     /**
      * x position or y position of the current mouse  move point
      */
-    int32_t currentMousePosition;
+    int32_t currentMousePosition = 0;
 
     /**
      * x position or y position of the last mouse move point
      */
-    int32_t lastMousePosition;
+    int32_t lastMousePosition = 0;
 
     /**
      * x position or y position of the last touch
      */
-    int32_t lastMovePosition;
+    int32_t lastMovePosition = 0;
 
     /**
      * maxWidth of window or maxHeight of window
      */
-    int32_t maxEdge;
+    int32_t maxEdge = 0;
 
     /**
      * The step length of the mouse movement each time
      */
-    int32_t step;
+    int32_t step = 0;
 };
 
 class PointerManager : public DelayedSingleton<PointerManager> {
@@ -331,7 +334,7 @@ public:
     {
     };
 
-    virtual void ExitCrosshairKeyStatus()
+    virtual void ExitCrosshairKeyStatus(const std::shared_ptr<InputToTouchContext> &context)
     {
     };
 

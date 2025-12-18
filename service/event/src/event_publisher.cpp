@@ -31,6 +31,7 @@ constexpr char* EVENT_PARAM_BUNDLE_NAME = "bundleName";
 constexpr char* EVENT_PARAM_BUNDLE_VERSION = "version";
 constexpr char* EVENT_PARAM_UNIQ = "uniq";
 constexpr char* EVENT_PARAM_VID_PID = "vidPid";
+constexpr char* EVENT_PARAM_WINDOW_ID = "windowId";
 constexpr char* EVENT_PARAM_DEVICE_TYPE = "deviceType";
 constexpr char* EVENT_PARAM_DEVICE_STATUS = "deviceStatus";
 constexpr char* EVENT_PARAM_DEVICE_NAME = "deviceName";
@@ -53,12 +54,10 @@ void EventPublisher::SendGameKeyMappingConfigChangeNotify(const GameKeyMappingIn
 {
     EventFwk::CommonEventPublishInfo publishInfo;
     publishInfo.SetOrdered(true);
-    publishInfo.SetBundleName(gameKeyMappingInfo.bundleName);
     publishInfo.SetSubscriberType(ALL_SUBSCRIBER_TYPE);
 
     AAFwk::Want want;
     want.SetAction(COMMON_EVENT_GAME_KEY_MAPPING_CHANGE);
-    want.SetBundle(gameKeyMappingInfo.bundleName);
     want.SetParam(EVENT_PARAM_BUNDLE_NAME, gameKeyMappingInfo.bundleName);
     want.SetParam(EVENT_PARAM_UNIQ, gameKeyMappingInfo.uniq);
     want.SetParam(EVENT_PARAM_DEVICE_TYPE, static_cast<int32_t>(gameKeyMappingInfo.deviceType));
@@ -85,8 +84,8 @@ int32_t EventPublisher::SendDeviceInfoNotify(const GameInfo &gameInfo,
     publishInfo.SetSubscriberType(SYSTEM_SUBSCRIBER_TYPE);
     EventFwk::CommonEventData event = BuildCommonEventData(COMMON_EVENT_DEVICE_STATUS_CHANGE, gameInfo, deviceInfo,
                                                            gamePid);
-    HILOGI("[PUB]DeviceInfoNotify, bundle[%{public}s], deviceName[%{public}s].",
-           gameInfo.bundleName.c_str(), deviceInfo.name.c_str());
+    HILOGI("[PUB]DeviceInfoNotify, bundle[%{public}s], deviceName[%{public}s], windowId[%{public}d].",
+           gameInfo.bundleName.c_str(), deviceInfo.name.c_str(), gameInfo.windowId);
     if (EventFwk::CommonEventManager::NewPublishCommonEvent(event, publishInfo) != 0) {
         HILOGE("[PUB]DeviceInfoNotify error, bundle[%{public}s].",
                gameInfo.bundleName.c_str());
@@ -129,6 +128,7 @@ EventFwk::CommonEventData EventPublisher::BuildCommonEventData(const std::string
     want.SetParam(EVENT_PARAM_UNIQ, deviceInfo.uniq);
     want.SetParam(EVENT_PARAM_VID_PID, deviceInfo.GetVidPid());
     if (gamePid != 0) {
+        want.SetParam(EVENT_PARAM_WINDOW_ID, gameInfo.windowId);
         want.SetParam(EVENT_PARAM_GAME_PID, gamePid);
     }
     EventFwk::CommonEventData event;
@@ -143,18 +143,16 @@ int32_t EventPublisher::SendEnableGameKeyMappingNotify(const GameInfo &gameInfo,
     }
     EventFwk::CommonEventPublishInfo publishInfo;
     publishInfo.SetOrdered(true);
-    publishInfo.SetBundleName(gameInfo.bundleName);
     publishInfo.SetSubscriberType(ALL_SUBSCRIBER_TYPE);
 
     AAFwk::Want want;
     want.SetAction(COMMON_EVENT_GAME_KEY_MAPPING_ENABLE);
-    want.SetBundle(gameInfo.bundleName);
     want.SetParam(EVENT_PARAM_BUNDLE_NAME, gameInfo.bundleName);
     want.SetParam(EVENT_PARAM_ENABLE, isEnable ? 1 : 0);
     EventFwk::CommonEventData event;
     event.SetWant(want);
     HILOGI("[PUB]SendEnableGameKeyMappingNotify, bundle[%{public}s], isEnable[%{public}d].",
-           gameInfo.bundleName.c_str(), isEnable ? 1 : 0);
+           gameInfo.bundleName.c_str(), isEnable);
     if (EventFwk::CommonEventManager::NewPublishCommonEvent(event, publishInfo) != 0) {
         HILOGE("[PUB]SendEnableGameKeyMappingNotify error, bundle[%{public}s].",
                gameInfo.bundleName.c_str());

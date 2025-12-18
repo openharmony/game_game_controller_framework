@@ -17,6 +17,8 @@
 #include <common_event_manager.h>
 #include <matching_skills.h>
 #include <syspara/parameters.h>
+#include <cstring>
+#include <dlfcn.h>
 #include "input_to_touch_client.h"
 #include "gamecontroller_log.h"
 #include "multi_modal_input_monitor.h"
@@ -27,6 +29,7 @@
 #include "gamecontroller_utils.h"
 #include "window_info_manager.h"
 #include "key_to_touch_manager.h"
+#include "plugin_callback_manager.h"
 
 namespace OHOS {
 namespace GameController {
@@ -43,10 +46,12 @@ constexpr const char* EVENT_PARAM_DEVICE_TYPE = "deviceType";
 constexpr const char* EVENT_PARAM_ENABLE = "enable";
 constexpr const char* EVENT_PARAM_KEYCODE = "keyCode";
 const int32_t GAME_CONTROLLER_UID = 6227;
-static BundleBasicInfo g_bundleInfo;
-const std::string PC_DEVICE_TYPE = "2in1";
+const std::string TV_DEVICE_TYPE = "tv";
 const int KEY_MAPPING_ENABLE = 1;
 const int KEYCODE_OPEN_TEMP_FOR_HOVER_TOUCH_CONTROLLER = 3107;
+const char* PLUGIN_LIB_PATH = "/system/lib64/libgamecontroller_anco_plugin.z.so";
+static BundleBasicInfo g_bundleInfo;
+static bool g_isPluginMode = false;
 }
 
 std::shared_ptr<GameCommonEventListener> InputToTouchClient::subscriber_ = nullptr;
@@ -63,6 +68,7 @@ void InputToTouchClient::DoAsyncTask()
 {
     // Determine whether the app is a common app.
     if (!IsCommonApp()) {
+        StartPluginMode();
         return;
     }
 
@@ -71,8 +77,9 @@ void InputToTouchClient::DoAsyncTask()
         HILOGI("The app does not support input-to-touch feature.");
         return;
     }
-    DelayedSingleton<KeyMappingHandle>::GetInstance()->SetSupportKeyMapping(true);
+
     HILOGI("The app supports input-to-touch feature.");
+    DelayedSingleton<KeyMappingHandle>::GetInstance()->SetSupportKeyMapping(true);
 
     // Start Multi-Modal-Input Monitor
     StartInputMonitor();
@@ -100,22 +107,24 @@ bool InputToTouchClient::IsSupportKeyMapping()
 
 void InputToTouchClient::StartInputMonitor()
 {
-    DelayedSingleton<WindowInfoManager>::GetInstance()->InitWindowInfo(g_bundleInfo.bundleName);
+    if (!g_isPluginMode) {
+        DelayedSingleton<KeyToTouchManager>::GetInstance()->SetCurrentBundleName(g_bundleInfo.bundleName, true, false);
+        DelayedSingleton<WindowInfoManager>::GetInstance()->InitWindowInfo(g_bundleInfo.bundleName);
+        DelayedSingleton<KeyMappingService>::GetInstance()->SetWindowId(
+            DelayedSingleton<WindowInfoManager>::GetInstance()->GetWindowId());
+    }
+    DelayedSingleton<PluginCallbackManager>::GetInstance()->SetPluginMode(g_isPluginMode);
     DelayedSingleton<MultiModalInputMonitor>::GetInstance()->RegisterMonitorBySystem();
     DelayedSingleton<MultiModalInputMgtService>::GetInstance()->GetAllDeviceInfosWhenRegisterDeviceMonitor();
-    // If it's a PC, simulate the built-in keyboard online.
-    if (OHOS::system::GetDeviceType() == PC_DEVICE_TYPE) {
-        HILOGI("It's pc device.");
-        g_bundleInfo.isPC = true;
-        DelayedSingleton<KeyMappingHandle>::GetInstance()->SetIsPC(true);
-    }
 }
 
 void InputToTouchClient::StartPublicEventMonitor()
 {
     SubscribeGameControllerSaEvent();
 
-    SubscribeScbEvent();
+    if (OHOS::system::GetDeviceType() == TV_DEVICE_TYPE) {
+        SubscribeScbEvent();
+    }
 }
 
 void InputToTouchClient::SubscribeGameControllerSaEvent()
@@ -170,7 +179,7 @@ void GameCommonEventListener::OnReceiveEvent(const EventFwk::CommonEventData &da
     if (action == KEY_MAPPING_CHANGE_EVENT) {
         HandleTemplateChangeEvent(bundleName, data);
     } else if (action == KEY_MAPPING_ENABLE_EVENT) {
-        HandleKeyMappingEnableChangeEvent(data);
+        HandleKeyMappingEnableChangeEvent(bundleName, data);
     } else {
         HILOGI("unknown sa event %{public}s", action.c_str());
     }
@@ -184,14 +193,17 @@ void GameCommonEventListener::HandleTemplateChangeEvent(const std::string &bundl
     HILOGI("Get the keymapping info by bundleName:%{public}s, deviceType:%{public}d",
            bundleName.c_str(), deviceType);
     DelayedSingleton<KeyMappingService>::GetInstance()->UpdateGameKeyMappingWhenTemplateChange(
-        static_cast<DeviceTypeEnum>(deviceType));
+        bundleName, static_cast<DeviceTypeEnum>(deviceType));
 }
 
-void GameCommonEventListener::HandleKeyMappingEnableChangeEvent(const EventFwk::CommonEventData &data)
+void GameCommonEventListener::HandleKeyMappingEnableChangeEvent(const std::string &bundleName,
+                                                                const EventFwk::CommonEventData &data)
 {
     AAFwk::Want want = data.GetWant();
     int enable = want.GetIntParam(EVENT_PARAM_ENABLE, KEY_MAPPING_ENABLE);
-    DelayedSingleton<KeyToTouchManager>::GetInstance()->EnableKeyMapping(enable == KEY_MAPPING_ENABLE ? true : false);
+    DelayedSingleton<KeyToTouchManager>::GetInstance()->EnableKeyMapping(bundleName,
+                                                                         enable);
+    DelayedSingleton<PluginCallbackManager>::GetInstance()->HandleKeyMappingEnableChangeEvent(bundleName, enable);
 }
 
 void GameCommonEventListener::HandleScbForwardKeyEvent(const EventFwk::CommonEventData &data)
@@ -224,6 +236,9 @@ void GameCommonEventListener::HandleSupportedKeyMappingChangeEvent()
 
 bool GameCommonEventListener::IsCurrentGameEvent(const std::string &bundleName)
 {
+    if (g_isPluginMode) {
+        return true;
+    }
     if (bundleName != g_bundleInfo.bundleName) {
         HILOGW("no need handle bundleName[%{public}s]'s public event. the current bundleName[%{public}s]'s",
                bundleName.c_str(),
@@ -232,5 +247,34 @@ bool GameCommonEventListener::IsCurrentGameEvent(const std::string &bundleName)
     }
     return true;
 }
+
+static std::unique_ptr<void, void (*)(void*)> pluginHandle_{nullptr, [](void* handle) {
+    if (handle) {
+        dlclose(handle);
+        HILOGW("close plugin so");
+    }
+}};
+
+void InputToTouchClient::StartPluginMode()
+{
+    if (!DelayedSingleton<KeyMappingService>::GetInstance()->CheckSupportKeyMapping(g_bundleInfo.bundleName)) {
+        return;
+    }
+
+    HILOGW("the system bundleName[%{public}s] support by GameControllerAncoPlugin", g_bundleInfo.bundleName.c_str());
+    void* handle = dlopen(PLUGIN_LIB_PATH, RTLD_LAZY | RTLD_GLOBAL);
+    if (handle) {
+        HILOGW("dlopen GameControllerAncoPlugin success");
+        pluginHandle_.reset(handle);
+    } else {
+        HILOGW("dlopen %{public}s failed", dlerror());
+        return;
+    }
+    DelayedSingleton<KeyMappingHandle>::GetInstance()->SetSupportKeyMapping(true);
+    g_isPluginMode = true;
+    StartInputMonitor();
+    StartPublicEventMonitor();
+}
+
 }
 }
