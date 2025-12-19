@@ -63,6 +63,7 @@ KeyToTouchManager::~KeyToTouchManager()
     if (curTaskHandler_ != nullptr) {
         handleQueue_->cancel(curTaskHandler_);
     }
+    handleQueue_ = nullptr;
 }
 
 void KeyToTouchManager::SetSupportKeyMapping(bool isSupportKeyMapping,
@@ -587,6 +588,10 @@ bool KeyToTouchManager::IsHandleMouseLeftButtonEvent(std::shared_ptr<InputToTouc
 
 void KeyToTouchManager::SetCurrentBundleName(const std::string &bundleName, bool isEnable, bool isPluginMode)
 {
+    std::lock_guard<ffrt::mutex> lock(checkMutex_);
+    if (handleQueue_ == nullptr) {
+        return;
+    }
     handleQueue_->submit([bundleName, isEnable, isPluginMode, this] {
         std::lock_guard<ffrt::mutex> lock(checkMutex_);
         HILOGI("SetCurrentBundleName bundleName[%{public}s] isEnableKeyMapping[%{public}d]",
@@ -599,6 +604,10 @@ void KeyToTouchManager::SetCurrentBundleName(const std::string &bundleName, bool
 
 void KeyToTouchManager::EnableKeyMapping(const std::string &bundleName, bool isEnable)
 {
+    std::lock_guard<ffrt::mutex> lock(checkMutex_);
+    if (handleQueue_ == nullptr) {
+        return;
+    }
     handleQueue_->submit([bundleName, isEnable, this] {
         std::lock_guard<ffrt::mutex> lock(checkMutex_);
         if (bundleName != bundleName_) {
@@ -629,7 +638,7 @@ void KeyToTouchManager::ResetContext(std::shared_ptr<InputToTouchContext> &conte
 
 bool KeyToTouchManager::IsCanEnableKeyMapping()
 {
-    return isSupportKeyMapping_ && isEnableKeyMapping_ && windowInfoEntity_.isFullScreen;
+    return handleQueue_ != nullptr && isSupportKeyMapping_ && isEnableKeyMapping_ && windowInfoEntity_.isFullScreen;
 }
 
 bool KeyToTouchManager::DeviceIsSupportKeyMapping(DeviceTypeEnum deviceTypeEnum)
@@ -646,6 +655,10 @@ bool KeyToTouchManager::DeviceIsSupportKeyMapping(DeviceTypeEnum deviceTypeEnum)
 
 void KeyToTouchManager::UpdateByDeviceStatusChanged(const DeviceInfo &deviceInfo)
 {
+    std::lock_guard<ffrt::mutex> lock(checkMutex_);
+    if (handleQueue_ == nullptr) {
+        return;
+    }
     if (deviceInfo.status == 0
         && deviceInfo.sourceTypeSet.count(MOUSE) != 0) {
         handleQueue_->submit([this] {
@@ -665,6 +678,9 @@ void KeyToTouchManager::UpdateByDeviceStatusChanged(const DeviceInfo &deviceInfo
 void KeyToTouchManager::ClearGameKeyMapping()
 {
     std::lock_guard<ffrt::mutex> lock(checkMutex_);
+    if (handleQueue_ == nullptr) {
+        return;
+    }
     HILOGI("do ClearGameKeyMapping. the currentBundleName is [%{public}s]", bundleName_.c_str());
     isSupportKeyMapping_ = false;
     supportDeviceTypeSet_.clear();
@@ -689,6 +705,9 @@ void KeyToTouchManager::ClearGameKeyMapping()
 void KeyToTouchManager::CheckPointerSendInterval()
 {
     std::lock_guard<ffrt::mutex> lock(checkMutex_);
+    if (handleQueue_ == nullptr) {
+        return;
+    }
     if (gcKeyboardContext_ != nullptr) {
         gcKeyboardContext_->CheckPointerSendInterval();
     }
