@@ -142,6 +142,7 @@ private:
     std::unordered_set<int32_t> supportDeviceTypeSet_;
     ffrt::mutex checkMutex_;
     std::unique_ptr<ffrt::queue> handleQueue_{nullptr};
+    ffrt::task_handle curTaskHandler_{nullptr};
     std::unordered_map<MappingTypeEnum, std::shared_ptr<BaseKeyToTouchHandler>> mappingHandler_;
     std::shared_ptr<InputToTouchContext> gcKeyboardContext_{nullptr};
     std::shared_ptr<InputToTouchContext> hoverTouchPadContext_{nullptr};

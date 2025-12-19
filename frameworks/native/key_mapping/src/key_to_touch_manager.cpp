@@ -59,6 +59,10 @@ KeyToTouchManager::KeyToTouchManager()
 
 KeyToTouchManager::~KeyToTouchManager()
 {
+    std::lock_guard<ffrt::mutex> lock(checkMutex_);
+    if (curTaskHandler_ != nullptr) {
+        handleQueue_->cancel(curTaskHandler_);
+    }
 }
 
 void KeyToTouchManager::SetSupportKeyMapping(bool isSupportKeyMapping,
@@ -669,7 +673,6 @@ void KeyToTouchManager::ClearGameKeyMapping()
     windowInfoEntity_ = WindowInfoEntity{};
     isEnableKeyMapping_ = true;
     bundleName_ = "";
-
     handleQueue_->submit([this] {
         if (!isPluginMode_) {
             return;
@@ -685,13 +688,17 @@ void KeyToTouchManager::ClearGameKeyMapping()
 
 void KeyToTouchManager::CheckPointerSendInterval()
 {
+    std::lock_guard<ffrt::mutex> lock(checkMutex_);
     if (gcKeyboardContext_ != nullptr) {
         gcKeyboardContext_->CheckPointerSendInterval();
     }
     if (hoverTouchPadContext_ != nullptr) {
         hoverTouchPadContext_->CheckPointerSendInterval();
     }
-    handleQueue_->submit([this] {
+    if (handleQueue_ == nullptr) {
+        return;
+    }
+    curTaskHandler_ = handleQueue_->submit_h([this] {
         CheckPointerSendInterval();
     }, ffrt::task_attr().name("pointer-check-task").delay(DELAY_TIME_UNIT));
 }
