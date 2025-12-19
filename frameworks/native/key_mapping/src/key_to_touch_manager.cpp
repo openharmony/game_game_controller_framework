@@ -695,9 +695,6 @@ void KeyToTouchManager::CheckPointerSendInterval()
     if (hoverTouchPadContext_ != nullptr) {
         hoverTouchPadContext_->CheckPointerSendInterval();
     }
-    if (handleQueue_ == nullptr) {
-        return;
-    }
     curTaskHandler_ = handleQueue_->submit_h([this] {
         CheckPointerSendInterval();
     }, ffrt::task_attr().name("pointer-check-task").delay(DELAY_TIME_UNIT));
