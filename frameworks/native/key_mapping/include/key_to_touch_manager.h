@@ -50,6 +50,11 @@ public:
      */
     void ClearGameKeyMapping();
 
+    /**
+     * Periodically check whether it is necessary to send a pointer move message
+     */
+    void CheckPointerSendInterval();
+
 private:
 
     bool IsCanEnableKeyMapping();
@@ -131,8 +136,6 @@ private:
     void HandleEnableKeyMapping(bool isEnable);
 
     void ResetContext(std::shared_ptr<InputToTouchContext> &context);
-
-    void CheckPointerSendInterval();
 
 private:
     bool isSupportKeyMapping_{false};

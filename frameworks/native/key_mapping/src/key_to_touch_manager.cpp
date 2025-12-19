@@ -55,9 +55,6 @@ KeyToTouchManager::KeyToTouchManager()
     mappingHandler_[MappingTypeEnum::MOUSE_LEFT_FIRE_TO_TOUCH] = std::make_shared<MouseLeftFireToTouchHandler>();
     mappingHandler_[MappingTypeEnum::MOUSE_RIGHT_KEY_CLICK_TO_TOUCH]
         = std::make_shared<MouseRightKeyClickToTouchHandler>();
-    handleQueue_->submit([this] {
-        CheckPointerSendInterval();
-    }, ffrt::task_attr().name("pointer-check-task").delay(DELAY_TIME_UNIT));
 }
 
 KeyToTouchManager::~KeyToTouchManager()
