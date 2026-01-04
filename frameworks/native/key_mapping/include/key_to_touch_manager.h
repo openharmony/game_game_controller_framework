@@ -57,6 +57,8 @@ public:
 
 private:
 
+    bool IsDispatchToPluginMode(const std::shared_ptr<MMI::KeyEvent> &keyEvent);
+
     bool IsCanEnableKeyMapping();
 
     bool DeviceIsSupportKeyMapping(DeviceTypeEnum deviceTypeEnum);
