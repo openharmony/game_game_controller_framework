@@ -80,21 +80,21 @@ bool KeyToTouchManager::DispatchKeyEvent(const std::shared_ptr<MMI::KeyEvent> &k
     if (keyEvent->GetKeyAction() != KeyEvent::KEY_ACTION_DOWN
         && keyEvent->GetKeyAction() != KeyEvent::KEY_ACTION_UP
         && keyEvent->GetKeyAction() != KeyEvent::KEY_ACTION_CANCEL) {
-        return false;
+        return IsDispatchToPluginMode(keyEvent);
     }
     std::lock_guard<ffrt::mutex> lock(checkMutex_);
     if (!IsCanEnableKeyMapping()) {
-        return false;
+        return IsDispatchToPluginMode(keyEvent);
     }
     int32_t keyCode = keyEvent->GetKeyCode();
     if (allMonitorKeys_.find(keyCode) == allMonitorKeys_.end()) {
-        return false;
+        return IsDispatchToPluginMode(keyEvent);
     }
 
     DeviceInfo deviceInfo = DelayedSingleton<MultiModalInputMgtService>::GetInstance()->GetDeviceInfo(
         keyEvent->GetDeviceId());
     if (deviceInfo.UniqIsEmpty()) {
-        return false;
+        return IsDispatchToPluginMode(keyEvent);
     }
     std::unordered_set<DeviceTypeEnum> deviceTypeSet = allMonitorKeys_[keyCode];
     DeviceTypeEnum deviceType;
@@ -106,22 +106,31 @@ bool KeyToTouchManager::DispatchKeyEvent(const std::shared_ptr<MMI::KeyEvent> &k
         if (deviceTypeSet.find(GAME_KEY_BOARD) != deviceTypeSet.end()) {
             deviceType = GAME_KEY_BOARD;
         } else {
-            return false;
+            return IsDispatchToPluginMode(keyEvent);
         }
     } else {
         if (deviceTypeSet.find(deviceInfo.deviceType) != deviceTypeSet.end()) {
             deviceType = deviceInfo.deviceType;
         } else {
-            return false;
+            return IsDispatchToPluginMode(keyEvent);
         }
     }
     if (!DeviceIsSupportKeyMapping(deviceType)) {
-        return false;
+        return IsDispatchToPluginMode(keyEvent);
     }
     handleQueue_->submit([keyEvent, deviceType, deviceInfo, this] {
         HandleKeyEvent(keyEvent, deviceType, deviceInfo);
     });
     return true;
+}
+
+bool KeyToTouchManager::IsDispatchToPluginMode(const std::shared_ptr<MMI::KeyEvent> &keyEvent)
+{
+    if (isPluginMode_) {
+        DelayedSingleton<PluginCallbackManager>::GetInstance()->SendInputEvent(bundleName_, keyEvent, false);
+        return true;
+    }
+    return false;
 }
 
 bool KeyToTouchManager::DispatchPointerEvent(const std::shared_ptr<MMI::PointerEvent> &pointerEvent)
