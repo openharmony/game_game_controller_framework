@@ -62,14 +62,22 @@
               "common/include/gamecontroller_utils.h",
               "common/include/gamecontroller_client_model.h",
               "common/include/gamecontroller_keymapping_model.h",
-              "multi_modal_input/include/game_device_client.h",
-              "plugin/include/plugin_client.h",
-              "plugin/include/plugin_event_callback.h",
-              "sa_client/include/gamecontroller_server_client.h",
-              "window/include/input_event_client.h"
+              "sa_client/include/gamecontroller_server_client.h"
             ]
           },
           "name": "//domains/game/game_controller_framework/frameworks/native:gamecontroller_client"
+        },
+        {
+          "header": {
+            "header_base": "//domains/game/game_controller_framework/frameworks/native",
+            "header_files": [
+              "multi_modal_input/include/game_device_client.h",
+              "plugin/include/plugin_client.h",
+              "plugin/include/plugin_event_callback.h",
+              "window/include/input_event_client.h"
+            ]
+          },
+          "name": "//domains/game/game_controller_framework/frameworks/native:gamecontroller_fwk_client"
         }
       ]
     }

@@ -19,12 +19,10 @@ group("game_controller_framework_packages") {
   deps = [
     "etc:game_controller_service_business_config",
     "etc/init:gamecontroller_server.cfg",
-    "sa_profile:game_controller_sa_profile",
     "frameworks/native:gamecontroller_client",
     "frameworks/native:gamecontroller_event",
+    "frameworks/native:gamecontroller_fwk_client",
     "interfaces/kits/c:ohgame_controller",
-    "etc:game_controller_service_business_config",
-    "etc/init:gamecontroller_server.cfg",
     "sa_profile:game_controller_sa_profile",
     "service:gamecontroller_server",
   ]
