@@ -13,8 +13,7 @@
 
 import("//build/ohos.gni")
 import("//build/ohos_var.gni")
-import(
-    "//domains/game/game_controller_framework/game_controller_framework.gni")
+import("//domains/game/game_controller_framework/game_controller_framework.gni")
 
 config("game_controller_capi_config") {
   include_dirs = [
@@ -48,7 +47,10 @@ ohos_shared_library("ohgame_controller") {
 
   public_configs = [ ":game_controller_capi_config" ]
 
-  deps = [ "${game_controller_framework_innerkits_path}:gamecontroller_client" ]
+  deps = [
+    "${game_controller_framework_innerkits_path}:gamecontroller_client",
+    "${game_controller_framework_innerkits_path}:gamecontroller_fwk_client",
+  ]
 
   public_external_deps = []
 

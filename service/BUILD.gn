@@ -12,8 +12,7 @@
 # limitations under the License.
 import("//build/ohos.gni")
 import("//build/ohos_var.gni")
-import(
-    "//domains/game/game_controller_framework/game_controller_framework.gni")
+import("//domains/game/game_controller_framework/game_controller_framework.gni")
 
 config("gamecontroller_service_config") {
   visibility = [
@@ -35,8 +34,8 @@ config("gamecontroller_service_config") {
 gamecontroller_server_sources = [
   "common/src/json_utils.cpp",
   "common/src/permission_utils.cpp",
-  "event/src/event_publisher.cpp",
   "device_manager/src/device_manager.cpp",
+  "event/src/event_publisher.cpp",
   "ipc/src/ability_event_handler.cpp",
   "ipc/src/gamecontroller_server_ability.cpp",
   "key_mapping_manager/src/game_support_key_mapping_manager.cpp",
@@ -49,6 +48,10 @@ ohos_shared_library("gamecontroller_server") {
   configs = [ ":gamecontroller_service_config" ]
   deps = [ "${game_controller_framework_innerkits_path}:gamecontroller_client" ]
   external_deps = [
+    "access_token:libaccesstoken_sdk",
+    "access_token:libtokenid_sdk",
+    "bundle_framework:appexecfwk_base",
+    "bundle_framework:appexecfwk_core",
     "c_utils:utils",
     "eventhandler:libeventhandler",
     "ffrt:libffrt",
@@ -58,10 +61,6 @@ ohos_shared_library("gamecontroller_server") {
     "json:nlohmann_json_static",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
-    "access_token:libaccesstoken_sdk",
-    "access_token:libtokenid_sdk",
-    "bundle_framework:appexecfwk_base",
-    "bundle_framework:appexecfwk_core",
   ]
 
   defines = []
