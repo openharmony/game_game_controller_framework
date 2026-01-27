@@ -39,14 +39,14 @@ public:
     * @return 0: success. Other values fail.
     */
     virtual int32_t IdentifyDevice(const std::vector<DeviceInfo> &deviceInfos,
-                                   std::vector<DeviceInfo> &identifyResult);
+                                   std::vector<DeviceInfo> &identifyResult) override;
 
     /**
      * Synchronize Identified device information.
      * @param deviceInfos Identified device information.
      * @return Interface Invoking Result
      */
-    virtual int32_t SyncIdentifiedDeviceInfos(const std::vector<IdentifiedDeviceInfo> &deviceInfos);
+    virtual int32_t SyncIdentifiedDeviceInfos(const std::vector<IdentifiedDeviceInfo> &deviceInfos) override;
 
     /**
      * Synchronize games that support key mapping (It can be invoked only by system service.)
@@ -55,7 +55,7 @@ public:
      * @param gameInfos Synchronized game information
      * @return Interface Invoking Result
      */
-    virtual int32_t SyncSupportKeyMappingGames(bool isSyncAll, const std::vector<GameInfo> &gameInfos);
+    virtual int32_t SyncSupportKeyMappingGames(bool isSyncAll, const std::vector<GameInfo> &gameInfos) override;
 
     /**
     * Getting the Game Key Mapping Configuration
@@ -64,21 +64,21 @@ public:
     * @return Interface Invoking Result
     */
     virtual int32_t GetGameKeyMappingConfig(const GetGameKeyMappingInfoParam &param,
-                                            GameKeyMappingInfo &gameKeyMappingInfo);
+                                            GameKeyMappingInfo &gameKeyMappingInfo) override;
 
     /**
      * Set custom game key mapping configuration (It can be invoked only by system service.)
      * @param gameKeyMappingInfo the custom game key mapping configuration
      * @return Interface Invoking Result
      */
-    virtual int32_t SetCustomGameKeyMappingConfig(const GameKeyMappingInfo &gameKeyMappingInfo);
+    virtual int32_t SetCustomGameKeyMappingConfig(const GameKeyMappingInfo &gameKeyMappingInfo) override;
 
     /**
      * Set default game key mapping configuration (It can be invoked only by system service.)
      * @param gameKeyMappingInfo default game key mapping configuration
      * @return Interface Invoking Result
      */
-    virtual int32_t SetDefaultGameKeyMappingConfig(const GameKeyMappingInfo &gameKeyMappingInfo);
+    virtual int32_t SetDefaultGameKeyMappingConfig(const GameKeyMappingInfo &gameKeyMappingInfo) override;
 
     /**
      * broadcast the device information
@@ -86,7 +86,7 @@ public:
      * @param deviceInfo device information
      * @return Interface Invoking Result
      */
-    virtual int32_t BroadcastDeviceInfo(const GameInfo &gameInfo, const DeviceInfo &deviceInfo);
+    virtual int32_t BroadcastDeviceInfo(const GameInfo &gameInfo, const DeviceInfo &deviceInfo) override;
 
     /**
      * Broadcast open the template configuration page
@@ -94,7 +94,7 @@ public:
      * @param deviceInfo  device information
      * @return Interface Invoking Result
      */
-    virtual int32_t BroadcastOpenTemplateConfig(const GameInfo &gameInfo, const DeviceInfo &deviceInfo);
+    virtual int32_t BroadcastOpenTemplateConfig(const GameInfo &gameInfo, const DeviceInfo &deviceInfo) override;
 
     /**
      * Enable input-to-touch for games with supported key mapping.
@@ -102,7 +102,7 @@ public:
      * @param isEnable true means enable
      * @return Interface Invoking Result
      */
-    virtual int32_t EnableGameKeyMapping(const GameInfo &gameInfo, bool isEnable);
+    virtual int32_t EnableGameKeyMapping(const GameInfo &gameInfo, bool isEnable) override;
 
 protected:
     /**

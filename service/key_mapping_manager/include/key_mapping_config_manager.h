@@ -171,7 +171,7 @@ struct KeyMappingInfoConfig {
     }
 };
 
-class KeyMappingConfigManager : public std::enable_shared_from_this<KeyMappingConfigManager> {
+class KeyMappingConfigManager : public DelayedSingleton<KeyMappingConfigManager> {
 DECLARE_DELAYED_SINGLETON(KeyMappingConfigManager)
 
 public:

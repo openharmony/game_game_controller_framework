@@ -44,7 +44,7 @@ struct GameSupportKeyMappingConfig {
     nlohmann::json ConvertToJson() const;
 };
 
-class GameSupportKeyMappingManager : public std::enable_shared_from_this<GameSupportKeyMappingManager> {
+class GameSupportKeyMappingManager : public DelayedSingleton<GameSupportKeyMappingManager> {
 DECLARE_DELAYED_SINGLETON(GameSupportKeyMappingManager)
 
 public:

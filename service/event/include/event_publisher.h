@@ -23,7 +23,7 @@
 
 namespace OHOS {
 namespace GameController {
-class EventPublisher : public std::enable_shared_from_this<EventPublisher> {
+class EventPublisher : public DelayedSingleton<EventPublisher> {
 DECLARE_DELAYED_SINGLETON(EventPublisher)
 
 public:
