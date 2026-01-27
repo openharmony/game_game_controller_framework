@@ -22,21 +22,21 @@
 namespace OHOS {
 namespace GameController {
 namespace {
-constexpr char* COMMON_EVENT_DEVICE_STATUS_CHANGE = "usual.event.ohos.gamecontroller.device.status";
-constexpr char* COMMON_EVENT_GAME_KEY_MAPPING_CHANGE = "usual.event.ohos.gamecontroller.game.keymapping.change";
-constexpr char* COMMON_EVENT_OPEN_TEMPLATE_CONFIG = "usual.event.ohos.gamecontroller.open.template.config";
-constexpr char* COMMON_EVENT_GAME_KEY_MAPPING_ENABLE = "usual.event.ohos.gamecontroller.game.keymapping.enable";
-constexpr char* COMMON_EVENT_SUPPORT_KEY_MAPPING_CHANGE = "usual.event.ohos.gamecontroller.supported.keymapping.change";
-constexpr char* EVENT_PARAM_BUNDLE_NAME = "bundleName";
-constexpr char* EVENT_PARAM_BUNDLE_VERSION = "version";
-constexpr char* EVENT_PARAM_UNIQ = "uniq";
-constexpr char* EVENT_PARAM_VID_PID = "vidPid";
-constexpr char* EVENT_PARAM_WINDOW_ID = "windowId";
-constexpr char* EVENT_PARAM_DEVICE_TYPE = "deviceType";
-constexpr char* EVENT_PARAM_DEVICE_STATUS = "deviceStatus";
-constexpr char* EVENT_PARAM_DEVICE_NAME = "deviceName";
-constexpr char* EVENT_PARAM_GAME_PID = "gamePid";
-constexpr char* EVENT_PARAM_ENABLE = "enable";
+constexpr const char* COMMON_EVENT_DEVICE_STATUS_CHANGE = "usual.event.ohos.gamecontroller.device.status";
+constexpr const char* COMMON_EVENT_GAME_KEY_MAPPING_CHANGE = "usual.event.ohos.gamecontroller.game.keymapping.change";
+constexpr const char* COMMON_EVENT_OPEN_TEMPLATE_CONFIG = "usual.event.ohos.gamecontroller.open.template.config";
+constexpr const char* COMMON_EVENT_GAME_KEY_MAPPING_ENABLE = "usual.event.ohos.gamecontroller.game.keymapping.enable";
+constexpr const char* COMMON_EVENT_SUPPORT_KEY_MAPPING_CHANGE = "usual.event.ohos.gamecontroller.supported.keymapping.change";
+constexpr const char* EVENT_PARAM_BUNDLE_NAME = "bundleName";
+constexpr const char* EVENT_PARAM_BUNDLE_VERSION = "version";
+constexpr const char* EVENT_PARAM_UNIQ = "uniq";
+constexpr const char* EVENT_PARAM_VID_PID = "vidPid";
+constexpr const char* EVENT_PARAM_WINDOW_ID = "windowId";
+constexpr const char* EVENT_PARAM_DEVICE_TYPE = "deviceType";
+constexpr const char* EVENT_PARAM_DEVICE_STATUS = "deviceStatus";
+constexpr const char* EVENT_PARAM_DEVICE_NAME = "deviceName";
+constexpr const char* EVENT_PARAM_GAME_PID = "gamePid";
+constexpr const char* EVENT_PARAM_ENABLE = "enable";
 
 const int32_t ALL_SUBSCRIBER_TYPE = 0;
 const int32_t SYSTEM_SUBSCRIBER_TYPE = 1;
