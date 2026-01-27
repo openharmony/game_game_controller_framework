@@ -20,7 +20,7 @@
 
 namespace OHOS {
 namespace GameController {
-class PermissionUtils : public std::enable_shared_from_this<PermissionUtils> {
+class PermissionUtils : public DelayedSingleton<PermissionUtils> {
 DECLARE_DELAYED_SINGLETON(PermissionUtils)
 
 public:
