@@ -23,10 +23,10 @@ namespace OHOS {
 namespace GameController {
 namespace {
 const std::string BUNDLE_SUPPORT_KEYMAPPING_CFG = "/data/service/el1/public/for-all-app/gamecontroller_server/";
-constexpr const char* FIELD_BUNDLE_NAME = "bundleName";
-constexpr const char* FIELD_VERSION = "version";
-constexpr const char* FIELD_SUPPORT_DEVICETYPES = "deviceTypes";
-constexpr const char* CONFIG_FILE = "game_support_key_mapping.json";
+const char* FIELD_BUNDLE_NAME = "bundleName";
+const char* FIELD_VERSION = "version";
+const char* FIELD_SUPPORT_DEVICETYPES = "deviceTypes";
+const char* CONFIG_FILE = "game_support_key_mapping.json";
 const size_t MAX_CONFIG_NUM = 2000;
 }
 

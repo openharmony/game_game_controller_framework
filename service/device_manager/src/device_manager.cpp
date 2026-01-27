@@ -29,11 +29,11 @@ using json = nlohmann::json;
 namespace OHOS {
 namespace GameController {
 namespace {
-constexpr const char* PRODUCT = "Product";
-constexpr const char* TYPE = "Type";
-constexpr const char* VENDOR = "Vendor";
-constexpr const char* NAME_PREFIX = "NamePrefix";
-constexpr const char* DEVICE_CONFIG = "device_config.json";
+const char* PRODUCT = "Product";
+const char* TYPE = "Type";
+const char* VENDOR = "Vendor";
+const char* NAME_PREFIX = "NamePrefix";
+const char* DEVICE_CONFIG = "device_config.json";
 const int32_t MAX_DEVICE_NUMBER = 10000;
 /**
  * The device type to be identified can be configured. Currently, only GamePad is supported.

@@ -34,17 +34,16 @@
 namespace OHOS {
 namespace GameController {
 namespace {
-constexpr const char* PERMISSION = "ohos.permission.PUBLISH_SYSTEM_COMMON_EVENT";
-constexpr const char* KEY_MAPPING_CHANGE_EVENT = "usual.event.ohos.gamecontroller.game.keymapping.change";
-constexpr const char* KEY_MAPPING_ENABLE_EVENT = "usual.event.ohos.gamecontroller.game.keymapping.enable";
-constexpr const char* SUPPORT_KEY_MAPPING_CHANGE_EVENT =
-    "usual.event.ohos.gamecontroller.supported.keymapping.change";
-constexpr const char* SCB_FORWARD_KEY_EVENT = "custom.event.SCB_FORWARD_KEYEVENT";
-constexpr const char* SCB_BUNDLE_NAME = "com.ohos.sceneboard";
-constexpr const char* EVENT_PARAM_BUNDLE_NAME = "bundleName";
-constexpr const char* EVENT_PARAM_DEVICE_TYPE = "deviceType";
-constexpr const char* EVENT_PARAM_ENABLE = "enable";
-constexpr const char* EVENT_PARAM_KEYCODE = "keyCode";
+const char* PERMISSION = "ohos.permission.PUBLISH_SYSTEM_COMMON_EVENT";
+const char* KEY_MAPPING_CHANGE_EVENT = "usual.event.ohos.gamecontroller.game.keymapping.change";
+const char* KEY_MAPPING_ENABLE_EVENT = "usual.event.ohos.gamecontroller.game.keymapping.enable";
+const char* SUPPORT_KEY_MAPPING_CHANGE_EVENT = "usual.event.ohos.gamecontroller.supported.keymapping.change";
+const char* SCB_FORWARD_KEY_EVENT = "custom.event.SCB_FORWARD_KEYEVENT";
+const char* SCB_BUNDLE_NAME = "com.ohos.sceneboard";
+const char* EVENT_PARAM_BUNDLE_NAME = "bundleName";
+const char* EVENT_PARAM_DEVICE_TYPE = "deviceType";
+const char* EVENT_PARAM_ENABLE = "enable";
+const char* EVENT_PARAM_KEYCODE = "keyCode";
 const int32_t GAME_CONTROLLER_UID = 6227;
 const std::string TV_DEVICE_TYPE = "tv";
 const int KEY_MAPPING_ENABLE = 1;

@@ -26,27 +26,26 @@ using json = nlohmann::json;
 namespace OHOS {
 namespace GameController {
 namespace {
-constexpr const char* FIELD_KEY_CODE = "keyCode";
-constexpr const char* FIELD_KEY_MAPPING = "keyMapping";
-constexpr const char* FIELD_MAPPING_TYPE = "mappingType";
-constexpr const char* FIELD_DEVICE_TYPE = "deviceType";
-constexpr const char* FIELD_X_VALUE = "xValue";
-constexpr const char* FIELD_Y_VALUE = "yValue";
-constexpr const char* FIELD_BUNDLE_NAME = "bundleName";
-constexpr const char* FIELD_RADIUS = "radius";
-constexpr const char* FIELD_SKILL_RANGE = "skillRange";
-constexpr const char* FIELD_X_STEP = "xStep";
-constexpr const char* FIELD_Y_STEP = "yStep";
-constexpr const char* FIELD_COMBINATION_KEYS = "combinationKeys";
-constexpr const char* FIELD_DPAD = "dpad";
-constexpr const char* FIELD_UP = "up";
-constexpr const char* FIELD_DOWN = "down";
-constexpr const char* FIELD_LEFT = "left";
-constexpr const char* FIELD_RIGHT = "right";
-constexpr const char* FIELD_DELAY_TIME = "delayTime";
-constexpr const char* DEFAULT_KEY_MAPPING_CONFIG = "default_key_mapping.json";
-
-constexpr const char* CUSTOM_KEY_MAPPING_CONFIG = "custom_key_mapping.json";
+const char* FIELD_KEY_CODE = "keyCode";
+const char* FIELD_KEY_MAPPING = "keyMapping";
+const char* FIELD_MAPPING_TYPE = "mappingType";
+const char* FIELD_DEVICE_TYPE = "deviceType";
+const char* FIELD_X_VALUE = "xValue";
+const char* FIELD_Y_VALUE = "yValue";
+const char* FIELD_BUNDLE_NAME = "bundleName";
+const char* FIELD_RADIUS = "radius";
+const char* FIELD_SKILL_RANGE = "skillRange";
+const char* FIELD_X_STEP = "xStep";
+const char* FIELD_Y_STEP = "yStep";
+const char* FIELD_COMBINATION_KEYS = "combinationKeys";
+const char* FIELD_DPAD = "dpad";
+const char* FIELD_UP = "up";
+const char* FIELD_DOWN = "down";
+const char* FIELD_LEFT = "left";
+const char* FIELD_RIGHT = "right";
+const char* FIELD_DELAY_TIME = "delayTime";
+const char* DEFAULT_KEY_MAPPING_CONFIG = "default_key_mapping.json";
+const char* CUSTOM_KEY_MAPPING_CONFIG = "custom_key_mapping.json";
 }
 
 DpadInfo::DpadInfo(const json &jsonObj)
