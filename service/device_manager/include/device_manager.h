@@ -70,7 +70,7 @@ struct IdentifyDeviceInfo {
     nlohmann::json ConvertToJson() const;
 };
 
-class DeviceManager : public std::enable_shared_from_this<DeviceManager> {
+class DeviceManager : public DelayedSingleton<DeviceManager> {
 DECLARE_DELAYED_SINGLETON(DeviceManager)
 
 public:

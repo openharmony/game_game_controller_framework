@@ -26,9 +26,6 @@ config("gamecontroller_service_config") {
     "${game_controller_service_path}/service/ipc/include",
     "${game_controller_service_path}/service/key_mapping_manager/include",
   ]
-
-  cflags = [ "-w" ]
-  cflags_cc = []
 }
 
 gamecontroller_server_sources = [
@@ -45,6 +42,13 @@ gamecontroller_server_sources = [
 ohos_shared_library("gamecontroller_server") {
   install_enable = true
   sources = gamecontroller_server_sources
+  cflags = [
+      "-fstack-protector-strong",
+      "-fstack-protector-all",
+      "-D_FORTIFY_SOURCE=2",
+      "-O2",
+  ]
+  cflags_cc = cflags
   configs = [ ":gamecontroller_service_config" ]
   deps = [ "${game_controller_framework_innerkits_path}:gamecontroller_client" ]
   external_deps = [

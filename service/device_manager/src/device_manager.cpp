@@ -29,11 +29,11 @@ using json = nlohmann::json;
 namespace OHOS {
 namespace GameController {
 namespace {
-constexpr const char* PRODUCT = "Product";
-constexpr const char* TYPE = "Type";
-constexpr const char* VENDOR = "Vendor";
-constexpr const char* NAME_PREFIX = "NamePrefix";
-constexpr const char* DEVICE_CONFIG = "device_config.json";
+const char* PRODUCT = "Product";
+const char* TYPE = "Type";
+const char* VENDOR = "Vendor";
+const char* NAME_PREFIX = "NamePrefix";
+const char* DEVICE_CONFIG = "device_config.json";
 const int32_t MAX_DEVICE_NUMBER = 10000;
 /**
  * The device type to be identified can be configured. Currently, only GamePad is supported.
@@ -174,13 +174,13 @@ void DeviceManager::LoadFromJson(const json &config)
         }
     }
     identifiedDevices_.insert(identifiedDevices_.end(), devices.begin(), devices.end());
-    HILOGI("identifiedDevices size[%{public}d].", identifiedDevices_.size());
+    HILOGI("identifiedDevices size[%zu].", identifiedDevices_.size());
 }
 
 int32_t DeviceManager::SyncIdentifiedDeviceInfos(const std::vector<IdentifiedDeviceInfo> &deviceInfos)
 {
     if (deviceInfos.size() > MAX_DEVICE_NUMBER) {
-        HILOGE("Over max device number.identifiedDevices size[%{public}d].", deviceInfos.size());
+        HILOGE("Over max device number.identifiedDevices size[%zu].", deviceInfos.size());
         return GAME_ERR_ARRAY_MAXSIZE;
     }
     std::lock_guard<std::mutex> lock(mMutex_);
@@ -210,7 +210,7 @@ int32_t DeviceManager::SaveToConfigFile(json &jsonContent, std::vector<IdentifyD
         jsonContent = json::object();
     }
     if (JsonUtils::WriteFileFromJson(GAME_CONTROLLER_SERVICE_ROOT + DEVICE_CONFIG, jsonContent)) {
-        HILOGI("SyncIdentifiedDeviceInfos success. identifiedDevices size[%{public}d].", devices.size());
+        HILOGI("SyncIdentifiedDeviceInfos success. identifiedDevices size[%zu].", devices.size());
         identifiedDevices_.clear();
         identifiedDevices_.insert(identifiedDevices_.end(), devices.begin(), devices.end());
         return GAME_CONTROLLER_SUCCESS;
