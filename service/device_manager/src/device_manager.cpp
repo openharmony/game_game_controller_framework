@@ -174,13 +174,13 @@ void DeviceManager::LoadFromJson(const json &config)
         }
     }
     identifiedDevices_.insert(identifiedDevices_.end(), devices.begin(), devices.end());
-    HILOGI("identifiedDevices size[%{public}lu].", identifiedDevices_.size());
+    HILOGI("identifiedDevices size[%zu].", identifiedDevices_.size());
 }
 
 int32_t DeviceManager::SyncIdentifiedDeviceInfos(const std::vector<IdentifiedDeviceInfo> &deviceInfos)
 {
     if (deviceInfos.size() > MAX_DEVICE_NUMBER) {
-        HILOGE("Over max device number.identifiedDevices size[%{public}lu].", deviceInfos.size());
+        HILOGE("Over max device number.identifiedDevices size[%zu].", deviceInfos.size());
         return GAME_ERR_ARRAY_MAXSIZE;
     }
     std::lock_guard<std::mutex> lock(mMutex_);
@@ -210,7 +210,7 @@ int32_t DeviceManager::SaveToConfigFile(json &jsonContent, std::vector<IdentifyD
         jsonContent = json::object();
     }
     if (JsonUtils::WriteFileFromJson(GAME_CONTROLLER_SERVICE_ROOT + DEVICE_CONFIG, jsonContent)) {
-        HILOGI("SyncIdentifiedDeviceInfos success. identifiedDevices size[%{public}lu].", devices.size());
+        HILOGI("SyncIdentifiedDeviceInfos success. identifiedDevices size[%zu].", devices.size());
         identifiedDevices_.clear();
         identifiedDevices_.insert(identifiedDevices_.end(), devices.begin(), devices.end());
         return GAME_CONTROLLER_SUCCESS;

@@ -162,7 +162,7 @@ void GameSupportKeyMappingManager::LoadConfigFromJsonFile()
         configMap_.insert(make_pair(gameConfig.bundleName, gameConfig));
         HILOGI("game [%{public}s] is support .", gameConfig.bundleName.c_str());
     }
-    HILOGI("load [%{public}s] file success. size is [%{public}lu]", CONFIG_FILE, configMap_.size());
+    HILOGI("load [%{public}s] file success. size is [%zu]", CONFIG_FILE, configMap_.size());
 }
 
 bool GameSupportKeyMappingManager::SaveToConfigFile(const std::unordered_map<std::string,
