@@ -69,6 +69,7 @@ ohos_shared_library("gamecontroller_client") {
     boundary_sanitize = true
     integer_overflow = true
     cfi = true
+    cfi_cross_dso = true
     debug = false
     stack_protector_ret = true
     ubsan = true
@@ -115,6 +116,7 @@ ohos_shared_library("gamecontroller_fwk_client") {
     boundary_sanitize = true
     integer_overflow = true
     cfi = true
+    cfi_cross_dso = true
     debug = false
     stack_protector_ret = true
     ubsan = true
@@ -196,6 +198,7 @@ ohos_shared_library("gamecontroller_event") {
     boundary_sanitize = true
     integer_overflow = true
     cfi = true
+    cfi_cross_dso = true
     debug = false
     stack_protector_ret = true
     ubsan = true

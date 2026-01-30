@@ -33,6 +33,11 @@ config("game_controller_capi_config") {
 }
 
 ohos_shared_library("ohgame_controller") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
   install_enable = true
   sources = [
     "$game_controller_framework_capi_path/c/game_device.cpp",
