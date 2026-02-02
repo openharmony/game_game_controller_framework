@@ -194,6 +194,7 @@ void WindowInfoManager::SetFocus(bool isFocus)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     isFocus_ = isFocus;
+    DelayedSingleton<KeyToTouchManager>::GetInstance()->UpdateFocusStatus(bundleName_, isFocus);
 }
 
 bool WindowInfoManager::IsForegroundAndFocus()

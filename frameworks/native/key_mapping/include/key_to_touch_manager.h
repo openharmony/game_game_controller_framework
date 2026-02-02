@@ -55,6 +55,13 @@ public:
      */
     void CheckPointerSendInterval();
 
+    /**
+     * when focus status is changed, reset context
+     * @param bundleName bundleName
+     * @param isFocus isFocus
+     */
+    void UpdateFocusStatus(const std::string &bundleName, bool isFocus);
+
 private:
 
     bool IsDispatchToPluginMode(const std::shared_ptr<MMI::KeyEvent> &keyEvent);

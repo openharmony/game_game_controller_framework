@@ -37,6 +37,8 @@ public:
 
     void BroadcastDeviceInfo(const DeviceInfo &deviceInfo);
 
+    void SetFocusStatus(const std::string &bundleName, bool isFocus);
+
 private:
     ffrt::mutex locker_;
     bool isPluginMode_{false};
