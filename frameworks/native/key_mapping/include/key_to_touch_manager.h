@@ -56,9 +56,9 @@ public:
     void CheckPointerSendInterval();
 
     /**
-     *
-     * @param bundleName
-     * @param isFocus
+     * when focus status is changed, reset context
+     * @param bundleName bundleName
+     * @param isFocus isFocus
      */
     void UpdateFocusStatus(const std::string &bundleName, bool isFocus);
 
