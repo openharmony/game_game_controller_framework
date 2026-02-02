@@ -22,8 +22,6 @@ config("game_controller_capi_config") {
   ]
 
   cflags = [
-    "-fstack-protector-strong",
-    "-fstack-protector-all",
     "-D_FORTIFY_SOURCE=2",
     "-O2",
   ]
