@@ -43,8 +43,6 @@ ohos_shared_library("gamecontroller_server") {
   install_enable = true
   sources = gamecontroller_server_sources
   cflags = [
-      "-fstack-protector-strong",
-      "-fstack-protector-all",
       "-D_FORTIFY_SOURCE=2",
       "-O2",
   ]
