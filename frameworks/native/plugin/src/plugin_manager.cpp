@@ -66,5 +66,10 @@ void PluginManager::BroadcastDeviceInfo(const DeviceInfo &deviceInfo)
     DelayedSingleton<KeyMappingService>::GetInstance()->BroadCastDeviceInfo(deviceInfo);
 }
 
+void PluginManager::SetFocusStatus(const std::string &bundleName, bool isFocus)
+{
+    DelayedSingleton<KeyToTouchManager>::GetInstance()->UpdateFocusStatus(bundleName_, isFocus);
+}
+
 }
 }

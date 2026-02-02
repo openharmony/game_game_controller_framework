@@ -79,6 +79,7 @@ void GameControllerPluginClient::RegisterSaEventCallback(const std::shared_ptr<S
 
 void GameControllerPluginClient::SetFocusStatus(const std::string &bundleName, bool isFocus)
 {
+    DelayedSingleton<PluginManager>::GetInstance()->SetFocusStatus(bundleName, isFocus);
 }
 }
 }

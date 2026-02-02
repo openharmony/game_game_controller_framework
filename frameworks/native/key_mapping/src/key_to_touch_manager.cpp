@@ -727,5 +727,23 @@ void KeyToTouchManager::CheckPointerSendInterval()
         CheckPointerSendInterval();
     }, ffrt::task_attr().name("pointer-check-task").delay(DELAY_TIME_UNIT));
 }
+
+void KeyToTouchManager::UpdateFocusStatus(const std::string &bundleName, bool isFocus)
+{
+    std::lock_guard<ffrt::mutex> lock(checkMutex_);
+    if (handleQueue_ == nullptr) {
+        return;
+    }
+    handleQueue_->submit([bundleName, this] {
+        std::lock_guard<ffrt::mutex> lock(checkMutex_);
+        if (bundleName != bundleName_) {
+            HILOGW("Discard the UpdateFocusStatus Operate. Because the bundleName[%{public}s] is not same "
+                   "with bundleName_[%{public}s]", bundleName.c_str(), bundleName_.c_str());
+            return;
+        }
+        ResetContext(gcKeyboardContext_);
+        ResetContext(hoverTouchPadContext_);
+    });
+}
 }
 }

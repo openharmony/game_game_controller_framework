@@ -55,6 +55,13 @@ public:
      */
     void CheckPointerSendInterval();
 
+    /**
+     *
+     * @param bundleName
+     * @param isFocus
+     */
+    void UpdateFocusStatus(const std::string &bundleName, bool isFocus);
+
 private:
 
     bool IsDispatchToPluginMode(const std::shared_ptr<MMI::KeyEvent> &keyEvent);
