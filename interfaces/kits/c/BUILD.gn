@@ -21,12 +21,6 @@ config("game_controller_capi_config") {
     "$game_controller_framework_path/frameworks/capi/include",
   ]
 
-  cflags = [
-    "-D_FORTIFY_SOURCE=2",
-    "-O2",
-  ]
-  cflags_cc = cflags
-
   defines = []
 }
 
@@ -37,6 +31,12 @@ ohos_shared_library("ohgame_controller") {
     cfi_cross_dso = true
     debug = false
   }
+  cflags = [
+    "-fstack-protector-all",
+    "-D_FORTIFY_SOURCE=2",
+    "-O2",
+  ]
+  cflags_cc = cflags
   install_enable = true
   sources = [
     "$game_controller_framework_capi_path/c/game_device.cpp",
