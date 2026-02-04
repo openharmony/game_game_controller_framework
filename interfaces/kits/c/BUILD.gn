@@ -32,6 +32,7 @@ ohos_shared_library("ohgame_controller") {
     debug = false
   }
   cflags = [
+    "-fstack-protector-all",
     "-D_FORTIFY_SOURCE=2",
     "-O2",
   ]
