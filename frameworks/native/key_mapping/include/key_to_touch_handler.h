@@ -244,6 +244,8 @@ struct Point {
 };
 
 struct MouseMoveReq {
+    MappingTypeEnum mappingType = CROSSHAIR_KEY_TO_TOUCH;
+    
     /**
      * x position or y position of the current mouse  move point
      */

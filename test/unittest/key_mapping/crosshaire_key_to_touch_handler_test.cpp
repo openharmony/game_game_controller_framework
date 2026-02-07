@@ -349,18 +349,20 @@ HWTEST_F(CrosshairKeyToTouchHandlerTest, HandlePointerEvent_004, TestSize.Level0
     lastMovePoint.SetWindowX(X_VALUE);
     lastMovePoint.SetWindowY(Y_VALUE);
     context_->pointerItems[pointerId] = lastMovePoint;
+    context_->lastMousePointer = BuildPointerItem(MOUSE_X_VALUE, MOUSE_Y_VALUE);
     pointerEvent_->SetPointerAction(PointerEvent::POINTER_ACTION_MOVE);
     pointerEvent_->RemoveAllPointerItems();
-    PointerEvent::PointerItem pointerItem = BuildPointerItem(X_VALUE, Y_VALUE);
+    PointerEvent::PointerItem pointerItem = BuildPointerItem(MOUSE_X_VALUE + MOUSE_MOVE_DISTANCE,
+                                                             MOUSE_Y_VALUE - MOUSE_MOVE_DISTANCE);
     pointerEvent_->AddPointerItem(pointerItem);
     handler_->HandlePointerEvent(context_, pointerEvent_, mappingInfo_);
 
-    ASSERT_EQ(context_->lastMousePointer.GetWindowX(), X_VALUE);
-    ASSERT_EQ(context_->lastMousePointer.GetWindowY(), Y_VALUE);
+    ASSERT_EQ(context_->lastMousePointer.GetWindowX(), MOUSE_X_VALUE + MOUSE_MOVE_DISTANCE);
+    ASSERT_EQ(context_->lastMousePointer.GetWindowY(), MOUSE_Y_VALUE - MOUSE_MOVE_DISTANCE);
     ASSERT_EQ(handler_->touchMoveEntity_.pointerId, pointerId);
     ASSERT_EQ(handler_->touchMoveEntity_.pointerAction, PointerEvent::POINTER_ACTION_MOVE);
     ASSERT_EQ(handler_->touchMoveEntity_.xValue, X_VALUE + X_STEP);
-    ASSERT_EQ(handler_->touchMoveEntity_.yValue, Y_VALUE + Y_STEP);
+    ASSERT_EQ(handler_->touchMoveEntity_.yValue, Y_VALUE - Y_STEP);
 }
 
 /**

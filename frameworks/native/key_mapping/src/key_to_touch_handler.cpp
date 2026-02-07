@@ -183,6 +183,7 @@ int32_t BaseKeyToTouchHandler::ComputeMovePositionForX(std::shared_ptr<InputToTo
     mouseMoveReqForX.lastMovePosition = lastMovePoint.GetWindowX();
     mouseMoveReqForX.maxEdge = context->windowInfoEntity.maxWidth;
     mouseMoveReqForX.step = mappingInfo.xStep;
+    mouseMoveReqForX.mappingType = mappingInfo.mappingType;
     return ComputeMovePosition(mouseMoveReqForX);
 }
 
@@ -197,16 +198,24 @@ int32_t BaseKeyToTouchHandler::ComputeMovePositionForY(std::shared_ptr<InputToTo
     mouseMoveReqForY.lastMovePosition = lastMovePoint.GetWindowY();
     mouseMoveReqForY.maxEdge = context->windowInfoEntity.maxHeight;
     mouseMoveReqForY.step = mappingInfo.yStep;
+    mouseMoveReqForY.mappingType = mappingInfo.mappingType;
     return ComputeMovePosition(mouseMoveReqForY);
 }
 
 int32_t BaseKeyToTouchHandler::ComputeMovePosition(MouseMoveReq mouseMoveReq)
 {
     int32_t result;
+    int32_t step = mouseMoveReq.step;
     if (mouseMoveReq.currentMousePosition > mouseMoveReq.lastMousePosition) {
-        result = std::min(mouseMoveReq.lastMovePosition + mouseMoveReq.step, mouseMoveReq.maxEdge);
+        if (mouseMoveReq.mappingType == MappingTypeEnum::CROSSHAIR_KEY_TO_TOUCH) {
+            step = std::min(step, mouseMoveReq.currentMousePosition - mouseMoveReq.lastMousePosition);
+        }
+        result = std::min(mouseMoveReq.lastMovePosition + step, mouseMoveReq.maxEdge);
     } else if (mouseMoveReq.currentMousePosition < mouseMoveReq.lastMousePosition) {
-        result = std::max(mouseMoveReq.lastMovePosition - mouseMoveReq.step, MIN_EDGE);
+        if (mouseMoveReq.mappingType == MappingTypeEnum::CROSSHAIR_KEY_TO_TOUCH) {
+            step = std::min(step, mouseMoveReq.lastMousePosition - mouseMoveReq.currentMousePosition);
+        }
+        result = std::max(mouseMoveReq.lastMovePosition - step, MIN_EDGE);
     } else {
         if (mouseMoveReq.currentMousePosition > MIN_EDGE &&
             mouseMoveReq.currentMousePosition < (mouseMoveReq.maxEdge - MIN_EDGE)) {
@@ -215,9 +224,9 @@ int32_t BaseKeyToTouchHandler::ComputeMovePosition(MouseMoveReq mouseMoveReq)
 
         if (mouseMoveReq.currentMousePosition <= MIN_EDGE) {
             // mouse has moved to left or top edge
-            result = std::max(mouseMoveReq.lastMovePosition - mouseMoveReq.step, MIN_EDGE);
+            result = std::max(mouseMoveReq.lastMovePosition - step, MIN_EDGE);
         } else {
-            result = std::min(mouseMoveReq.lastMovePosition + mouseMoveReq.step, mouseMoveReq.maxEdge);
+            result = std::min(mouseMoveReq.lastMovePosition + step, mouseMoveReq.maxEdge);
         }
     }
     return result;
