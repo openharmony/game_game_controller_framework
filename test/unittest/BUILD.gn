@@ -127,6 +127,7 @@ ohos_unittest("GameControllerFrameworkTest") {
     "key_mapping/crosshaire_key_to_touch_handler_test.cpp",
     "key_mapping/dpad_key_to_touch_handler_test.cpp",
     "key_mapping/key_mapping_handle_test.cpp",
+    "key_mapping/key_to_touch_handler_test.cpp",
     "key_mapping/key_to_touch_manager_test.cpp",
     "key_mapping/keyboard_observation_to_touch_handler_test.cpp",
     "key_mapping/mouse_left_fire_to_touch_handler_test.cpp",
