@@ -87,10 +87,15 @@ struct InputDeviceInfo {
 
     /**
      * whether it's the  the virtual device of the external device
+     * @param isFoldPc Is it a foldable PC.
      * @return true means it's the virtual device of the external device
      */
-    bool IsVirtualDeviceForExternalDevice()
+    bool IsVirtualDeviceForExternalDevice(bool isFoldPc)
     {
+        if (isFoldPc && name == "input_mt_wrapper") {
+            // When it's a foldable PC, the buttons come from the input_ct_wrapper device
+            return true;
+        }
         return UniqIsEmpty() && vendor != 0 && product != 0;
     }
 
@@ -140,6 +145,18 @@ public:
      */
     void HandleKeyBoardTypeCallback(int32_t keyboardType);
 
+    /**
+     * This function is used to set whether the current device is a foldable phone.
+     * @param isFoldPc Boolean indicating if the device is a foldable pc. true for foldable, false for non-foldable
+     */
+    void SetIsFoldPc();
+
+    /**
+     * Determines whether the device is a foldable pc
+     * @return Returns a boolean value indicating whether it is a foldable pc
+     */
+    bool IsFoldPc();
+
 private:
     /**
      * Queries all device IDs.
@@ -184,6 +201,8 @@ private:
     std::vector<int32_t> deviceIds_;
 
     int32_t keyboardType_{0};
+
+    bool isFoldPc_{false};
 };
 }
 }
