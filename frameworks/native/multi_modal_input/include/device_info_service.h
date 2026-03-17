@@ -27,6 +27,8 @@
 
 namespace OHOS {
 namespace GameController {
+const std::string VIRTUAL_KEYBOARD_DEVICE_NAME = "input_mt_wrapper";
+
 using namespace OHOS::MMI;
 struct InputSourceType {
     InputSourceTypeEnum inputSourceTypeEnum;
@@ -92,7 +94,7 @@ struct InputDeviceInfo {
      */
     bool IsVirtualDeviceForExternalDevice(bool isFoldPc)
     {
-        if (isFoldPc && name == "input_mt_wrapper") {
+        if (isFoldPc && name == VIRTUAL_KEYBOARD_DEVICE_NAME) {
             // When it's a foldable PC, the buttons come from the input_ct_wrapper device
             return true;
         }
