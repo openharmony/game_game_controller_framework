@@ -113,6 +113,7 @@ void InputToTouchClient::StartInputMonitor()
             DelayedSingleton<WindowInfoManager>::GetInstance()->GetWindowId());
     }
     DelayedSingleton<PluginCallbackManager>::GetInstance()->SetPluginMode(g_isPluginMode);
+    DelayedSingleton<DeviceInfoService>::GetInstance()->SetIsFoldPc();
     DelayedSingleton<MultiModalInputMonitor>::GetInstance()->RegisterMonitorBySystem();
     DelayedSingleton<MultiModalInputMgtService>::GetInstance()->GetAllDeviceInfosWhenRegisterDeviceMonitor();
     DelayedSingleton<KeyToTouchManager>::GetInstance()->CheckPointerSendInterval();

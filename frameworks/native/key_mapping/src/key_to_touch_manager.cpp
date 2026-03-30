@@ -93,7 +93,8 @@ bool KeyToTouchManager::DispatchKeyEvent(const std::shared_ptr<MMI::KeyEvent> &k
 
     DeviceInfo deviceInfo = DelayedSingleton<MultiModalInputMgtService>::GetInstance()->GetDeviceInfo(
         keyEvent->GetDeviceId());
-    if (deviceInfo.UniqIsEmpty()) {
+    if (deviceInfo.UniqIsEmpty() || deviceInfo.name == VIRTUAL_KEYBOARD_DEVICE_NAME) {
+        // 折叠PC的虚拟键盘不适合玩游戏
         return IsDispatchToPluginMode(keyEvent);
     }
     std::unordered_set<DeviceTypeEnum> deviceTypeSet = allMonitorKeys_[keyCode];

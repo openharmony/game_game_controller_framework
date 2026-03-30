@@ -287,7 +287,8 @@ bool MultiModalInputMgtService::GetUniqOnDeviceAddEvent(
     }
 
     // uniq is empty in the virtual device information
-    if (!inputDeviceInfo.IsVirtualDeviceForExternalDevice()) {
+    if (!inputDeviceInfo.IsVirtualDeviceForExternalDevice(
+        DelayedSingleton<DeviceInfoService>::GetInstance()->IsFoldPc())) {
         // The system's own virtual devices do not need to be notified to the user.
         HILOGW("[GameController]Discard DeviceOnlineEvent. deviceId is %{public}d, "
                "because it's system virtual device",
