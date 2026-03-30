@@ -102,6 +102,7 @@ ohos_static_library("gamecontroller_framework_static_test") {
     "ipc:ipc_single",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "window_manager:libdm",
     "window_manager:libwm",
   ]
 
@@ -159,6 +160,7 @@ ohos_unittest("GameControllerFrameworkTest") {
     "ipc:ipc_single",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "window_manager:libdm",
     "window_manager:libwm",
   ]
   subsystem_name = "game"

@@ -183,7 +183,8 @@ ohos_shared_library("gamecontroller_fwk_client") {
     "ipc:ipc_single",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
-    "window_manager:libwm",
+    "window_manager:libdm",
+    "window_manager:libwm"
   ]
   subsystem_name = "game"
   part_name = "game_controller_framework"
