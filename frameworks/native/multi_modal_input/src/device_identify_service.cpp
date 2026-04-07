@@ -90,6 +90,10 @@ bool DeviceIdentifyService::HasFullKeyboard(const DeviceInfo &deviceInfo)
         if (result.second == ALPHABETIC_KEYBOARD_TYPE) {
             return true;
         }
+        if (deviceInfo.name == VIRTUAL_KEYBOARD_DEVICE_NAME
+            && DelayedSingleton<DeviceInfoService>::GetInstance()->IsFoldPc()) {
+            return true;
+        }
     }
     return false;
 }
