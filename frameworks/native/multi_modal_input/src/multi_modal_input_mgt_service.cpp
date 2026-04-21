@@ -362,17 +362,21 @@ void MultiModalInputMgtService::IdentifyDeviceType(
         if (deviceInfoByUniqMap_.find(deviceInfo.uniq) == deviceInfoByUniqMap_.end()) {
             // The local cache does not exist. The online event needs to be sent.
             isNeedNotify = true;
+            CheckDeviceType(deviceInfo);
         } else {
             DeviceInfo oriDeviceInfo = deviceInfoByUniqMap_[deviceInfo.uniq];
 
             // When the device type changes, a notification needs to be sent to go online.
-            isNeedNotify = oriDeviceInfo.deviceType != deviceInfo.deviceType;
             deviceInfo.ids.insert(oriDeviceInfo.ids.begin(), oriDeviceInfo.ids.end());
             deviceInfo.names.insert(oriDeviceInfo.names.begin(), oriDeviceInfo.names.end());
             deviceInfo.sourceTypeSet.insert(oriDeviceInfo.sourceTypeSet.begin(), oriDeviceInfo.sourceTypeSet.end());
             deviceInfo.idSourceTypeMap.insert(oriDeviceInfo.idSourceTypeMap.begin(),
                                               oriDeviceInfo.idSourceTypeMap.end());
             deviceInfo.hasFullKeyBoard = oriDeviceInfo.hasFullKeyBoard || deviceInfo.hasFullKeyBoard;
+            CheckDeviceType(deviceInfo);
+
+            // When the device type changes, a notification needs to be sent to go online.
+            isNeedNotify = oriDeviceInfo.deviceType != deviceInfo.deviceType;
         }
 
         CheckDeviceType(deviceInfo);
