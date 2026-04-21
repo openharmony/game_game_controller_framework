@@ -95,6 +95,7 @@ ohos_static_library("gamecontroller_framework_static_test") {
     "c_utils:utils",
     "eventhandler:libeventhandler",
     "ffrt:libffrt",
+    "graphic_2d:color_manager",
     "hilog:libhilog",
     "init:libbegetutil",
     "input:libmmi-client",
