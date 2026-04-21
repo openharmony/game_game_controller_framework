@@ -176,6 +176,7 @@ ohos_shared_library("gamecontroller_fwk_client") {
     "c_utils:utils",
     "eventhandler:libeventhandler",
     "ffrt:libffrt",
+    "graphic_2d:color_manager",
     "hilog:libhilog",
     "init:libbegetutil",
     "input:libmmi-client",
