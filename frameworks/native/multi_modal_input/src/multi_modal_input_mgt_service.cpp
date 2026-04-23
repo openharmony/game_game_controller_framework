@@ -379,7 +379,6 @@ void MultiModalInputMgtService::IdentifyDeviceType(
             isNeedNotify = oriDeviceInfo.deviceType != deviceInfo.deviceType;
         }
 
-        CheckDeviceType(deviceInfo);
         deviceInfoByUniqMap_[deviceInfo.uniq] = deviceInfo;
         tempDeviceInfoByUniqMap[deviceInfo.uniq] = deviceInfo;
         for (auto id: deviceInfo.ids) {
