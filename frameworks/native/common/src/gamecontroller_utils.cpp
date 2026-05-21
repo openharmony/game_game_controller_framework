@@ -36,7 +36,7 @@ int32_t StringUtils::ConvertToCharPtrArray(const std::string &string, char** res
     int32_t count = static_cast<int32_t>(string.size());
     *result = static_cast<char*>(malloc(sizeof(char) * (count + 1)));
     if (*result == nullptr) {
-        HILOGI("malloc is feiled!");
+        HILOGI("malloc is failed!");
         return GAME_ERR_ENOMEM;
     }
     int ret = strncpy_s(*result, count + 1, string.c_str(), count);
