@@ -107,7 +107,7 @@ int32_t GameControllerServerAbility::GetGameKeyMappingConfig(const GetGameKeyMap
                                                              GameKeyMappingInfo &gameKeyMappingInfo)
 {
     if (!IsSystemAppCall()) {
-        // 1. check the gameInfo.bundleName is same with the caller.
+        // 1. check the param.bundleName is same with the caller.
         if (!VerifyBundleNameIsValid(param.bundleName)) {
             HILOGE("no sys permission");
             return GAME_ERR_NO_SYS_PERMISSIONS;
