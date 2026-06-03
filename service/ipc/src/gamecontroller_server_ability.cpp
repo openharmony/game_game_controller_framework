@@ -106,6 +106,13 @@ int32_t GameControllerServerAbility::SetCustomGameKeyMappingConfig(const GameKey
 int32_t GameControllerServerAbility::GetGameKeyMappingConfig(const GetGameKeyMappingInfoParam &param,
                                                              GameKeyMappingInfo &gameKeyMappingInfo)
 {
+    if (!IsSystemAppCall()) {
+        // 1. check the param.bundleName is same with the caller.
+        if (!VerifyBundleNameIsValid(param.bundleName)) {
+            HILOGE("no sys permission");
+            return GAME_ERR_NO_SYS_PERMISSIONS;
+        }
+    }
     return DelayedSingleton<KeyMappingConfigManager>::GetInstance()->GetGameKeyMappingConfig(param,
                                                                                              gameKeyMappingInfo);
 }
