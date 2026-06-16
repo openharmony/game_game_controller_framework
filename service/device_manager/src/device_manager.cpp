@@ -123,10 +123,10 @@ int32_t DeviceManager::DeviceIdentify(const std::vector<DeviceInfo> &devices, st
                           [device](const IdentifyDeviceInfo authed) { return authed.IsMatched(device); });
         if (it != identifiedDevices_.end()) {
             BuildDeviceInfoWithType(device, result, static_cast<DeviceTypeEnum>((*it).deviceType));
-            HILOGI("Device identified, name[%{public}s], type[%{public}d]", device.name.c_str(), (*it).deviceType);
+            HILOGI("Device identified, name[%{private}s], type[%{public}d]", device.name.c_str(), (*it).deviceType);
             continue;
         }
-        HILOGI("Un-authed identified, name[%{public}s]", device.name.c_str());
+        HILOGI("Un-authed identified, name[%{private}s]", device.name.c_str());
         BuildDeviceInfoWithType(device, result, DeviceTypeEnum::UNKNOWN);
     }
     return GAME_CONTROLLER_SUCCESS;
@@ -196,7 +196,7 @@ int32_t DeviceManager::SyncIdentifiedDeviceInfos(const std::vector<IdentifiedDev
             jsonContent[DEVICE_TYPE_LUT.at(device.deviceType)].push_back(identifyDeviceInfo.ConvertToJson());
             devices.push_back(identifyDeviceInfo);
         } else {
-            HILOGW("discard unknown device type, deviceName is [%{public}s]", device.name.c_str());
+            HILOGW("discard unknown device type, deviceName is [%{private}s]", device.name.c_str());
             continue;
         }
     }

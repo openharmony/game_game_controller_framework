@@ -84,7 +84,7 @@ int32_t EventPublisher::SendDeviceInfoNotify(const GameInfo &gameInfo,
     publishInfo.SetSubscriberType(SYSTEM_SUBSCRIBER_TYPE);
     EventFwk::CommonEventData event = BuildCommonEventData(COMMON_EVENT_DEVICE_STATUS_CHANGE, gameInfo, deviceInfo,
                                                            gamePid);
-    HILOGI("[PUB]DeviceInfoNotify, bundle[%{public}s], deviceName[%{public}s], windowId[%{public}d].",
+    HILOGI("[PUB]DeviceInfoNotify, bundle[%{public}s], deviceName[%{private}s], windowId[%{public}d].",
            gameInfo.bundleName.c_str(), deviceInfo.name.c_str(), gameInfo.windowId);
     if (EventFwk::CommonEventManager::NewPublishCommonEvent(event, publishInfo) != 0) {
         HILOGE("[PUB]DeviceInfoNotify error, bundle[%{public}s].",
@@ -103,7 +103,7 @@ int32_t EventPublisher::SendOpenTemplateConfigNotify(const GameInfo &gameInfo, c
     publishInfo.SetSubscriberType(SYSTEM_SUBSCRIBER_TYPE);
 
     EventFwk::CommonEventData event = BuildCommonEventData(COMMON_EVENT_OPEN_TEMPLATE_CONFIG, gameInfo, deviceInfo, 0);
-    HILOGI("[PUB]OpenTemplateConfigNotify, bundle[%{public}s], deviceName[%{public}s].",
+    HILOGI("[PUB]OpenTemplateConfigNotify, bundle[%{public}s], deviceName[%{private}s].",
            gameInfo.bundleName.c_str(), deviceInfo.name.c_str());
     if (EventFwk::CommonEventManager::NewPublishCommonEvent(event, publishInfo) != 0) {
         HILOGE("[PUB]OpenTemplateConfigNotify error, bundle[%{public}s].",

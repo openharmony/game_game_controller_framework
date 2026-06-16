@@ -129,7 +129,7 @@ std::pair<int32_t, std::vector<InputDeviceInfo>> DeviceInfoService::GetAllDevice
         if (!GetUniqOnGetAllDeviceInfos(infos, inputDeviceInfo)) {
             continue;
         }
-        HILOGI("[GameController]GetAllDeviceInfos InputDeviceInfo %{public}s",
+        HILOGI("[GameController]GetAllDeviceInfos InputDeviceInfo %{private}s",
                inputDeviceInfo.GetDeviceInfoDesc().c_str());
         infos.push_back(inputDeviceInfo);
     }
@@ -147,7 +147,7 @@ bool DeviceInfoService::GetUniqOnGetAllDeviceInfos(std::vector<InputDeviceInfo> 
     // uniq is empty in the virtual device information
     if (!inputDeviceInfo.IsVirtualDeviceForExternalDevice(IsFoldPc())) {
         // The system's own virtual devices do not need to be notified to the user.
-        HILOGW("[GameController]GetAllDeviceInfos discard system InputDeviceInfo %{public}s. "
+        HILOGW("[GameController]GetAllDeviceInfos discard system InputDeviceInfo %{private}s. "
                "it's system virtual device",
                inputDeviceInfo.GetDeviceInfoDesc().c_str());
         return false;
