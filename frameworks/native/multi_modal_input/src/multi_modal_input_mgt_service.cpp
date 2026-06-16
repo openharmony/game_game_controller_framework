@@ -354,7 +354,7 @@ void MultiModalInputMgtService::IdentifyDeviceType(
         ClearAllDeviceIdUniqMap();
     }
 
-    bool isNeedNotify; // 需要对本地缓存新增或更新设备类型时，需要发送一个设备上线事件
+    bool isNeedNotify = false; // 需要对本地缓存新增或更新设备类型时，需要发送一个设备上线事件
     for (auto &deviceInfo: result) {
         deviceInfo.onlineTime = StringUtils::GetSysClockTime();
         deviceInfo.anonymizationUniq = StringUtils::AnonymizationUniq(deviceInfo.uniq);

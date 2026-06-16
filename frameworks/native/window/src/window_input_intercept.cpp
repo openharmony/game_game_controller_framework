@@ -97,7 +97,7 @@ WindowInputInterceptConsumer::WindowInputInterceptConsumer() noexcept
 
 void WindowInputInterceptConsumer::OnInputEvent(const std::shared_ptr<MMI::KeyEvent> &keyEvent)
 {
-    HILOGD("OnKeyEvent is %s", keyEvent->ToString().c_str());
+    HILOGD("OnKeyEvent is %{private}s", keyEvent->ToString().c_str());
     if (IsNotifyOpenTemplateConfigPage(keyEvent)) {
         return;
     }
@@ -110,7 +110,7 @@ void WindowInputInterceptConsumer::OnInputEvent(const std::shared_ptr<MMI::KeyEv
 
 void WindowInputInterceptConsumer::OnInputEvent(const std::shared_ptr<MMI::PointerEvent> &pointerEvent)
 {
-    HILOGD("OnInputEvent is %s", pointerEvent->ToString().c_str());
+    HILOGD("OnInputEvent is %{private}s", pointerEvent->ToString().c_str());
     if (DelayedSingleton<KeyToTouchManager>::GetInstance()->DispatchPointerEvent(pointerEvent)) {
         return;
     }
