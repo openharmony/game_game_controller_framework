@@ -29,6 +29,13 @@ config("gamecontroller_ipc_test_public") {
 }
 
 ohos_source_set("gamecontroller_ipc_test") {
+  branch_protector_ret = "pac_ret"
+  stack_protector_ret = true
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
   output_values = get_target_outputs(":game_controller_interface")
   sources = []
   sources += filter_include(output_values, [ "*.cpp" ])
@@ -66,13 +73,13 @@ config("gamecontroller_client_config") {
 
 ohos_shared_library("gamecontroller_client") {
   branch_protector_ret = "pac_ret"
+  stack_protector_ret = true
   sanitize = {
     boundary_sanitize = true
     integer_overflow = true
     cfi = true
     cfi_cross_dso = true
     debug = false
-    stack_protector_ret = true
     ubsan = true
   }
   cflags = [
@@ -113,13 +120,13 @@ ohos_shared_library("gamecontroller_client") {
 
 ohos_shared_library("gamecontroller_fwk_client") {
   branch_protector_ret = "pac_ret"
+  stack_protector_ret = true
   sanitize = {
     boundary_sanitize = true
     integer_overflow = true
     cfi = true
     cfi_cross_dso = true
     debug = false
-    stack_protector_ret = true
     ubsan = true
   }
   cflags = [
@@ -197,13 +204,13 @@ config("gamecontroller_event_config") {
 
 ohos_shared_library("gamecontroller_event") {
   branch_protector_ret = "pac_ret"
+  stack_protector_ret = true
   sanitize = {
     boundary_sanitize = true
     integer_overflow = true
     cfi = true
     cfi_cross_dso = true
     debug = false
-    stack_protector_ret = true
     ubsan = true
   }
   cflags = [

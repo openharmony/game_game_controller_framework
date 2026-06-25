@@ -41,6 +41,8 @@ config("gamecontroller_framework_unittest_config") {
 
 # Just for test.
 ohos_static_library("gamecontroller_framework_static_test") {
+  branch_protector_ret = "pac_ret"
+  stack_protector_ret = true
   testonly = true
   use_exceptions = true
   visibility = [ ":*" ]
@@ -107,6 +109,12 @@ ohos_static_library("gamecontroller_framework_static_test") {
     "window_manager:libwm",
   ]
 
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
   deps =
       [ "${game_controller_framework_innerkits_path}:gamecontroller_ipc_test" ]
 
@@ -169,7 +177,10 @@ ohos_unittest("GameControllerFrameworkTest") {
 }
 
 gamecontroller_service_include_dirs = [
+  "${target_gen_dir}",
+  "${game_controller_framework_innerkits_path}",
   "${game_controller_framework_innerkits_path}/common/include",
+  "${game_controller_framework_innerkits_path}/sa_client/include",
   "${game_controller_service_path}/service/common/include",
   "${game_controller_service_path}/service/event/include",
   "${game_controller_service_path}/service/device_manager/include",
@@ -185,6 +196,8 @@ config("gamecontroller_service_unittest_config") {
 
 # Just for test.
 ohos_static_library("gamecontroller_service_static_test") {
+  branch_protector_ret = "pac_ret"
+  stack_protector_ret = true
   testonly = true
   use_exceptions = true
   visibility = [ ":*" ]
@@ -195,6 +208,10 @@ ohos_static_library("gamecontroller_service_static_test") {
   cflags_cc = []
 
   sources = [
+    "${game_controller_framework_innerkits_path}/common/src/gamecontroller_keymapping_model.cpp",
+    "${game_controller_framework_innerkits_path}/common/src/gamecontroller_utils.cpp",
+    "${game_controller_framework_innerkits_path}/sa_client/src/gamecontroller_server_client.cpp",
+    "${game_controller_framework_innerkits_path}/sa_client/src/gamecontroller_server_client_proxy.cpp",
     "${game_controller_service_path}/service/common/src/json_utils.cpp",
     "${game_controller_service_path}/service/common/src/permission_utils.cpp",
     "${game_controller_service_path}/service/device_manager/src/device_manager.cpp",
@@ -202,7 +219,9 @@ ohos_static_library("gamecontroller_service_static_test") {
     "${game_controller_service_path}/service/key_mapping_manager/src/game_support_key_mapping_manager.cpp",
     "${game_controller_service_path}/service/key_mapping_manager/src/key_mapping_config_manager.cpp",
   ]
+
   deps = [ "${game_controller_framework_innerkits_path}:gamecontroller_client" ]
+
   external_deps = [
     "access_token:libaccesstoken_sdk",
     "access_token:libtokenid_sdk",
@@ -216,7 +235,11 @@ ohos_static_library("gamecontroller_service_static_test") {
     "samgr:samgr_proxy",
   ]
 
-  deps = []
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
 
   subsystem_name = "game"
   part_name = "game_controller_framework"
@@ -236,8 +259,7 @@ ohos_unittest("GameControllerServiceTest") {
     "service/key_mapping/key_mapping_config_manager_test.cpp",
   ]
   deps = [
-    ":gamecontroller_service_static_test",
-    "${game_controller_framework_innerkits_path}:gamecontroller_client",
+    ":gamecontroller_service_static_test"
   ]
   use_exceptions = true
 
