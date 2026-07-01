@@ -445,6 +445,10 @@ void MultiModalInputMgtService::ClearAllDeviceIdUniqMap()
 
 void MultiModalInputMgtService::ClearOfflineDeviceAndBroadcast(const int32_t deviceId)
 {
+    if (deviceIdUniqMap_.find(deviceId) == deviceIdUniqMap_.end()) {
+        HILOGW("Discard DeviceOfflineEvent. deviceId not found, deviceId is %{public}d", deviceId);
+        return;
+    }
     std::string uniq = deviceIdUniqMap_[deviceId];
     ClearDeviceIdUniqMapByDeviceId(deviceId);
     if (deviceInfoByUniqMap_.find(uniq) == deviceInfoByUniqMap_.end()) {
