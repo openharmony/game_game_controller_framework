@@ -267,6 +267,10 @@ struct KeyToTouchMappingInfo : public Parcelable {
             return false;
         }
 
+        if (mappingType < static_cast<int32_t>(SINGE_KEY_TO_TOUCH) ||
+            mappingType > static_cast<int32_t>(MOUSE_RIGHT_KEY_CLICK_TO_TOUCH)) {
+            return false;
+        }
         ret->mappingType = static_cast<MappingTypeEnum>(mappingType);
         return true;
     }
