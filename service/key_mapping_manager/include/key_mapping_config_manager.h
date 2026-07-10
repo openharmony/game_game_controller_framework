@@ -75,6 +75,7 @@ struct KeyMapping {
         xStep = keyToTouchMappingInfo.xStep;
         yStep = keyToTouchMappingInfo.yStep;
         delayTime = keyToTouchMappingInfo.delayTime;
+        joystick = keyToTouchMappingInfo.joystick;
     }
 
     int32_t mappingType = 0;
@@ -88,6 +89,7 @@ struct KeyMapping {
     int32_t xStep = 0;
     int32_t yStep = 0;
     int32_t delayTime = 0;
+    int32_t joystick = 0;
 
     nlohmann::json ConvertToJson() const;
 
@@ -103,6 +105,7 @@ struct KeyMapping {
         keyToTouchMappingInfo.xStep = xStep;
         keyToTouchMappingInfo.yStep = yStep;
         keyToTouchMappingInfo.delayTime = delayTime;
+        keyToTouchMappingInfo.joystick = joystick;
         keyToTouchMappingInfo.combinationKeys = combinationKeys;
         keyToTouchMappingInfo.dpadKeyCodeEntity = dpadInfo.ConvertToDpadKeyCodeEntity();
         return keyToTouchMappingInfo;
