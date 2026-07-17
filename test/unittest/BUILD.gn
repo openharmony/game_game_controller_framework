@@ -41,8 +41,6 @@ config("gamecontroller_framework_unittest_config") {
 
 # Just for test.
 ohos_static_library("gamecontroller_framework_static_test") {
-  branch_protector_ret = "pac_ret"
-  stack_protector_ret = true
   testonly = true
   use_exceptions = true
   visibility = [ ":*" ]
@@ -108,12 +106,6 @@ ohos_static_library("gamecontroller_framework_static_test") {
     "window_manager:libdm",
     "window_manager:libwm",
   ]
-
-  sanitize = {
-    cfi = true
-    cfi_cross_dso = true
-    debug = false
-  }
 
   deps =
       [ "${game_controller_framework_innerkits_path}:gamecontroller_ipc_test" ]
@@ -196,8 +188,6 @@ config("gamecontroller_service_unittest_config") {
 
 # Just for test.
 ohos_static_library("gamecontroller_service_static_test") {
-  branch_protector_ret = "pac_ret"
-  stack_protector_ret = true
   testonly = true
   use_exceptions = true
   visibility = [ ":*" ]
@@ -234,12 +224,6 @@ ohos_static_library("gamecontroller_service_static_test") {
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
-
-  sanitize = {
-    cfi = true
-    cfi_cross_dso = true
-    debug = false
-  }
 
   subsystem_name = "game"
   part_name = "game_controller_framework"
