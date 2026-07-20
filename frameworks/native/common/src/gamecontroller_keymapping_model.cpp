@@ -27,6 +27,7 @@ const size_t MAX_SINGLE_KEY_MAPPING_SIZE = 50;
 const size_t MAX_COMBINATION_KEY_MAPPING_SIZE = 30;
 const size_t MAX_SKILL_KEY_MAPPING_SIZE = 10;
 const size_t MAX_SINGLE_KEY_SIZE_FOR_HOVER_TOUCH_PAD = 2;
+const size_t MAX_TRIGGER_MAPPING_SIZE = 2;
 const int32_t MAX_DELAY_TIME = 5;
 std::unordered_map<MappingTypeEnum, CheckHandler> checkKeyMappingHandlerMap = {
     {MappingTypeEnum::SINGE_KEY_TO_TOUCH,               &GameKeyMappingInfo::CheckSingleKey},
@@ -39,7 +40,13 @@ std::unordered_map<MappingTypeEnum, CheckHandler> checkKeyMappingHandlerMap = {
     {MappingTypeEnum::KEY_BOARD_OBSERVATION_TO_TOUCH,   &GameKeyMappingInfo::CheckKeyBoardObservation},
     {MappingTypeEnum::CROSSHAIR_KEY_TO_TOUCH,           &GameKeyMappingInfo::CheckCrosshairKey},
     {MappingTypeEnum::MOUSE_LEFT_FIRE_TO_TOUCH,         &GameKeyMappingInfo::CheckMouseLeftFire},
-    {MappingTypeEnum::MOUSE_RIGHT_KEY_CLICK_TO_TOUCH,   &GameKeyMappingInfo::CheckMouseRightKeyClick}
+    {MappingTypeEnum::MOUSE_RIGHT_KEY_CLICK_TO_TOUCH,   &GameKeyMappingInfo::CheckMouseRightKeyClick},
+    {MappingTypeEnum::THUMB_STICK_WALKING_TO_TOUCH,     &GameKeyMappingInfo::CheckThumbStickWalking},
+    {MappingTypeEnum::THUMB_STICK_OBSERVATION_TO_TOUCH, &GameKeyMappingInfo::CheckThumbStickObservation},
+    {MappingTypeEnum::GAMEPAD_SKILL_TO_TOUCH,           &GameKeyMappingInfo::CheckGamepadSkill},
+    {MappingTypeEnum::GAMEPAD_SKILL_CANCEL_TO_TOUCH,    &GameKeyMappingInfo::CheckGamepadSkillCancel},
+    {MappingTypeEnum::TRIGGER_TO_TOUCH,                   &GameKeyMappingInfo::CheckTriggerToTouch},
+    {MappingTypeEnum::THUMB_STICK_FPS_OBSERVATION_TO_TOUCH, &GameKeyMappingInfo::CheckThumbStickFpsObservation}
 };
 }
 
@@ -282,6 +289,102 @@ bool GameKeyMappingInfo::CheckMouseRightKeyClick(KeyToTouchMappingInfo &currentK
     return true;
 }
 
+bool GameKeyMappingInfo::CheckThumbStickWalking(KeyToTouchMappingInfo &currentKeyMapping,
+                                                ParameterByCheck &parameter)
+{
+    if (++parameter.keyMappingNumber[MappingTypeEnum::THUMB_STICK_WALKING_TO_TOUCH] > 1) {
+        HILOGE("numbers of THUMB_STICK_WALKING_TO_TOUCH have exceeded its limit[1]");
+        return false;
+    }
+    if (currentKeyMapping.radius <= 0) {
+        HILOGE("THUMB_STICK_WALKING_TO_TOUCH's radius must be greater than 0");
+        return false;
+    }
+    currentKeyMapping.keyCode = 0;
+    currentKeyMapping.SetDpadInfoToDefault();
+    currentKeyMapping.combinationKeys.clear();
+    currentKeyMapping.skillRange = 0;
+    currentKeyMapping.SetStepToDefault();
+    return true;
+}
+
+bool GameKeyMappingInfo::CheckThumbStickObservation(KeyToTouchMappingInfo &currentKeyMapping,
+                                                    ParameterByCheck &parameter)
+{
+    if (++parameter.keyMappingNumber[MappingTypeEnum::THUMB_STICK_OBSERVATION_TO_TOUCH] > 1) {
+        HILOGE("numbers of THUMB_STICK_OBSERVATION_TO_TOUCH have exceeded its limit[1]");
+        return false;
+    }
+    if (currentKeyMapping.xStep <= 0 || currentKeyMapping.yStep <= 0) {
+        HILOGE("THUMB_STICK_OBSERVATION_TO_TOUCH's xStep or yStep must be greater than 0");
+        return false;
+    }
+    currentKeyMapping.keyCode = 0;
+    currentKeyMapping.SetDpadInfoToDefault();
+    currentKeyMapping.combinationKeys.clear();
+    currentKeyMapping.SetSkillRangeRadiusToDefault();
+    return true;
+}
+
+bool GameKeyMappingInfo::CheckGamepadSkill(KeyToTouchMappingInfo &currentKeyMapping,
+                                           ParameterByCheck &parameter)
+{
+    if (++parameter.keyMappingNumber[MappingTypeEnum::GAMEPAD_SKILL_TO_TOUCH] > MAX_SKILL_KEY_MAPPING_SIZE) {
+        HILOGE("numbers of GAMEPAD_SKILL_TO_TOUCH have exceeded its limit[%{public}d]",
+               static_cast<int32_t>(MAX_SKILL_KEY_MAPPING_SIZE));
+        return false;
+    }
+    if (currentKeyMapping.skillRange < 0 || currentKeyMapping.radius < 0) {
+        HILOGE("GAMEPAD_SKILL_TO_TOUCH's skillRange or radius cannot be negative");
+        return false;
+    }
+    if (parameter.uniqKeyCodeMap.find(currentKeyMapping.keyCode) != parameter.uniqKeyCodeMap.end()) {
+        HILOGE("keycode has been used");
+        return false;
+    }
+    parameter.uniqKeyCodeMap[currentKeyMapping.keyCode] = currentKeyMapping.mappingType;
+    currentKeyMapping.combinationKeys.clear();
+    currentKeyMapping.SetDpadInfoToDefault();
+    currentKeyMapping.SetStepToDefault();
+    return true;
+}
+
+bool GameKeyMappingInfo::CheckGamepadSkillCancel(KeyToTouchMappingInfo &currentKeyMapping,
+                                                 ParameterByCheck &parameter)
+{
+    if (++parameter.keyMappingNumber[MappingTypeEnum::GAMEPAD_SKILL_CANCEL_TO_TOUCH] > 1) {
+        HILOGE("numbers of GAMEPAD_SKILL_CANCEL_TO_TOUCH have exceeded its limit[1]");
+        return false;
+    }
+    if (parameter.uniqKeyCodeMap.find(currentKeyMapping.keyCode) != parameter.uniqKeyCodeMap.end()) {
+        HILOGE("keycode has been used");
+        return false;
+    }
+    parameter.uniqKeyCodeMap[currentKeyMapping.keyCode] = currentKeyMapping.mappingType;
+    currentKeyMapping.combinationKeys.clear();
+    currentKeyMapping.SetDpadInfoToDefault();
+    currentKeyMapping.SetSkillRangeRadiusToDefault();
+    currentKeyMapping.SetStepToDefault();
+    return true;
+}
+
+
+bool GameKeyMappingInfo::CheckTriggerToTouch(KeyToTouchMappingInfo &currentKeyMapping,
+                                             ParameterByCheck &parameter)
+{
+    if (++parameter.keyMappingNumber[MappingTypeEnum::TRIGGER_TO_TOUCH] > MAX_TRIGGER_MAPPING_SIZE) {
+        HILOGE("numbers of TRIGGER_TO_TOUCH have exceeded its limit[%{public}zu]",
+               MAX_TRIGGER_MAPPING_SIZE);
+        return false;
+    }
+    currentKeyMapping.keyCode = 0;
+    currentKeyMapping.SetDpadInfoToDefault();
+    currentKeyMapping.combinationKeys.clear();
+    currentKeyMapping.SetSkillRangeRadiusToDefault();
+    currentKeyMapping.SetStepToDefault();
+    return true;
+}
+
 bool GameKeyMappingInfo::CheckKeyMapping(std::vector<KeyToTouchMappingInfo> &KeyToTouchMappings)
 {
     ParameterByCheck parameter;
@@ -294,6 +397,20 @@ bool GameKeyMappingInfo::CheckKeyMapping(std::vector<KeyToTouchMappingInfo> &Key
             return false;
         }
         HILOGE("MappingTypeEnum [%{public}d] is invalid", currentMappingType);
+        return false;
+    }
+    return true;
+}
+
+bool GameKeyMappingInfo::CheckThumbStickFpsObservation(KeyToTouchMappingInfo &currentKeyMapping,
+                                                       ParameterByCheck &parameter)
+{
+    if (++parameter.keyMappingNumber[THUMB_STICK_FPS_OBSERVATION_TO_TOUCH] > 1) {
+        HILOGE("numbers of THUMB_STICK_FPS_OBSERVATION_TO_TOUCH have exceeded its limit[1]");
+        return false;
+    }
+    if (currentKeyMapping.xStep <= 0 || currentKeyMapping.yStep <= 0) {
+        HILOGE("THUMB_STICK_FPS_OBSERVATION_TO_TOUCH's xStep or yStep must be greater than 0");
         return false;
     }
     return true;

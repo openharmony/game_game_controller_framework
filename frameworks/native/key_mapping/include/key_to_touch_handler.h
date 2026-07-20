@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,6 +118,8 @@ struct InputToTouchContext {
     DeviceTypeEnum deviceType = UNKNOWN;
     bool isMonitorMouse = false;
     std::unordered_map<int32_t, KeyToTouchMappingInfo> singleKeyMappings;
+    /** Thumbstick axis mappings (THUMB_STICK_WALKING/OBSERVATION/FPS), separate from key-based mappings */
+    std::unordered_map<int32_t, KeyToTouchMappingInfo> axisMappings_;
     std::unordered_map<int32_t, std::unordered_map<int32_t, KeyToTouchMappingInfo>> combinationKeyMappings;
     std::unordered_map<int32_t, KeyToTouchMappingInfo> mouseBtnKeyMappings;
     WindowInfoEntity windowInfoEntity;
@@ -205,6 +207,7 @@ struct InputToTouchContext {
      */
     void ResetTempVariables();
 
+    bool IsGamePadMapping(const KeyToTouchMappingInfo &mappingInfo);
     void ReleasePointerId(const int32_t keyCode);
 
     /**
@@ -245,7 +248,7 @@ struct Point {
 
 struct MouseMoveReq {
     MappingTypeEnum mappingType = CROSSHAIR_KEY_TO_TOUCH;
-    
+
     /**
      * x position or y position of the current mouse  move point
      */
