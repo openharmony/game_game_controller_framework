@@ -32,6 +32,10 @@ GameDeviceProxy::~GameDeviceProxy()
 
 GameController_ErrorCode GameDeviceProxy::GetAllDeviceInfos(GameDevice_AllDeviceInfos** allDeviceInfos)
 {
+    if (allDeviceInfos == nullptr) {
+        HILOGE("[CAPI][GetAllDeviceInfos]allDeviceInfos is nullptr");
+        return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
+    }
     std::pair<int32_t, std::vector<DeviceInfo>> pair =
         DelayedSingleton<GameDeviceClient>::GetInstance()->GetAllDeviceInfos();
     if (pair.first != GAME_CONTROLLER_SUCCESS) {
@@ -83,8 +87,8 @@ GameController_ErrorCode GameDeviceProxy::GetCountFromAllDeviceInfos(
     const struct GameDevice_AllDeviceInfos* allDeviceInfos,
     int32_t* count)
 {
-    if (allDeviceInfos == nullptr) {
-        HILOGE("[CAPI][GetCountFromAllDeviceInfos]allDeviceInfos is nullptr");
+    if (allDeviceInfos == nullptr || count == nullptr) {
+        HILOGE("[CAPI][GetCountFromAllDeviceInfos]allDeviceInfos or count is nullptr");
         return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
     }
     *count = ((AllDeviceInfos*)allDeviceInfos)->count;
@@ -95,8 +99,8 @@ GameController_ErrorCode GameDeviceProxy::GetDeviceInfoFromAllDeviceInfos(
     const struct GameDevice_AllDeviceInfos* allDeviceInfos,
     const int32_t index, GameDevice_DeviceInfo** deviceInfo)
 {
-    if (allDeviceInfos == nullptr) {
-        HILOGE("[CAPI][GetDeviceInfoFromAllDeviceInfos]allDeviceInfos is nullptr");
+    if (allDeviceInfos == nullptr || deviceInfo == nullptr) {
+        HILOGE("[CAPI][GetDeviceInfoFromAllDeviceInfos]allDeviceInfos or deviceInfo is nullptr");
         return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
     }
     int count = ((AllDeviceInfos*)allDeviceInfos)->count;

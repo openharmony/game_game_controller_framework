@@ -47,8 +47,8 @@ GameController_ErrorCode GamePadEventProxy::GetButtonActionFromButtonEvent(
     const struct GamePad_ButtonEvent* buttonEvent,
     GamePad_Button_ActionType* actionType)
 {
-    if (buttonEvent == nullptr) {
-        HILOGE("[CAPI][GetButtonActionFromButtonEvent]buttonEvent is nullptr");
+    if (buttonEvent == nullptr || actionType == nullptr) {
+        HILOGE("[CAPI][GetButtonActionFromButtonEvent]buttonEvent or actionType is nullptr");
         return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
     }
     int32_t keyAction = ((GamePadButtonEvent*)buttonEvent)->keyAction;
@@ -59,8 +59,8 @@ GameController_ErrorCode GamePadEventProxy::GetButtonActionFromButtonEvent(
 GameController_ErrorCode GamePadEventProxy::GetButtonCodeFromButtonEvent(
     const struct GamePad_ButtonEvent* buttonEvent, int32_t* code)
 {
-    if (buttonEvent == nullptr) {
-        HILOGE("[CAPI][GetButtonCodeFromButtonEvent]buttonEvent is nullptr");
+    if (buttonEvent == nullptr || code == nullptr) {
+        HILOGE("[CAPI][GetButtonCodeFromButtonEvent]buttonEvent or code is nullptr");
         return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
     }
     *code = ((GamePadButtonEvent*)buttonEvent)->keyCode;
@@ -85,8 +85,8 @@ GameController_ErrorCode GamePadEventProxy::GetButtonCodeNameFromButtonEvent(
 GameController_ErrorCode GamePadEventProxy::GetCountFromPressedButtons(
     const struct GamePad_ButtonEvent* buttonEvent, int32_t* count)
 {
-    if (buttonEvent == nullptr) {
-        HILOGE("[CAPI][GetCountFromPressedButtons]buttonEvent is nullptr");
+    if (buttonEvent == nullptr || count == nullptr) {
+        HILOGE("[CAPI][GetCountFromPressedButtons]buttonEvent or count is nullptr");
         return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
     }
 
@@ -98,8 +98,8 @@ GameController_ErrorCode GamePadEventProxy::GetButtonInfoFromPressedButtons(
     const struct GamePad_ButtonEvent* buttonEvent, const int32_t index,
     GamePad_PressedButton** pressedButton)
 {
-    if (buttonEvent == nullptr) {
-        HILOGE("[CAPI][GetButtonInfoFromPressedButtons]buttonEvent is nullptr");
+    if (buttonEvent == nullptr || pressedButton == nullptr) {
+        HILOGE("[CAPI][GetButtonInfoFromPressedButtons]buttonEvent or pressedButton is nullptr");
         return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
     }
 
@@ -131,8 +131,8 @@ GameController_ErrorCode GamePadEventProxy::DestroyPressedButton(GamePad_Pressed
 GameController_ErrorCode GamePadEventProxy::GetButtonCodeFromPressedButton(
     const struct GamePad_PressedButton* pressedButton, int32_t* code)
 {
-    if (pressedButton == nullptr) {
-        HILOGE("[CAPI][GetButtonCodeFromPressedButton]pressedButton is nullptr");
+    if (pressedButton == nullptr || code == nullptr) {
+        HILOGE("[CAPI][GetButtonCodeFromPressedButton]pressedButton or code is nullptr");
         return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
     }
     *code = ((KeyInfo*)pressedButton)->keyCode;
@@ -158,8 +158,8 @@ GameController_ErrorCode GamePadEventProxy::GetButtonCodeNameFromPressedButton(
 GameController_ErrorCode GamePadEventProxy::GetActionTimeFromButtonEvent(
     const struct GamePad_ButtonEvent* buttonEvent, int64_t* actionTime)
 {
-    if (buttonEvent == nullptr) {
-        HILOGE("[CAPI][GetActionTimeFromButtonEvent]buttonEvent is nullptr");
+    if (buttonEvent == nullptr || actionTime == nullptr) {
+        HILOGE("[CAPI][GetActionTimeFromButtonEvent]buttonEvent or actionTime is nullptr");
         return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
     }
     *actionTime = ((GamePadButtonEvent*)buttonEvent)->actionTime;
@@ -184,8 +184,8 @@ GameController_ErrorCode GamePadEventProxy::GetDeviceIdFromAxisEvent(
 GameController_ErrorCode GamePadEventProxy::GetAxisSourceTypeFromAxisEvent(const struct GamePad_AxisEvent* axisEvent,
                                                                            GamePad_AxisSourceType* axisSourceType)
 {
-    if (axisEvent == nullptr) {
-        HILOGE("[CAPI][GetAxisSourceTypeFromAxisEvent]axisEvent is nullptr");
+    if (axisEvent == nullptr || axisSourceType == nullptr) {
+        HILOGE("[CAPI][GetAxisSourceTypeFromAxisEvent]axisEvent or axisSourceType is nullptr");
         return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
     }
     int32_t type = ((GamePadAxisEvent*)axisEvent)->axisSourceType;
@@ -196,8 +196,8 @@ GameController_ErrorCode GamePadEventProxy::GetAxisSourceTypeFromAxisEvent(const
 GameController_ErrorCode GamePadEventProxy::GetXAxisValueFromAxisEvent(const struct GamePad_AxisEvent* axisEvent,
                                                                        double* axisValue)
 {
-    if (axisEvent == nullptr) {
-        HILOGE("[CAPI][GetXAxisValueFromAxisEvent]axisEvent is nullptr");
+    if (axisEvent == nullptr || axisValue == nullptr) {
+        HILOGE("[CAPI][GetXAxisValueFromAxisEvent]axisEvent or axisValue is nullptr");
         return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
     }
     *axisValue = ((GamePadAxisEvent*)axisEvent)->xValue;
@@ -207,8 +207,8 @@ GameController_ErrorCode GamePadEventProxy::GetXAxisValueFromAxisEvent(const str
 GameController_ErrorCode GamePadEventProxy::GetYAxisValueFromAxisEvent(const struct GamePad_AxisEvent* axisEvent,
                                                                        double* axisValue)
 {
-    if (axisEvent == nullptr) {
-        HILOGE("[CAPI][GetYAxisValueFromAxisEvent]axisEvent is nullptr");
+    if (axisEvent == nullptr || axisValue == nullptr) {
+        HILOGE("[CAPI][GetYAxisValueFromAxisEvent]axisEvent or axisValue is nullptr");
         return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
     }
     *axisValue = ((GamePadAxisEvent*)axisEvent)->yValue;
@@ -218,8 +218,8 @@ GameController_ErrorCode GamePadEventProxy::GetYAxisValueFromAxisEvent(const str
 GameController_ErrorCode GamePadEventProxy::GetZAxisValueFromAxisEvent(const struct GamePad_AxisEvent* axisEvent,
                                                                        double* axisValue)
 {
-    if (axisEvent == nullptr) {
-        HILOGE("[CAPI][GetZAxisValueFromAxisEvent]axisEvent is nullptr");
+    if (axisEvent == nullptr || axisValue == nullptr) {
+        HILOGE("[CAPI][GetZAxisValueFromAxisEvent]axisEvent or axisValue is nullptr");
         return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
     }
     *axisValue = ((GamePadAxisEvent*)axisEvent)->zValue;
@@ -229,8 +229,8 @@ GameController_ErrorCode GamePadEventProxy::GetZAxisValueFromAxisEvent(const str
 GameController_ErrorCode GamePadEventProxy::GetRZAxisValueFromAxisEvent(const struct GamePad_AxisEvent* axisEvent,
                                                                         double* axisValue)
 {
-    if (axisEvent == nullptr) {
-        HILOGE("[CAPI][GetRZAxisValueFromAxisEvent]axisEvent is nullptr");
+    if (axisEvent == nullptr || axisValue == nullptr) {
+        HILOGE("[CAPI][GetRZAxisValueFromAxisEvent]axisEvent or axisValue is nullptr");
         return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
     }
     *axisValue = ((GamePadAxisEvent*)axisEvent)->rzValue;
@@ -240,8 +240,8 @@ GameController_ErrorCode GamePadEventProxy::GetRZAxisValueFromAxisEvent(const st
 GameController_ErrorCode GamePadEventProxy::GetHatXAxisValueFromAxisEvent(const struct GamePad_AxisEvent* axisEvent,
                                                                           double* axisValue)
 {
-    if (axisEvent == nullptr) {
-        HILOGE("[CAPI][GetHatXAxisValueFromAxisEvent]axisEvent is nullptr");
+    if (axisEvent == nullptr || axisValue == nullptr) {
+        HILOGE("[CAPI][GetHatXAxisValueFromAxisEvent]axisEvent or axisValue is nullptr");
         return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
     }
     *axisValue = ((GamePadAxisEvent*)axisEvent)->hatxValue;
@@ -251,8 +251,8 @@ GameController_ErrorCode GamePadEventProxy::GetHatXAxisValueFromAxisEvent(const 
 GameController_ErrorCode GamePadEventProxy::GetHatYAxisValueFromAxisEvent(const struct GamePad_AxisEvent* axisEvent,
                                                                           double* axisValue)
 {
-    if (axisEvent == nullptr) {
-        HILOGE("[CAPI][GetHatYAxisValueFromAxisEvent]axisEvent is nullptr");
+    if (axisEvent == nullptr || axisValue == nullptr) {
+        HILOGE("[CAPI][GetHatYAxisValueFromAxisEvent]axisEvent or axisValue is nullptr");
         return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
     }
     *axisValue = ((GamePadAxisEvent*)axisEvent)->hatyValue;
@@ -262,8 +262,8 @@ GameController_ErrorCode GamePadEventProxy::GetHatYAxisValueFromAxisEvent(const 
 GameController_ErrorCode GamePadEventProxy::GetGasAxisValueFromAxisEvent(const struct GamePad_AxisEvent* axisEvent,
                                                                          double* axisValue)
 {
-    if (axisEvent == nullptr) {
-        HILOGE("[CAPI][GetGasAxisValueFromAxisEvent]axisEvent is nullptr");
+    if (axisEvent == nullptr || axisValue == nullptr) {
+        HILOGE("[CAPI][GetGasAxisValueFromAxisEvent]axisEvent or axisValue is nullptr");
         return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
     }
     *axisValue = ((GamePadAxisEvent*)axisEvent)->gasValue;
@@ -271,10 +271,10 @@ GameController_ErrorCode GamePadEventProxy::GetGasAxisValueFromAxisEvent(const s
 }
 
 GameController_ErrorCode GamePadEventProxy::GetBrakeAxisValueFromAxisEvent(const struct GamePad_AxisEvent* axisEvent,
-                                                                           double* axisValue)
+                                                                            double* axisValue)
 {
-    if (axisEvent == nullptr) {
-        HILOGE("[CAPI][GetBrakeAxisValueFromAxisEvent]axisEvent is nullptr");
+    if (axisEvent == nullptr || axisValue == nullptr) {
+        HILOGE("[CAPI][GetBrakeAxisValueFromAxisEvent]axisEvent or axisValue is nullptr");
         return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
     }
     *axisValue = ((GamePadAxisEvent*)axisEvent)->brakeValue;
@@ -284,8 +284,8 @@ GameController_ErrorCode GamePadEventProxy::GetBrakeAxisValueFromAxisEvent(const
 GameController_ErrorCode GamePadEventProxy::GetActionTimeFromAxisEvent(
     const struct GamePad_AxisEvent* axisEvent, int64_t* actionTime)
 {
-    if (axisEvent == nullptr) {
-        HILOGE("[CAPI][GetActionTimeFromAxisEvent]axisEvent is nullptr");
+    if (axisEvent == nullptr || actionTime == nullptr) {
+        HILOGE("[CAPI][GetActionTimeFromAxisEvent]axisEvent or actionTime is nullptr");
         return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
     }
     *actionTime = ((GamePadAxisEvent*)axisEvent)->actionTime;

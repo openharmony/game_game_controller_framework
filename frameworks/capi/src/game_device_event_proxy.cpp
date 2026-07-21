@@ -32,8 +32,8 @@ GameDeviceEventProxy::~GameDeviceEventProxy()
 GameController_ErrorCode GameDeviceEventProxy::GetChangedType(
     const struct GameDevice_DeviceEvent* deviceEvent, GameDevice_StatusChangedType* statusChangedType)
 {
-    if (deviceEvent == nullptr) {
-        HILOGE("[CAPI][DeviceEvent_GetChangedType]deviceEvent is nullptr");
+    if (deviceEvent == nullptr || statusChangedType == nullptr) {
+        HILOGE("[CAPI][DeviceEvent_GetChangedType]deviceEvent or statusChangedType is nullptr");
         return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
     }
     int32_t changeType = ((GameDeviceEvent*)deviceEvent)->changeType;
@@ -44,8 +44,8 @@ GameController_ErrorCode GameDeviceEventProxy::GetChangedType(
 GameController_ErrorCode GameDeviceEventProxy::GetDeviceInfo(const struct GameDevice_DeviceEvent* deviceEvent,
                                                              GameDevice_DeviceInfo** deviceInfo)
 {
-    if (deviceEvent == nullptr) {
-        HILOGE("[CAPI][DeviceEvent_GetDeviceInfo]deviceEvent is nullptr");
+    if (deviceEvent == nullptr || deviceInfo == nullptr) {
+        HILOGE("[CAPI][DeviceEvent_GetDeviceInfo]deviceEvent or deviceInfo is nullptr");
         return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
     }
     BasicDeviceInfo deviceInfoTemp = ((GameDeviceEvent*)deviceEvent)->deviceInfo;
@@ -104,8 +104,8 @@ GameController_ErrorCode GameDeviceEventProxy::GetNameFromDeviceInfo(
 GameController_ErrorCode GameDeviceEventProxy::GetProductFromDeviceInfo(
     const struct GameDevice_DeviceInfo* deviceInfo, int32_t* product)
 {
-    if (deviceInfo == nullptr) {
-        HILOGE("[CAPI][GetProductFromDeviceInfo]deviceInfo is nullptr");
+    if (deviceInfo == nullptr || product == nullptr) {
+        HILOGE("[CAPI][GetProductFromDeviceInfo]deviceInfo or product is nullptr");
         return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
     }
     *product = ((BasicDeviceInfo*)deviceInfo)->product;
@@ -115,8 +115,8 @@ GameController_ErrorCode GameDeviceEventProxy::GetProductFromDeviceInfo(
 GameController_ErrorCode GameDeviceEventProxy::GetVersionFromDeviceInfo(
     const struct GameDevice_DeviceInfo* deviceInfo, int32_t* version)
 {
-    if (deviceInfo == nullptr) {
-        HILOGE("[CAPI][GetVersionFromDeviceInfo]deviceInfo is nullptr");
+    if (deviceInfo == nullptr || version == nullptr) {
+        HILOGE("[CAPI][GetVersionFromDeviceInfo]deviceInfo or version is nullptr");
         return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
     }
     *version = ((BasicDeviceInfo*)deviceInfo)->version;
@@ -142,8 +142,8 @@ GameController_ErrorCode GameDeviceEventProxy::GetDeviceTypeFromDeviceInfo(
     const struct GameDevice_DeviceInfo* deviceInfo,
     GameDevice_DeviceType* deviceType)
 {
-    if (deviceInfo == nullptr) {
-        HILOGE("[CAPI][GetDeviceTypeFromDeviceInfo]deviceInfo is nullptr");
+    if (deviceInfo == nullptr || deviceType == nullptr) {
+        HILOGE("[CAPI][GetDeviceTypeFromDeviceInfo]deviceInfo or deviceType is nullptr");
         return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
     }
     int32_t type = ((BasicDeviceInfo*)deviceInfo)->deviceType;
