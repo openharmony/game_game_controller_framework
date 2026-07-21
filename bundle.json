@@ -40,7 +40,8 @@
         "eventhandler",
         "init",
         "access_token",
-        "bundle_framework"
+        "bundle_framework",
+        "graphic_2d"
       ]
     },
     "build": {

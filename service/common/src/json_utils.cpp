@@ -221,7 +221,7 @@ bool JsonUtils::CopyFile(const std::string &src, const std::string &dest, const 
     destFile.flush();
     destFile.close();
     free(srcRealPath);
-    int res;
+    int res = 0;
     if (isAllUserRead) {
         res = chmod(dest.c_str(), S_IREAD | S_IWRITE | S_IRGRP | S_IROTH);
     } else {

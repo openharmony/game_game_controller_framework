@@ -44,6 +44,7 @@ const char* FIELD_DOWN = "down";
 const char* FIELD_LEFT = "left";
 const char* FIELD_RIGHT = "right";
 const char* FIELD_DELAY_TIME = "delayTime";
+const char* FIELD_JOYSTICK = "joystick";
 const char* DEFAULT_KEY_MAPPING_CONFIG = "default_key_mapping.json";
 const char* CUSTOM_KEY_MAPPING_CONFIG = "custom_key_mapping.json";
 }
@@ -77,7 +78,8 @@ KeyMapping::KeyMapping(const json &jsonObj)
     xStep = JsonUtils::GetJsonInt32Value(jsonObj, FIELD_X_STEP, 0);
     yStep = JsonUtils::GetJsonInt32Value(jsonObj, FIELD_Y_STEP, 0);
     delayTime = JsonUtils::GetJsonInt32Value(jsonObj, FIELD_DELAY_TIME, 0);
-
+    joystick = JsonUtils::GetJsonInt32Value(jsonObj, FIELD_JOYSTICK, 0);
+    
     if (jsonObj.contains(FIELD_COMBINATION_KEYS) && jsonObj.at(FIELD_COMBINATION_KEYS).is_array()) {
         combinationKeys = jsonObj.at(FIELD_COMBINATION_KEYS).get<std::vector<int32_t>>();
     }
@@ -99,6 +101,7 @@ json KeyMapping::ConvertToJson() const
     jsonContent[FIELD_X_STEP] = this->xStep;
     jsonContent[FIELD_Y_STEP] = this->yStep;
     jsonContent[FIELD_DELAY_TIME] = this->delayTime;
+    jsonContent[FIELD_JOYSTICK] = this->joystick;
     jsonContent[FIELD_DPAD] = this->dpadInfo.ConvertToJson();
     jsonContent[FIELD_COMBINATION_KEYS] = combinationKeys;
     return jsonContent;

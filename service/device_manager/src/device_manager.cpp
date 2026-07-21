@@ -123,10 +123,10 @@ int32_t DeviceManager::DeviceIdentify(const std::vector<DeviceInfo> &devices, st
                           [device](const IdentifyDeviceInfo authed) { return authed.IsMatched(device); });
         if (it != identifiedDevices_.end()) {
             BuildDeviceInfoWithType(device, result, static_cast<DeviceTypeEnum>((*it).deviceType));
-            HILOGI("Device identified, name[%{public}s], type[%{public}d]", device.name.c_str(), (*it).deviceType);
+            HILOGI("Device identified, name[%{private}s], type[%{public}d]", device.name.c_str(), (*it).deviceType);
             continue;
         }
-        HILOGI("Un-authed identified, name[%{public}s]", device.name.c_str());
+        HILOGI("Un-authed identified, name[%{private}s]", device.name.c_str());
         BuildDeviceInfoWithType(device, result, DeviceTypeEnum::UNKNOWN);
     }
     return GAME_CONTROLLER_SUCCESS;
@@ -174,13 +174,13 @@ void DeviceManager::LoadFromJson(const json &config)
         }
     }
     identifiedDevices_.insert(identifiedDevices_.end(), devices.begin(), devices.end());
-    HILOGI("identifiedDevices size[%zu].", identifiedDevices_.size());
+    HILOGI("identifiedDevices size[%{public}zu].", identifiedDevices_.size());
 }
 
 int32_t DeviceManager::SyncIdentifiedDeviceInfos(const std::vector<IdentifiedDeviceInfo> &deviceInfos)
 {
     if (deviceInfos.size() > MAX_DEVICE_NUMBER) {
-        HILOGE("Over max device number.identifiedDevices size[%zu].", deviceInfos.size());
+        HILOGE("Over max device number.identifiedDevices size[%{public}zu].", deviceInfos.size());
         return GAME_ERR_ARRAY_MAXSIZE;
     }
     std::lock_guard<std::mutex> lock(mMutex_);
@@ -196,7 +196,7 @@ int32_t DeviceManager::SyncIdentifiedDeviceInfos(const std::vector<IdentifiedDev
             jsonContent[DEVICE_TYPE_LUT.at(device.deviceType)].push_back(identifyDeviceInfo.ConvertToJson());
             devices.push_back(identifyDeviceInfo);
         } else {
-            HILOGW("discard unknown device type, deviceName is [%{public}s]", device.name.c_str());
+            HILOGW("discard unknown device type, deviceName is [%{private}s]", device.name.c_str());
             continue;
         }
     }
@@ -210,7 +210,7 @@ int32_t DeviceManager::SaveToConfigFile(json &jsonContent, std::vector<IdentifyD
         jsonContent = json::object();
     }
     if (JsonUtils::WriteFileFromJson(GAME_CONTROLLER_SERVICE_ROOT + DEVICE_CONFIG, jsonContent)) {
-        HILOGI("SyncIdentifiedDeviceInfos success. identifiedDevices size[%zu].", devices.size());
+        HILOGI("SyncIdentifiedDeviceInfos success. identifiedDevices size[%{public}zu].", devices.size());
         identifiedDevices_.clear();
         identifiedDevices_.insert(identifiedDevices_.end(), devices.begin(), devices.end());
         return GAME_CONTROLLER_SUCCESS;

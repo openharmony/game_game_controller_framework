@@ -160,6 +160,8 @@ struct KeyToTouchMappingInfo : public Parcelable {
 
     int32_t delayTime = 0;
 
+    int32_t joystick = 0;
+
     bool Marshalling(Parcel &parcel) const
     {
         if (!parcel.WriteInt32(keyCode)) {
@@ -187,6 +189,9 @@ struct KeyToTouchMappingInfo : public Parcelable {
             return false;
         }
         if (!parcel.WriteInt32(delayTime)) {
+            return false;
+        }
+        if (!parcel.WriteInt32(joystick)) {
             return false;
         }
         if (!parcel.WriteParcelable(&dpadKeyCodeEntity)) {
@@ -247,6 +252,9 @@ struct KeyToTouchMappingInfo : public Parcelable {
         if (!parcel.ReadInt32(ret->delayTime)) {
             goto error;
         }
+        if (!parcel.ReadInt32(ret->joystick)) {
+            goto error;
+        }
         if (!ReadDpadInfo(parcel, ret)) {
             goto error;
         }
@@ -267,6 +275,10 @@ struct KeyToTouchMappingInfo : public Parcelable {
             return false;
         }
 
+        if (mappingType < static_cast<int32_t>(SINGE_KEY_TO_TOUCH) ||
+            mappingType > static_cast<int32_t>(MOUSE_RIGHT_KEY_CLICK_TO_TOUCH)) {
+            return false;
+        }
         ret->mappingType = static_cast<MappingTypeEnum>(mappingType);
         return true;
     }
@@ -310,6 +322,7 @@ struct KeyToTouchMappingInfo : public Parcelable {
         tmp.append(", xStep:" + std::to_string(xStep));
         tmp.append(", yStep:" + std::to_string(yStep));
         tmp.append(", delayTime:" + std::to_string(delayTime));
+        tmp.append(", joystick:" + std::to_string(joystick));
         tmp.append(", combinationKeys:");
         for (auto combinationKey: combinationKeys) {
             tmp.append(std::to_string(combinationKey) + "|");

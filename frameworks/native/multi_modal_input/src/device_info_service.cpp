@@ -17,6 +17,8 @@
 #include "device_info_service.h"
 #include "gamecontroller_errors.h"
 #include <input_manager.h>
+#include <display_manager.h>
+#include <syspara/parameters.h>
 #include "gamecontroller_log.h"
 
 namespace OHOS {
@@ -38,6 +40,8 @@ InputSourceType g_inputSourceType[] = {
     {JOYSTICK,    EVDEV_UDEV_TAG_JOYSTICK},
     {TRACKBALL,   EVDEV_UDEV_TAG_TRACKBALL},
 };
+
+const std::string PC_DEVICE_TYPE = "2in1";
 }
 
 DeviceInfoService::DeviceInfoService()
@@ -125,7 +129,7 @@ std::pair<int32_t, std::vector<InputDeviceInfo>> DeviceInfoService::GetAllDevice
         if (!GetUniqOnGetAllDeviceInfos(infos, inputDeviceInfo)) {
             continue;
         }
-        HILOGI("[GameController]GetAllDeviceInfos InputDeviceInfo %{public}s",
+        HILOGI("[GameController]GetAllDeviceInfos InputDeviceInfo %{private}s",
                inputDeviceInfo.GetDeviceInfoDesc().c_str());
         infos.push_back(inputDeviceInfo);
     }
@@ -141,9 +145,9 @@ bool DeviceInfoService::GetUniqOnGetAllDeviceInfos(std::vector<InputDeviceInfo> 
     }
 
     // uniq is empty in the virtual device information
-    if (!inputDeviceInfo.IsVirtualDeviceForExternalDevice()) {
+    if (!inputDeviceInfo.IsVirtualDeviceForExternalDevice(IsFoldPc())) {
         // The system's own virtual devices do not need to be notified to the user.
-        HILOGW("[GameController]GetAllDeviceInfos discard system InputDeviceInfo %{public}s. "
+        HILOGW("[GameController]GetAllDeviceInfos discard system InputDeviceInfo %{private}s. "
                "it's system virtual device",
                inputDeviceInfo.GetDeviceInfoDesc().c_str());
         return false;
@@ -221,6 +225,18 @@ void DeviceInfoService::HandleKeyBoardTypeCallback(int32_t keyboardType)
 {
     keyboardType_ = keyboardType;
     taskConditionVar_.notify_all();
+}
+
+void DeviceInfoService::SetIsFoldPc()
+{
+    if (OHOS::system::GetDeviceType() == PC_DEVICE_TYPE) {
+        isFoldPc_ = Rosen::DisplayManager::GetInstance().IsFoldable();
+    }
+}
+
+bool DeviceInfoService::IsFoldPc()
+{
+    return isFoldPc_;
 }
 
 }

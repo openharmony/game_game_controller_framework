@@ -287,7 +287,8 @@ bool MultiModalInputMgtService::GetUniqOnDeviceAddEvent(
     }
 
     // uniq is empty in the virtual device information
-    if (!inputDeviceInfo.IsVirtualDeviceForExternalDevice()) {
+    if (!inputDeviceInfo.IsVirtualDeviceForExternalDevice(
+        DelayedSingleton<DeviceInfoService>::GetInstance()->IsFoldPc())) {
         // The system's own virtual devices do not need to be notified to the user.
         HILOGW("[GameController]Discard DeviceOnlineEvent. deviceId is %{public}d, "
                "because it's system virtual device",
@@ -353,7 +354,7 @@ void MultiModalInputMgtService::IdentifyDeviceType(
         ClearAllDeviceIdUniqMap();
     }
 
-    bool isNeedNotify; // 需要对本地缓存新增或更新设备类型时，需要发送一个设备上线事件
+    bool isNeedNotify = false; // 需要对本地缓存新增或更新设备类型时，需要发送一个设备上线事件
     for (auto &deviceInfo: result) {
         deviceInfo.onlineTime = StringUtils::GetSysClockTime();
         deviceInfo.anonymizationUniq = StringUtils::AnonymizationUniq(deviceInfo.uniq);
@@ -361,20 +362,23 @@ void MultiModalInputMgtService::IdentifyDeviceType(
         if (deviceInfoByUniqMap_.find(deviceInfo.uniq) == deviceInfoByUniqMap_.end()) {
             // The local cache does not exist. The online event needs to be sent.
             isNeedNotify = true;
+            CheckDeviceType(deviceInfo);
         } else {
             DeviceInfo oriDeviceInfo = deviceInfoByUniqMap_[deviceInfo.uniq];
 
             // When the device type changes, a notification needs to be sent to go online.
-            isNeedNotify = oriDeviceInfo.deviceType != deviceInfo.deviceType;
             deviceInfo.ids.insert(oriDeviceInfo.ids.begin(), oriDeviceInfo.ids.end());
             deviceInfo.names.insert(oriDeviceInfo.names.begin(), oriDeviceInfo.names.end());
             deviceInfo.sourceTypeSet.insert(oriDeviceInfo.sourceTypeSet.begin(), oriDeviceInfo.sourceTypeSet.end());
             deviceInfo.idSourceTypeMap.insert(oriDeviceInfo.idSourceTypeMap.begin(),
                                               oriDeviceInfo.idSourceTypeMap.end());
             deviceInfo.hasFullKeyBoard = oriDeviceInfo.hasFullKeyBoard || deviceInfo.hasFullKeyBoard;
+            CheckDeviceType(deviceInfo);
+
+            // When the device type changes, a notification needs to be sent to go online.
+            isNeedNotify = oriDeviceInfo.deviceType != deviceInfo.deviceType;
         }
 
-        CheckDeviceType(deviceInfo);
         deviceInfoByUniqMap_[deviceInfo.uniq] = deviceInfo;
         tempDeviceInfoByUniqMap[deviceInfo.uniq] = deviceInfo;
         for (auto id: deviceInfo.ids) {
@@ -441,6 +445,10 @@ void MultiModalInputMgtService::ClearAllDeviceIdUniqMap()
 
 void MultiModalInputMgtService::ClearOfflineDeviceAndBroadcast(const int32_t deviceId)
 {
+    if (deviceIdUniqMap_.find(deviceId) == deviceIdUniqMap_.end()) {
+        HILOGW("Discard DeviceOfflineEvent. deviceId not found, deviceId is %{public}d", deviceId);
+        return;
+    }
     std::string uniq = deviceIdUniqMap_[deviceId];
     ClearDeviceIdUniqMapByDeviceId(deviceId);
     if (deviceInfoByUniqMap_.find(uniq) == deviceInfoByUniqMap_.end()) {
