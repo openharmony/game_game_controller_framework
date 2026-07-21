@@ -38,14 +38,10 @@ const char* PERMISSION = "ohos.permission.PUBLISH_SYSTEM_COMMON_EVENT";
 const char* KEY_MAPPING_CHANGE_EVENT = "usual.event.ohos.gamecontroller.game.keymapping.change";
 const char* KEY_MAPPING_ENABLE_EVENT = "usual.event.ohos.gamecontroller.game.keymapping.enable";
 const char* SUPPORT_KEY_MAPPING_CHANGE_EVENT = "usual.event.ohos.gamecontroller.supported.keymapping.change";
-const char* SCB_FORWARD_KEY_EVENT = "custom.event.SCB_FORWARD_KEYEVENT";
-const char* SCB_BUNDLE_NAME = "com.ohos.sceneboard";
 const char* EVENT_PARAM_BUNDLE_NAME = "bundleName";
 const char* EVENT_PARAM_DEVICE_TYPE = "deviceType";
 const char* EVENT_PARAM_ENABLE = "enable";
-const char* EVENT_PARAM_KEYCODE = "keyCode";
 const int32_t GAME_CONTROLLER_UID = 6227;
-const std::string TV_DEVICE_TYPE = "tv";
 const int KEY_MAPPING_ENABLE = 1;
 const int KEYCODE_OPEN_TEMP_FOR_HOVER_TOUCH_CONTROLLER = 3107;
 const char* PLUGIN_LIB_PATH = "/system/lib64/libgamecontroller_anco_plugin.z.so";
@@ -121,10 +117,6 @@ void InputToTouchClient::StartInputMonitor()
 void InputToTouchClient::StartPublicEventMonitor()
 {
     SubscribeGameControllerSaEvent();
-
-    if (OHOS::system::GetDeviceType() == TV_DEVICE_TYPE) {
-        SubscribeScbEvent();
-    }
 }
 
 void InputToTouchClient::SubscribeGameControllerSaEvent()
@@ -145,29 +137,10 @@ void InputToTouchClient::SubscribeGameControllerSaEvent()
     }
 }
 
-void InputToTouchClient::SubscribeScbEvent()
-{
-    EventFwk::MatchingSkills scbMatchingSkills;
-    scbMatchingSkills.AddEvent(SCB_FORWARD_KEY_EVENT);
-    EventFwk::CommonEventSubscribeInfo subscribeInfoForScb(scbMatchingSkills);
-    subscribeInfoForScb.SetPublisherBundleName(SCB_BUNDLE_NAME);
-    subscriberForScb_ = std::make_shared<GameCommonEventListener>(subscribeInfoForScb);
-    if (EventFwk::CommonEventManager::SubscribeCommonEvent(subscriberForScb_)) {
-        HILOGI("SubscribeScbCommonEvent success");
-    } else {
-        HILOGE("SubscribeScbCommonEvent failed");
-    }
-}
-
 void GameCommonEventListener::OnReceiveEvent(const EventFwk::CommonEventData &data)
 {
     AAFwk::Want want = data.GetWant();
     std::string action = want.GetAction();
-    if (action == SCB_FORWARD_KEY_EVENT) {
-        HandleScbForwardKeyEvent(data);
-        return;
-    }
-
     if (action == SUPPORT_KEY_MAPPING_CHANGE_EVENT) {
         HandleSupportedKeyMappingChangeEvent();
         return;
@@ -204,29 +177,6 @@ void GameCommonEventListener::HandleKeyMappingEnableChangeEvent(const std::strin
     DelayedSingleton<KeyToTouchManager>::GetInstance()->EnableKeyMapping(bundleName,
                                                                          enable);
     DelayedSingleton<PluginCallbackManager>::GetInstance()->HandleKeyMappingEnableChangeEvent(bundleName, enable);
-}
-
-void GameCommonEventListener::HandleScbForwardKeyEvent(const EventFwk::CommonEventData &data)
-{
-    AAFwk::Want want = data.GetWant();
-    int code = want.GetIntParam(EVENT_PARAM_KEYCODE, 0);
-    if (code != KEYCODE_OPEN_TEMP_FOR_HOVER_TOUCH_CONTROLLER) {
-        HILOGW("Discard HandleScbForwardKeyEvent. code is %{public}d", code);
-        return;
-    }
-    std::pair<bool, DeviceInfo> deviceInfo = DelayedSingleton<MultiModalInputMgtService>::GetInstance()
-        ->GetOneDeviceByDeviceType(HOVER_TOUCH_PAD);
-    if (!deviceInfo.first) {
-        HILOGW("Discard HandleScbForwardKeyEvent. No HoverTouchPad");
-        return;
-    }
-
-    if (DelayedSingleton<WindowInfoManager>::GetInstance()->IsForegroundAndFocus()) {
-        HILOGI("HandleScbForwardKeyEvent. Game is foreground and focus");
-        DelayedSingleton<KeyMappingService>::GetInstance()->BroadcastOpenTemplateConfig(deviceInfo.second);
-    } else {
-        HILOGW("Discard HandleScbForwardKeyEvent. Game is not foreground and focus");
-    }
 }
 
 void GameCommonEventListener::HandleSupportedKeyMappingChangeEvent()
