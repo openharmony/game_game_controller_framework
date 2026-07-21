@@ -42,8 +42,6 @@ private:
 
     void HandleKeyMappingEnableChangeEvent(const std::string &bundleName, const EventFwk::CommonEventData &data);
 
-    void HandleScbForwardKeyEvent(const EventFwk::CommonEventData &data);
-
     void HandleSupportedKeyMappingChangeEvent();
 
     bool IsCurrentGameEvent(const std::string &bundleName);
@@ -63,8 +61,6 @@ private:
     static void StartInputMonitor();
 
     static void StartPublicEventMonitor();
-
-    static void SubscribeScbEvent();
 
     static void SubscribeGameControllerSaEvent();
 
