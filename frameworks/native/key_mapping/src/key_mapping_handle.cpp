@@ -32,7 +32,8 @@ KeyMappingHandle::KeyMappingHandle()
 {
     isOpenTemplateValidHandlerMap_ = {
         {DeviceTypeEnum::HOVER_TOUCH_PAD, &KeyMappingHandle::OpenTemplateByHoverTouchPad},
-        {DeviceTypeEnum::GAME_KEY_BOARD,  &KeyMappingHandle::OpenTemplateByKeyBoard}
+        {DeviceTypeEnum::GAME_KEY_BOARD,  &KeyMappingHandle::OpenTemplateByKeyBoard},
+        {DeviceTypeEnum::GAME_PAD,        &KeyMappingHandle::OpenTemplateByGamePad}
     };
 }
 
@@ -58,6 +59,17 @@ bool KeyMappingHandle::IsNotifyOpenTemplateConfigPage(const std::shared_ptr<MMI:
     }
 
     return IsNotifyOpenTemplateConfigPage(keyEvent, deviceInfo);
+}
+
+bool KeyMappingHandle::OpenTemplateByGamePad(const std::shared_ptr<MMI::KeyEvent> &keyEvent,
+                                             const DeviceInfo &deviceInfo)
+{
+    if (keyEvent->GetKeyCode() == OHOS::GameController::ButtonMenu) {
+        HILOGI("Open template config page by GamePad Start button.");
+        DelayedSingleton<KeyMappingService>::GetInstance()->BroadcastOpenTemplateConfig(deviceInfo);
+        return true;
+    }
+    return false;
 }
 
 void KeyMappingHandle::SetSupportKeyMapping(bool isSupportKeyMapping)

@@ -1,4 +1,4 @@
-/*
+﻿/*
  *  Copyright (c) 2025 Huawei Device Co., Ltd.
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 #include <unordered_set>
 #include <parcel.h>
 #include <memory>
+
 #include "gamecontroller_client_model.h"
 
 namespace OHOS {
@@ -31,7 +32,7 @@ const size_t COMBINATION_LAST_KEYCODE_IDX = 1;
 const int32_t MAX_KEY_MAPPING_SIZE = 100;
 const size_t MAX_BUNDLE_NAME_LENGTH = 256;
 const size_t MAX_VERSION_LENGTH = 50;
-const size_t SUM_OF_MAPPING_TYPE = 11;
+const size_t SUM_OF_MAPPING_TYPE = 17;
 const int32_t MAX_SUPPORT_DEVICE_TYPES = 2;
 
 struct ParameterByCheck {
@@ -73,7 +74,25 @@ enum MappingTypeEnum {
     MOUSE_LEFT_FIRE_TO_TOUCH = 9,
 
     // Right-button of mouse switch to touch clicking
-    MOUSE_RIGHT_KEY_CLICK_TO_TOUCH = 10
+    MOUSE_RIGHT_KEY_CLICK_TO_TOUCH = 10,
+
+    // Left/Right thumbstick controls movement direction
+    THUMB_STICK_WALKING_TO_TOUCH = 11,
+
+    // Left/Right thumbstick controls observation perspective
+    THUMB_STICK_OBSERVATION_TO_TOUCH = 12,
+
+    // Gamepad skill key press + thumbstick aiming
+    GAMEPAD_SKILL_TO_TOUCH = 13,
+
+    // Gamepad skill cancel key
+    GAMEPAD_SKILL_CANCEL_TO_TOUCH = 14,
+
+    // Trigger axis to touch click (LT/RT)
+    TRIGGER_TO_TOUCH = 15,
+
+    // FPS-style thumbstick observation with velocity integration
+    THUMB_STICK_FPS_OBSERVATION_TO_TOUCH = 16
 };
 
 /**
@@ -160,6 +179,9 @@ struct KeyToTouchMappingInfo : public Parcelable {
 
     int32_t delayTime = 0;
 
+    /**
+     * Which thumbstick controls this mapping. 0 for left stick, 1 for right stick.
+     */
     int32_t joystick = 0;
 
     bool Marshalling(Parcel &parcel) const
@@ -255,6 +277,7 @@ struct KeyToTouchMappingInfo : public Parcelable {
         if (!parcel.ReadInt32(ret->joystick)) {
             goto error;
         }
+
         if (!ReadDpadInfo(parcel, ret)) {
             goto error;
         }
@@ -276,7 +299,7 @@ struct KeyToTouchMappingInfo : public Parcelable {
         }
 
         if (mappingType < static_cast<int32_t>(SINGE_KEY_TO_TOUCH) ||
-            mappingType > static_cast<int32_t>(MOUSE_RIGHT_KEY_CLICK_TO_TOUCH)) {
+            mappingType > static_cast<int32_t>(THUMB_STICK_FPS_OBSERVATION_TO_TOUCH)) {
             return false;
         }
         ret->mappingType = static_cast<MappingTypeEnum>(mappingType);
@@ -493,7 +516,8 @@ struct GameInfo : public Parcelable {
             }
             deviceTypeEnum = static_cast<DeviceTypeEnum>(deviceType);
             if (deviceTypeEnum != DeviceTypeEnum::GAME_KEY_BOARD
-                && deviceTypeEnum != DeviceTypeEnum::HOVER_TOUCH_PAD) {
+                && deviceTypeEnum != DeviceTypeEnum::HOVER_TOUCH_PAD
+                && deviceTypeEnum != DeviceTypeEnum::GAME_PAD) {
                 return false;
             }
             ret->supportedDeviceTypes.push_back(deviceType);
@@ -700,6 +724,12 @@ struct GameKeyMappingInfo : public Parcelable {
     bool CheckMouseLeftFire(KeyToTouchMappingInfo &currentKeyMapping, ParameterByCheck &parameter);
 
     bool CheckMouseRightKeyClick(KeyToTouchMappingInfo &currentKeyMapping, ParameterByCheck &parameter);
+    bool CheckThumbStickWalking(KeyToTouchMappingInfo &currentKeyMapping, ParameterByCheck &parameter);
+    bool CheckThumbStickObservation(KeyToTouchMappingInfo &currentKeyMapping, ParameterByCheck &parameter);
+    bool CheckGamepadSkill(KeyToTouchMappingInfo &currentKeyMapping, ParameterByCheck &parameter);
+    bool CheckGamepadSkillCancel(KeyToTouchMappingInfo &currentKeyMapping, ParameterByCheck &parameter);
+    bool CheckThumbStickFpsObservation(KeyToTouchMappingInfo &currentKeyMapping, ParameterByCheck &parameter);
+    bool CheckTriggerToTouch(KeyToTouchMappingInfo &currentKeyMapping, ParameterByCheck &parameter);
 
     bool IsDpadKeyCodeUniq(KeyToTouchMappingInfo &currentKeyMapping, ParameterByCheck &parameter);
 

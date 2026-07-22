@@ -362,12 +362,31 @@ InputToTouchContext::InputToTouchContext(const DeviceTypeEnum &type,
             || mappingInfo.mappingType == OBSERVATION_KEY_TO_TOUCH) {
             singleKeyMappings[mappingInfo.keyCode] = mappingInfo;
             isMonitorMouse = true;
+        } else if (IsGamePadMapping(mappingInfo)) {
+            // handled by IsGamePadMapping
         } else if (mappingInfo.mappingType == SINGE_KEY_TO_TOUCH) {
             singleKeyMappings[mappingInfo.keyCode] = mappingInfo;
         } else {
             HILOGW("unknown mappingType[%{public}d]", static_cast<int32_t>(mappingInfo.mappingType));
         }
     }
+}
+
+bool InputToTouchContext::IsGamePadMapping(const KeyToTouchMappingInfo &mappingInfo)
+{
+    if (mappingInfo.mappingType == THUMB_STICK_WALKING_TO_TOUCH
+        || mappingInfo.mappingType == THUMB_STICK_OBSERVATION_TO_TOUCH
+        || mappingInfo.mappingType == THUMB_STICK_FPS_OBSERVATION_TO_TOUCH) {
+        axisMappings_[mappingInfo.joystick] = mappingInfo;
+        return true;
+    }
+    if (mappingInfo.mappingType == GAMEPAD_SKILL_TO_TOUCH
+        || mappingInfo.mappingType == GAMEPAD_SKILL_CANCEL_TO_TOUCH) {
+        singleKeyMappings[mappingInfo.keyCode] = mappingInfo;
+        return true;
+    }
+    // TRIGGER_TO_TOUCH is stored in KeyToTouchManager::triggerMappings_, not here
+    return (mappingInfo.mappingType == TRIGGER_TO_TOUCH);
 }
 
 bool InputToTouchContext::HasSingleKeyDown(const int32_t keyCode)
@@ -451,6 +470,7 @@ void InputToTouchContext::ResetTempVariables()
     ResetCurrentWalking();
     ResetCurrentMouseRightClick();
     ResetCurrentMouseLeftClick();
+    axisMappings_.clear();
 }
 
 std::pair<bool, int32_t> InputToTouchContext::GetPointerIdByKeyCode(const int32_t keyCode)

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,16 @@
 #include "dpad_key_to_touch_handler.h"
 #include "mouse_right_key_walking_to_touch_handler.h"
 #include "mouse_right_key_click_to_touch_handler.h"
+#include "thumb_stick_walking_to_touch_handler.h"
+#include "thumb_stick_observation_to_touch_handler.h"
+#include "gamepad_skill_to_touch_handler.h"
+#include "gamepad_skill_cancel_to_touch_handler.h"
+#include "trigger_to_touch_handler.h"
+#include "thumb_stick_fps_observation_to_touch_handler.h"
 #include "plugin_callback_manager.h"
+#include "nlohmann/json.hpp"
+#include <fstream>
+#include <cmath>
 
 namespace OHOS {
 namespace GameController {
@@ -55,6 +64,18 @@ KeyToTouchManager::KeyToTouchManager()
     mappingHandler_[MappingTypeEnum::MOUSE_LEFT_FIRE_TO_TOUCH] = std::make_shared<MouseLeftFireToTouchHandler>();
     mappingHandler_[MappingTypeEnum::MOUSE_RIGHT_KEY_CLICK_TO_TOUCH]
         = std::make_shared<MouseRightKeyClickToTouchHandler>();
+    mappingHandler_[MappingTypeEnum::THUMB_STICK_WALKING_TO_TOUCH]
+        = std::make_shared<ThumbStickWalkingToTouchHandler>();
+    mappingHandler_[MappingTypeEnum::THUMB_STICK_OBSERVATION_TO_TOUCH]
+        = std::make_shared<ThumbStickObservationToTouchHandler>();
+    mappingHandler_[MappingTypeEnum::GAMEPAD_SKILL_TO_TOUCH]
+        = std::make_shared<GamepadSkillToTouchHandler>();
+    mappingHandler_[MappingTypeEnum::GAMEPAD_SKILL_CANCEL_TO_TOUCH]
+        = std::make_shared<GamepadSkillCancelToTouchHandler>();
+    mappingHandler_[MappingTypeEnum::TRIGGER_TO_TOUCH]
+        = std::make_shared<TriggerToTouchHandler>();
+    mappingHandler_[MappingTypeEnum::THUMB_STICK_FPS_OBSERVATION_TO_TOUCH]
+        = std::make_shared<ThumbStickFpsObservationToTouchHandler>();
 }
 
 KeyToTouchManager::~KeyToTouchManager()
@@ -94,7 +115,7 @@ bool KeyToTouchManager::DispatchKeyEvent(const std::shared_ptr<MMI::KeyEvent> &k
     DeviceInfo deviceInfo = DelayedSingleton<MultiModalInputMgtService>::GetInstance()->GetDeviceInfo(
         keyEvent->GetDeviceId());
     if (deviceInfo.UniqIsEmpty() || deviceInfo.name == VIRTUAL_KEYBOARD_DEVICE_NAME) {
-        // 折叠PC的虚拟键盘不适合玩游戏
+        // 鎶樺彔PC鐨勮櫄鎷熼敭鐩樹笉閫傚悎鐜╂父鎴?
         return IsDispatchToPluginMode(keyEvent);
     }
     std::unordered_set<DeviceTypeEnum> deviceTypeSet = allMonitorKeys_[keyCode];
@@ -136,7 +157,17 @@ bool KeyToTouchManager::IsDispatchToPluginMode(const std::shared_ptr<MMI::KeyEve
 
 bool KeyToTouchManager::DispatchPointerEvent(const std::shared_ptr<MMI::PointerEvent> &pointerEvent)
 {
-    // current only handle mouse event
+   // current only handle mouse event
+    if (IsGamePadAxisEvent(pointerEvent)) {
+        std::lock_guard<ffrt::mutex> lock(checkMutex_);
+        if (IsCanEnableKeyMapping() && gamePadContext_ != nullptr&& DeviceIsSupportKeyMapping(GAME_PAD)) {
+            handleQueue_->submit([pointerEvent, this] {
+                HandleGamePadAxisEvent(pointerEvent);
+            });
+            return true;
+        }
+        return false;
+    }
     if (!BaseKeyToTouchHandler::IsMouseLeftButtonEvent(pointerEvent)
         && !BaseKeyToTouchHandler::IsMouseRightButtonEvent(pointerEvent)
         && !BaseKeyToTouchHandler::IsMouseMoveEvent(pointerEvent)) {
@@ -201,6 +232,8 @@ void KeyToTouchManager::HandleKeyEvent(const std::shared_ptr<MMI::KeyEvent> &key
         context = gcKeyboardContext_;
     } else if (deviceType == HOVER_TOUCH_PAD) {
         context = hoverTouchPadContext_;
+    } else if (deviceType == GAME_PAD) {
+        context = gamePadContext_;
     }
     if (context == nullptr) {
         DelayedSingleton<PluginCallbackManager>::GetInstance()->SendInputEvent(bundleName_, keyEvent, false);
@@ -211,6 +244,7 @@ void KeyToTouchManager::HandleKeyEvent(const std::shared_ptr<MMI::KeyEvent> &key
     if (!isSuccess) {
         return;
     }
+
     ExecuteHandle(context, keyToTouchMappingInfo, keyEvent, deviceInfo);
 }
 
@@ -242,6 +276,8 @@ void KeyToTouchManager::HandleTemplateConfig(const DeviceTypeEnum &deviceType,
         InitGcKeyboardContext(mappingInfos);
     } else if (deviceType == HOVER_TOUCH_PAD) {
         InitHoverTouchPadContext(mappingInfos);
+    } else if (deviceType == GAME_PAD) {
+        InitGpInputToTouchContext(mappingInfos);
     }
     ResetMonitor();
 }
@@ -255,6 +291,7 @@ void KeyToTouchManager::HandleWindowInfo(const WindowInfoEntity &windowInfoEntit
     }
     UpdateContextWindowInfo(gcKeyboardContext_);
     UpdateContextWindowInfo(hoverTouchPadContext_);
+    UpdateContextWindowInfo(gamePadContext_);
 }
 
 void KeyToTouchManager::UpdateContextWindowInfo(const std::shared_ptr<InputToTouchContext> &context)
@@ -291,6 +328,58 @@ void KeyToTouchManager::InitHoverTouchPadContext(const std::vector<KeyToTouchMap
     }
     hoverTouchPadContext_ = std::make_shared<InputToTouchContext>(HOVER_TOUCH_PAD,
                                                                   windowInfoEntity_, mappingInfos);
+}
+
+
+void KeyToTouchManager::CancelGamePadHandlerTimers()
+{
+    auto walking = std::static_pointer_cast<ThumbStickWalkingToTouchHandler>(
+        mappingHandler_[MappingTypeEnum::THUMB_STICK_WALKING_TO_TOUCH]);
+    if (walking) {
+        walking->ResetState();
+    }
+    auto obs = std::static_pointer_cast<ThumbStickObservationToTouchHandler>(
+        mappingHandler_[MappingTypeEnum::THUMB_STICK_OBSERVATION_TO_TOUCH]);
+    if (obs) {
+        obs->CancelTimer();
+        obs->ResetState();
+    }
+    auto fps = std::static_pointer_cast<ThumbStickFpsObservationToTouchHandler>(
+        mappingHandler_[MappingTypeEnum::THUMB_STICK_FPS_OBSERVATION_TO_TOUCH]);
+    if (fps) {
+        fps->CancelTimer();
+        fps->ResetState();
+    }
+}
+
+void KeyToTouchManager::InjectTriggerBridgeMappings()
+{
+    KeyToTouchMappingInfo ltTrigger;
+    ltTrigger.mappingType = MappingTypeEnum::TRIGGER_TO_TOUCH;
+    ltTrigger.joystick = 0;
+    ltTrigger.keyCode = LeftTrigger;
+    triggerMappings_[0] = ltTrigger;
+
+    KeyToTouchMappingInfo rtTrigger;
+    rtTrigger.mappingType = MappingTypeEnum::TRIGGER_TO_TOUCH;
+    rtTrigger.joystick = 1;
+    rtTrigger.keyCode = RightTrigger;
+    triggerMappings_[1] = rtTrigger;
+}
+
+void KeyToTouchManager::InitGpInputToTouchContext(const std::vector<KeyToTouchMappingInfo> &mappingInfos)
+{
+    CancelGamePadHandlerTimers();
+    if (gamePadContext_ != nullptr) {
+        ReleaseContext(gamePadContext_);
+    }
+    if (mappingInfos.empty()) {
+        gamePadContext_ = nullptr;
+        return;
+    }
+    gamePadContext_ = std::make_shared<InputToTouchContext>(GAME_PAD,
+        windowInfoEntity_, mappingInfos);
+    InjectTriggerBridgeMappings();
 }
 
 void KeyToTouchManager::ReleaseContext(const std::shared_ptr<InputToTouchContext> &inputToTouchContext)
@@ -334,6 +423,7 @@ void KeyToTouchManager::ResetMonitor()
     isMonitorMouse_ = false;
     ResetAllMonitorKeysAndMouseMonitor(gcKeyboardContext_);
     ResetAllMonitorKeysAndMouseMonitor(hoverTouchPadContext_);
+    ResetAllMonitorKeysAndMouseMonitor(gamePadContext_);
 }
 
 void KeyToTouchManager::ResetAllMonitorKeysAndMouseMonitor(const std::shared_ptr<InputToTouchContext> &context)
@@ -633,8 +723,15 @@ void KeyToTouchManager::HandleEnableKeyMapping(bool isEnable)
 {
     isEnableKeyMapping_ = isEnable;
     HILOGI("EnableKeyMapping([%{public}d]). 1 is enable", isEnable);
+    auto fpsHandler = std::static_pointer_cast<ThumbStickFpsObservationToTouchHandler>(
+        mappingHandler_[MappingTypeEnum::THUMB_STICK_FPS_OBSERVATION_TO_TOUCH]);
+    if (fpsHandler) {
+        fpsHandler->ResetState();
+        fpsHandler->CancelTimer();
+    }
     ResetContext(gcKeyboardContext_);
     ResetContext(hoverTouchPadContext_);
+    ResetContext(gamePadContext_);
 }
 
 void KeyToTouchManager::ResetContext(std::shared_ptr<InputToTouchContext> &context)
@@ -644,6 +741,232 @@ void KeyToTouchManager::ResetContext(std::shared_ptr<InputToTouchContext> &conte
     }
     ReleaseContext(context);
     context->ResetTempVariables();
+}
+
+bool KeyToTouchManager::IsGamePadAxisEvent(const std::shared_ptr<MMI::PointerEvent> &pointerEvent)
+{
+    if (pointerEvent->GetSourceType() == PointerEvent::SOURCE_TYPE_TOUCHSCREEN) {
+        return false;
+    }
+    int32_t action = pointerEvent->GetPointerAction();
+    return action == PointerEvent::POINTER_ACTION_AXIS_BEGIN
+        || action == PointerEvent::POINTER_ACTION_AXIS_UPDATE
+        || action == PointerEvent::POINTER_ACTION_AXIS_END;
+}
+
+
+void KeyToTouchManager::DetectGamePadStickEvent(
+    const std::shared_ptr<MMI::PointerEvent> &pointerEvent,
+    bool &hasLeft, bool &hasRight) const
+{
+    hasLeft = pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_X)
+        || pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_Y);
+    hasRight = pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_Z)
+        || pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_RZ);
+
+    bool hasTrigger = pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_BRAKE)
+        || pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_GAS);
+    if (hasTrigger) {
+        hasLeft = false;
+        hasRight = false;
+        return;
+    }
+
+    if (hasLeft && hasRight) {
+        double leftMag = 0.0;
+        if (pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_X))
+            leftMag += pointerEvent->GetAxisValue(PointerEvent::AxisType::AXIS_TYPE_ABS_X)
+                     * pointerEvent->GetAxisValue(PointerEvent::AxisType::AXIS_TYPE_ABS_X);
+        if (pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_Y))
+            leftMag += pointerEvent->GetAxisValue(PointerEvent::AxisType::AXIS_TYPE_ABS_Y)
+                     * pointerEvent->GetAxisValue(PointerEvent::AxisType::AXIS_TYPE_ABS_Y);
+        leftMag = std::sqrt(leftMag);
+
+        double rightMag = 0.0;
+        auto addRightMag = [&](PointerEvent::AxisType t) {
+            if (pointerEvent->HasAxis(t)) {
+                double v = pointerEvent->GetAxisValue(t);
+                rightMag += v * v;
+            }
+        };
+        addRightMag(PointerEvent::AxisType::AXIS_TYPE_ABS_Z);
+        addRightMag(PointerEvent::AxisType::AXIS_TYPE_ABS_RZ);
+        rightMag = std::sqrt(rightMag);
+        if (leftMag > STICK_CENTER_DEAD_ZONE && rightMag < STICK_CENTER_DEAD_ZONE) {
+            hasRight = false;
+        } else if (rightMag > STICK_CENTER_DEAD_ZONE && leftMag < STICK_CENTER_DEAD_ZONE) {
+            hasLeft = false;
+        }
+    }
+}
+
+void KeyToTouchManager::RouteGamePadStick(
+    const std::shared_ptr<MMI::PointerEvent> &pointerEvent, int32_t joystick)
+{
+    bool routeToSkill = gamePadContext_->isSkillOperating
+        && gamePadContext_->currentSkillKeyInfo.joystick == joystick;
+    if (routeToSkill) {
+        stickPushedDuringSkill_[joystick] = true;
+        UpdateStickAxisCache(pointerEvent, joystick);
+        auto handler = mappingHandler_[MappingTypeEnum::GAMEPAD_SKILL_TO_TOUCH];
+        if (handler != nullptr) {
+            handler->HandlePointerEvent(gamePadContext_, pointerEvent,
+                gamePadContext_->currentSkillKeyInfo);
+        }
+        return;
+    }
+    for (auto &mappingPair : gamePadContext_->axisMappings_) {
+        if (mappingPair.second.joystick != joystick) { continue; }
+        auto handler = mappingHandler_[mappingPair.second.mappingType];
+        if (handler != nullptr) {
+            handler->HandlePointerEvent(gamePadContext_, pointerEvent, mappingPair.second);
+        }
+    }
+}
+void KeyToTouchManager::HandleGamePadAxisEvent(const std::shared_ptr<MMI::PointerEvent> &pointerEvent)
+{
+    if (gamePadContext_ == nullptr) {
+        return;
+    }
+
+    bool hasLeft = false;
+    bool hasRight = false;
+    DetectGamePadStickEvent(pointerEvent, hasLeft, hasRight);
+
+    if (hasLeft) { RouteGamePadStick(pointerEvent, 0); }
+    if (hasRight) { RouteGamePadStick(pointerEvent, 1); }
+
+    // Route LT/RT triggers through TRIGGER_TO_TOUCH handler
+    if (pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_BRAKE)
+        || pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_GAS)) {
+        int32_t targetJoystick = pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_BRAKE) ? 0 : 1;
+        RouteGamePadTrigger(pointerEvent, targetJoystick);
+    }
+}
+
+void KeyToTouchManager::RouteGamePadTrigger(
+    const std::shared_ptr<MMI::PointerEvent> &pointerEvent, int32_t targetJoystick)
+{
+    for (auto &mappingPair : triggerMappings_) {
+        if (mappingPair.second.joystick != targetJoystick) {
+            continue;
+        }
+        auto handler = mappingHandler_[MappingTypeEnum::TRIGGER_TO_TOUCH];
+        if (handler != nullptr) {
+            handler->HandlePointerEvent(gamePadContext_, pointerEvent, mappingPair.second);
+        }
+    }
+}
+
+void KeyToTouchManager::InjectGamepadTriggerKey(std::shared_ptr<InputToTouchContext> &context,
+    int32_t keyCode, int32_t keyAction, int64_t actionTime)
+{
+    if (context == nullptr || !isEnableKeyMapping_) {
+        return;
+    }
+    KeyToTouchMappingInfo mappingInfo;
+    bool found = false;
+    if (context->singleKeyMappings.find(keyCode) != context->singleKeyMappings.end()) {
+        mappingInfo = context->singleKeyMappings[keyCode];
+        found = true;
+    }
+    if (!found) {
+        return;
+    }
+    if (mappingHandler_.find(mappingInfo.mappingType) == mappingHandler_.end()) {
+        return;
+    }
+    auto handler = mappingHandler_[mappingInfo.mappingType];
+    if (handler == nullptr) {
+        return;
+    }
+    auto keyEvent = MMI::KeyEvent::Create();
+    keyEvent->SetKeyCode(keyCode);
+    keyEvent->SetKeyAction(keyAction);
+    keyEvent->SetActionTime(actionTime);
+    DeviceInfo deviceInfo;
+    deviceInfo.deviceType = GAME_PAD;
+    handler->HandleKeyEvent(context, keyEvent, deviceInfo, mappingInfo);
+}
+void KeyToTouchManager::ResetAxisHandlerStates()
+{
+    // Determine if the stick was pushed during the skill AND is still off-center.
+    // Only suppress camera if both conditions are true: stick was used AND hasn't
+    // been released yet. If the user centered the stick before ending the skill,
+    // allow camera to respond immediately.
+    bool stickWasPushed = false;
+    bool stickIsCentered = true;
+    if (gamePadContext_ != nullptr) {
+        int32_t skillJoystick = gamePadContext_->currentSkillKeyInfo.joystick;
+        if (skillJoystick >= 0 && skillJoystick <= 1) {
+            stickWasPushed = stickPushedDuringSkill_[skillJoystick];
+            stickIsCentered = IsStickInDeadZone(skillJoystick);
+        }
+        stickPushedDuringSkill_[0] = false;
+        stickPushedDuringSkill_[1] = false;
+    }
+    CancelStickTimers();
+    // Set needCenterFirst_ based on stick state during the skill.
+    // If the stick was pushed AND is still off-center, suppress camera
+    // until the stick is centered (prevents snap after skill release).
+    // Otherwise allow camera to respond immediately.
+    bool needSuppress = stickWasPushed && !stickIsCentered;
+    auto obsHandler = std::static_pointer_cast<ThumbStickObservationToTouchHandler>(
+        mappingHandler_[MappingTypeEnum::THUMB_STICK_OBSERVATION_TO_TOUCH]);
+    if (obsHandler) {
+        obsHandler->SetNeedCenterFirst(needSuppress);
+    }
+    auto fpsObsHandler = std::static_pointer_cast<ThumbStickFpsObservationToTouchHandler>(
+        mappingHandler_[MappingTypeEnum::THUMB_STICK_FPS_OBSERVATION_TO_TOUCH]);
+    if (fpsObsHandler) {
+        fpsObsHandler->SetNeedCenterFirst(needSuppress);
+    }
+}
+
+void KeyToTouchManager::CancelStickTimers()
+{
+    // Stop running stick timers and reset handler state.
+    // needCenterFirst_ is managed by ResetAxisHandlerStates ? only set
+    // when the stick was pushed during a skill and hasn't been centered.
+    auto obsHandler = std::static_pointer_cast<ThumbStickObservationToTouchHandler>(
+       mappingHandler_[MappingTypeEnum::THUMB_STICK_OBSERVATION_TO_TOUCH]);
+    if (obsHandler) {
+        obsHandler->CancelTimer();
+        obsHandler->ResetState();
+    }
+    auto fpsObsHandler = std::static_pointer_cast<ThumbStickFpsObservationToTouchHandler>(
+       mappingHandler_[MappingTypeEnum::THUMB_STICK_FPS_OBSERVATION_TO_TOUCH]);
+    if (fpsObsHandler) {
+        fpsObsHandler->CancelTimer();
+        fpsObsHandler->ResetState();
+    }
+}
+void KeyToTouchManager::UpdateStickAxisCache(const std::shared_ptr<MMI::PointerEvent> &pointerEvent,
+    int32_t joystick)
+{
+    if (pointerEvent == nullptr) { return; }
+    if (joystick == 0) {
+        if (pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_X)) {
+            cachedStickAxisX_[0] = pointerEvent->GetAxisValue(PointerEvent::AxisType::AXIS_TYPE_ABS_X);
+        }
+        if (pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_Y)) {
+            cachedStickAxisY_[0] = pointerEvent->GetAxisValue(PointerEvent::AxisType::AXIS_TYPE_ABS_Y);
+        }
+    } else {
+        if (pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_Z)) {
+            cachedStickAxisX_[1] = pointerEvent->GetAxisValue(PointerEvent::AxisType::AXIS_TYPE_ABS_Z);
+        }
+        if (pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_RZ)) {
+            cachedStickAxisY_[1] = pointerEvent->GetAxisValue(PointerEvent::AxisType::AXIS_TYPE_ABS_RZ);
+        }
+    }
+}
+
+bool KeyToTouchManager::IsStickInDeadZone(int32_t joystick) const
+{
+    double mag = std::sqrt(cachedStickAxisX_[joystick] * cachedStickAxisX_[joystick]
+        + cachedStickAxisY_[joystick] * cachedStickAxisY_[joystick]);
+    return mag < STICK_CENTER_DEAD_ZONE;
 }
 
 bool KeyToTouchManager::IsCanEnableKeyMapping()
@@ -709,6 +1032,7 @@ void KeyToTouchManager::ClearGameKeyMapping()
         std::vector<KeyToTouchMappingInfo> mappingInfos;
         InitGcKeyboardContext(mappingInfos);
         InitHoverTouchPadContext(mappingInfos);
+        InitGpInputToTouchContext(mappingInfos);
     });
 }
 
@@ -723,6 +1047,9 @@ void KeyToTouchManager::CheckPointerSendInterval()
     }
     if (hoverTouchPadContext_ != nullptr) {
         hoverTouchPadContext_->CheckPointerSendInterval();
+    }
+    if (gamePadContext_ != nullptr) {
+        gamePadContext_->CheckPointerSendInterval();
     }
     curTaskHandler_ = handleQueue_->submit_h([this] {
         CheckPointerSendInterval();
@@ -744,6 +1071,13 @@ void KeyToTouchManager::UpdateFocusStatus(const std::string &bundleName, bool is
         }
         ResetContext(gcKeyboardContext_);
         ResetContext(hoverTouchPadContext_);
+        auto fpsHandler = std::static_pointer_cast<ThumbStickFpsObservationToTouchHandler>(
+            mappingHandler_[MappingTypeEnum::THUMB_STICK_FPS_OBSERVATION_TO_TOUCH]);
+        if (fpsHandler) {
+            fpsHandler->CancelTimer();
+            fpsHandler->ResetState();
+        }
+        ResetContext(gamePadContext_);
     });
 }
 }

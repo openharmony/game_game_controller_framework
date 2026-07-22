@@ -87,6 +87,13 @@ ohos_static_library("gamecontroller_framework_static_test") {
     "${game_controller_framework_innerkits_path}/window/src/window_info_manager.cpp",
     "${game_controller_framework_innerkits_path}/window/src/window_input_intercept.cpp",
     "${game_controller_framework_innerkits_path}/window/src/window_opr_handle.cpp",
+    "${game_controller_framework_innerkits_path}/key_mapping/src/stick_timer_manager.cpp",
+    "${game_controller_framework_innerkits_path}/key_mapping/src/thumb_stick_walking_to_touch_handler.cpp",
+    "${game_controller_framework_innerkits_path}/key_mapping/src/thumb_stick_observation_to_touch_handler.cpp",
+    "${game_controller_framework_innerkits_path}/key_mapping/src/thumb_stick_fps_observation_to_touch_handler.cpp",
+    "${game_controller_framework_innerkits_path}/key_mapping/src/gamepad_skill_to_touch_handler.cpp",
+    "${game_controller_framework_innerkits_path}/key_mapping/src/gamepad_skill_cancel_to_touch_handler.cpp",
+    "${game_controller_framework_innerkits_path}/key_mapping/src/trigger_to_touch_handler.cpp",
   ]
 
   external_deps = [

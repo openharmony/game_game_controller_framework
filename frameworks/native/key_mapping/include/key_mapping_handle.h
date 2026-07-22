@@ -54,6 +54,8 @@ private:
 
     bool OpenTemplateByKeyBoard(const std::shared_ptr<MMI::KeyEvent> &keyEvent, const DeviceInfo &deviceInfo);
 
+    bool OpenTemplateByGamePad(const std::shared_ptr<MMI::KeyEvent> &keyEvent, const DeviceInfo &deviceInfo);
+
     bool IsFullKeyboard(const DeviceInfo &deviceInfo);
 
 private:
