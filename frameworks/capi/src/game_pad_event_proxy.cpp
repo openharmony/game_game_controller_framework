@@ -271,7 +271,7 @@ GameController_ErrorCode GamePadEventProxy::GetGasAxisValueFromAxisEvent(const s
 }
 
 GameController_ErrorCode GamePadEventProxy::GetBrakeAxisValueFromAxisEvent(const struct GamePad_AxisEvent* axisEvent,
-                                                                           double* axisValue)
+                                                                            double* axisValue)
 {
     if (axisEvent == nullptr || axisValue == nullptr) {
         HILOGE("[CAPI][GetBrakeAxisValueFromAxisEvent]axisEvent or axisValue is nullptr");
