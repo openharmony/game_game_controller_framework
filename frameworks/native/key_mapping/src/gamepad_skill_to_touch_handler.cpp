@@ -29,6 +29,7 @@ void GamepadSkillToTouchHandler::HandleKeyDown(std::shared_ptr<InputToTouchConte
         return;
     }
     HILOGI("gamepad key convert to down event of gamepad-skill-to-touch");
+    DelayedSingleton<KeyToTouchManager>::GetInstance()->ReleaseStickObservers();
     DelayedSingleton<KeyToTouchManager>::GetInstance()->CancelStickTimers();
     int32_t pointerId = DelayedSingleton<PointerManager>::GetInstance()->ApplyPointerId();
     context->SetCurrentSkillKeyInfo(mappingInfo, pointerId);
@@ -78,7 +79,7 @@ void GamepadSkillToTouchHandler::ReadStickAxis(const std::shared_ptr<MMI::Pointe
 {
     PointerEvent::AxisType axisZ;
     PointerEvent::AxisType axisRZ;
-    if (joystick == 0) {
+    if (joystick == STICK_LEFT) {
         axisZ = PointerEvent::AxisType::AXIS_TYPE_ABS_X;
         axisRZ = PointerEvent::AxisType::AXIS_TYPE_ABS_Y;
     } else {
@@ -97,14 +98,13 @@ void GamepadSkillToTouchHandler::SendSkillAimMove(
     std::shared_ptr<InputToTouchContext> &context,
     const std::shared_ptr<MMI::PointerEvent> &pointerEvent)
 {
-    if (lastAxisZ_ > -SKILL_DEAD_ZONE && lastAxisZ_ < SKILL_DEAD_ZONE
-        && lastAxisRZ_ > -SKILL_DEAD_ZONE && lastAxisRZ_ < SKILL_DEAD_ZONE) {
+    if (IsStickCentered()) {
         return;
     }
     int32_t aimX = context->currentSkillKeyInfo.xValue
-        + static_cast<int32_t>(lastAxisZ_ * context->currentSkillKeyInfo.skillRange);
+        + static_cast<int32_t>(lastAxisZ_ * context->currentSkillKeyInfo.radius);
     int32_t aimY = context->currentSkillKeyInfo.yValue
-        + static_cast<int32_t>(lastAxisRZ_ * context->currentSkillKeyInfo.skillRange);
+        + static_cast<int32_t>(lastAxisRZ_ * context->currentSkillKeyInfo.radius);
     std::pair<bool, int32_t> pair = context->GetPointerIdByKeyCode(KEY_CODE_SKILL);
     if (!pair.first) {
         HILOGW("discard axis event. because cannot find the pointerId for skill");
@@ -119,6 +119,12 @@ void GamepadSkillToTouchHandler::SendSkillAimMove(
     BuildAndSendPointerEvent(context, moveEntity);
 }
 
+bool GamepadSkillToTouchHandler::IsStickCentered() const
+{
+    return lastAxisZ_ > -SKILL_DEAD_ZONE && lastAxisZ_ < SKILL_DEAD_ZONE
+        && lastAxisRZ_ > -SKILL_DEAD_ZONE && lastAxisRZ_ < SKILL_DEAD_ZONE;
+}
+
 void GamepadSkillToTouchHandler::HandlePointerEvent(std::shared_ptr<InputToTouchContext> &context,
                                                     const std::shared_ptr<MMI::PointerEvent> &pointerEvent,
                                                     const KeyToTouchMappingInfo &mappingInfo)
@@ -128,17 +134,6 @@ void GamepadSkillToTouchHandler::HandlePointerEvent(std::shared_ptr<InputToTouch
         return;
     }
     if (!context->isSkillOperating) {
-        return;
-    }
-    int32_t action = pointerEvent->GetPointerAction();
-    if (action != PointerEvent::POINTER_ACTION_AXIS_BEGIN
-        && action != PointerEvent::POINTER_ACTION_AXIS_UPDATE
-        && action != PointerEvent::POINTER_ACTION_AXIS_END) {
-        return;
-    }
-    if (action == PointerEvent::POINTER_ACTION_AXIS_END) {
-        lastAxisZ_ = 0.0;
-        lastAxisRZ_ = 0.0;
         return;
     }
     ReadStickAxis(pointerEvent, context->currentSkillKeyInfo.joystick);

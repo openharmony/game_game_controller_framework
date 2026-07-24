@@ -17,7 +17,7 @@
 #define GAME_CONTROLLER_FRAMEWORK_THUMB_STICK_OBSERVATION_TO_TOUCH_HANDLER_H
 
 #include "key_to_touch_handler.h"
-#include <mutex>
+#include "stick_observation_task.h"
 
 namespace OHOS {
 namespace GameController {
@@ -26,52 +26,29 @@ public:
     ThumbStickObservationToTouchHandler() = default;
     ~ThumbStickObservationToTouchHandler() override;
 
-    void HandleKeyDown(std::shared_ptr<InputToTouchContext> &context,
-                       const std::shared_ptr<MMI::KeyEvent> &keyEvent,
-                       const KeyToTouchMappingInfo &mappingInfo,
-                       const DeviceInfo &deviceInfo) override;
-    void HandleKeyUp(std::shared_ptr<InputToTouchContext> &context,
-                     const std::shared_ptr<MMI::KeyEvent> &keyEvent,
-                     const DeviceInfo &deviceInfo) override;
     void HandlePointerEvent(std::shared_ptr<InputToTouchContext> &context,
                             const std::shared_ptr<MMI::PointerEvent> &pointerEvent,
                             const KeyToTouchMappingInfo &mappingInfo) override;
     void ResetState();
-    void SetNeedCenterFirst(bool value) { needCenterFirst_ = value; }
+    void SetNeedCenterFirst(bool value);
     void CancelTimer();
+    void ReleaseIfActive(std::shared_ptr<InputToTouchContext> &context);
 
 private:
     void HandleAxisEvent(std::shared_ptr<InputToTouchContext> &context,
                          const std::shared_ptr<MMI::PointerEvent> &pointerEvent,
                          const KeyToTouchMappingInfo &mappingInfo);
-    void GetStickAxisTypes(const std::shared_ptr<MMI::PointerEvent> &pointerEvent,
-                           int32_t joystick, PointerEvent::AxisType &axisZ,
-                           PointerEvent::AxisType &axisRZ) const;
     void ActivateObservation(std::shared_ptr<InputToTouchContext> &context,
-                             const std::shared_ptr<MMI::PointerEvent> &pointerEvent,
-                             const KeyToTouchMappingInfo &mappingInfo, int64_t actionTime);
-    void StartObsTimer(std::shared_ptr<InputToTouchContext> context,
-                       KeyToTouchMappingInfo mappingInfo);
-    void StopObsTimer(std::shared_ptr<InputToTouchContext> &context, int64_t actionTime);
-    void TimerTick(std::shared_ptr<InputToTouchContext> context,
-                   const KeyToTouchMappingInfo &mappingInfo);
+                             const KeyToTouchMappingInfo &mappingInfo,
+                             int64_t actionTime);
+    void DeactivateObservation(std::shared_ptr<InputToTouchContext> &context,
+                               int64_t actionTime);
 
-    std::mutex stickMutex_;
-    bool isActive_ = false;
+    StickObservationTask task_;
     int32_t pointerId_ = 0;
-    bool needCenterFirst_ = false;
-    double rawStickX_ = 0.0;
-    double rawStickY_ = 0.0;
     double lastAxisZ_ = 0.0;
     double lastAxisRZ_ = 0.0;
-    int32_t curX_ = 0;
-    int32_t curY_ = 0;
-    int32_t anchorX_ = 0;
-    int32_t anchorY_ = 0;
-    int32_t xStep_ = 0;
-    int32_t yStep_ = 0;
-    int32_t maxW_ = 0;
-    int32_t maxH_ = 0;
+    bool needCenterFirst_ = false;
 };
 }
 }

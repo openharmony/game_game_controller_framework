@@ -17,8 +17,7 @@
 #define GAME_CONTROLLER_FRAMEWORK_THUMB_STICK_FPS_OBSERVATION_TO_TOUCH_HANDLER_H
 
 #include "key_to_touch_handler.h"
-#include <chrono>
-#include <mutex>
+#include "stick_observation_task.h"
 
 namespace OHOS {
 namespace GameController {
@@ -27,60 +26,36 @@ public:
     ThumbStickFpsObservationToTouchHandler() = default;
     ~ThumbStickFpsObservationToTouchHandler() override;
 
-    void HandleKeyDown(std::shared_ptr<InputToTouchContext> &context,
-                       const std::shared_ptr<MMI::KeyEvent> &keyEvent,
-                       const KeyToTouchMappingInfo &mappingInfo,
-                       const DeviceInfo &deviceInfo) override;
-    void HandleKeyUp(std::shared_ptr<InputToTouchContext> &context,
-                     const std::shared_ptr<MMI::KeyEvent> &keyEvent,
-                     const DeviceInfo &deviceInfo) override;
     void HandlePointerEvent(std::shared_ptr<InputToTouchContext> &context,
                             const std::shared_ptr<MMI::PointerEvent> &pointerEvent,
                             const KeyToTouchMappingInfo &mappingInfo) override;
     void ResetState();
-    void SetNeedCenterFirst(bool value) { needCenterFirst_ = value; }
     void CancelTimer();
+    void ReleaseIfActive(std::shared_ptr<InputToTouchContext> &context);
 
 private:
     void HandleAxisEvent(std::shared_ptr<InputToTouchContext> &context,
                          const std::shared_ptr<MMI::PointerEvent> &pointerEvent,
                          const KeyToTouchMappingInfo &mappingInfo);
-    void GetStickAxisTypes(const std::shared_ptr<MMI::PointerEvent> &pointerEvent,
-                           int32_t joystick, PointerEvent::AxisType &axisZ,
-                           PointerEvent::AxisType &axisRZ) const;
-    bool ReadAndCacheStickAxes(const std::shared_ptr<MMI::PointerEvent> &pointerEvent,
-                               int32_t joystick, double &rawZ, double &rawRZ, double &rawMag);
-    void HandleDeadZoneDecay(std::shared_ptr<InputToTouchContext> context);
-    void HandleEdgeReposition(std::shared_ptr<InputToTouchContext> context,
-                              const KeyToTouchMappingInfo &mappingInfo, int32_t pixelDx, int32_t pixelDy);
     void ActivateFpsObservation(std::shared_ptr<InputToTouchContext> &context,
-                                const std::shared_ptr<MMI::PointerEvent> &pointerEvent,
                                 const KeyToTouchMappingInfo &mappingInfo,
-                                int64_t actionTime, double rawZ, double rawRZ, double rawMag);
-    void StartFpsTimer(std::shared_ptr<InputToTouchContext> context, KeyToTouchMappingInfo mappingInfo);
-    void StopFpsTimer(std::shared_ptr<InputToTouchContext> &context, int64_t actionTime);
-    void TimerTick(std::shared_ptr<InputToTouchContext> context, const KeyToTouchMappingInfo &mappingInfo);
+                                int64_t actionTime,
+                                double rawZ, double rawRZ, double rawMag);
+    void DeactivateFpsObservation(std::shared_ptr<InputToTouchContext> &context,
+                                  int64_t actionTime);
 
-    std::mutex stickMutex_;
-    bool needCenterFirst_ = false;
-    bool isActive_ = false;
+    StickObservationTask task_;
     int32_t pointerId_ = 0;
-    std::chrono::steady_clock::time_point lastTick_;
-    int32_t deadCounter_ = 0;
-    double rawStickX_ = 0.0;
-    double rawStickY_ = 0.0;
     double lastAxisZ_ = 0.0;
     double lastAxisRZ_ = 0.0;
-    double filteredX_ = 0.0;
-    double filteredY_ = 0.0;
-    int32_t curX_ = 0;
-    int32_t curY_ = 0;
-    int32_t anchorX_ = 0;
-    int32_t anchorY_ = 0;
-    int32_t baseSpeedX_ = 0;
-    int32_t baseSpeedY_ = 0;
-    int32_t maxW_ = 0;
-    int32_t maxH_ = 0;
+    int32_t deadCounter_ = 0;
+
+    static constexpr int32_t DEAD_STOP_TICKS = 10;
+    static constexpr double DEAD_ZONE = 0.05;
+    static constexpr int32_t DEFAULT_BASE_SPEED = 800;
+    static constexpr double Y_AXIS_RATIO = 0.8;
+    static constexpr int64_t INIT_DELTA_US = 8000;
+    static constexpr double US_PER_SEC = 1000000.0;
 };
 }
 }

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,6 @@
 
 namespace OHOS {
 namespace GameController {
-void ThumbStickWalkingToTouchHandler::HandleKeyDown(std::shared_ptr<InputToTouchContext> &context,
-                                                    const std::shared_ptr<MMI::KeyEvent> &keyEvent,
-                                                    const KeyToTouchMappingInfo &mappingInfo,
-                                                    const DeviceInfo &deviceInfo)
-{
-}
-
-void ThumbStickWalkingToTouchHandler::HandleKeyUp(std::shared_ptr<InputToTouchContext> &context,
-                                                  const std::shared_ptr<MMI::KeyEvent> &keyEvent,
-                                                  const DeviceInfo &deviceInfo)
-{
-}
-
 void ThumbStickWalkingToTouchHandler::HandlePointerEvent(std::shared_ptr<InputToTouchContext> &context,
                                                          const std::shared_ptr<MMI::PointerEvent> &pointerEvent,
                                                          const KeyToTouchMappingInfo &mappingInfo)
@@ -54,7 +41,7 @@ void ThumbStickWalkingToTouchHandler::GetStickAxisTypes(
     PointerEvent::AxisType &axisX,
     PointerEvent::AxisType &axisY) const
 {
-    if (joystick == 0) {
+    if (joystick == STICK_LEFT) {
         axisX = PointerEvent::AxisType::AXIS_TYPE_ABS_X;
         axisY = PointerEvent::AxisType::AXIS_TYPE_ABS_Y;
     } else {
