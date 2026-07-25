@@ -470,7 +470,6 @@ void InputToTouchContext::ResetTempVariables()
     ResetCurrentWalking();
     ResetCurrentMouseRightClick();
     ResetCurrentMouseLeftClick();
-    axisMappings_.clear();
 }
 
 std::pair<bool, int32_t> InputToTouchContext::GetPointerIdByKeyCode(const int32_t keyCode)

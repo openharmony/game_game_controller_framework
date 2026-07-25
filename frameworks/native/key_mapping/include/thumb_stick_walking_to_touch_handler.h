@@ -25,13 +25,6 @@ public:
     ThumbStickWalkingToTouchHandler() = default;
     ~ThumbStickWalkingToTouchHandler() override = default;
 
-    void HandleKeyDown(std::shared_ptr<InputToTouchContext> &context,
-                       const std::shared_ptr<MMI::KeyEvent> &keyEvent,
-                       const KeyToTouchMappingInfo &mappingInfo,
-                       const DeviceInfo &deviceInfo) override;
-    void HandleKeyUp(std::shared_ptr<InputToTouchContext> &context,
-                     const std::shared_ptr<MMI::KeyEvent> &keyEvent,
-                     const DeviceInfo &deviceInfo) override;
     void HandlePointerEvent(std::shared_ptr<InputToTouchContext> &context,
                             const std::shared_ptr<MMI::PointerEvent> &pointerEvent,
                             const KeyToTouchMappingInfo &mappingInfo) override;

@@ -77,14 +77,7 @@ public:
     void ResetAxisHandlerStates();
 
     void CancelStickTimers();
-
-    /**
-     * Update cached stick axis values for dead-zone detection.
-     * Called from HandleGamePadAxisEvent for every axis event.
-     */
-    void UpdateStickAxisCache(const std::shared_ptr<MMI::PointerEvent> &pointerEvent, int32_t joystick);
-
-    bool IsStickInDeadZone(int32_t joystick) const;
+    void ReleaseStickObservers();
 
 private:
     bool IsDispatchToPluginMode(const std::shared_ptr<MMI::KeyEvent> &keyEvent);
@@ -102,13 +95,6 @@ private:
 
     bool IsGamePadAxisEvent(const std::shared_ptr<MMI::PointerEvent> &pointerEvent);
 
-    void DetectGamePadStickEvent(const std::shared_ptr<MMI::PointerEvent> &pointerEvent,
-                                 bool &hasLeft, bool &hasRight) const;
-    void RouteGamePadStick(const std::shared_ptr<MMI::PointerEvent> &pointerEvent,
-                           int32_t joystick);
-
-    void RouteGamePadTrigger(const std::shared_ptr<MMI::PointerEvent> &pointerEvent,
-                              int32_t targetJoystick);
     /**
      * Get mapping info
      * @param context context
@@ -202,24 +188,6 @@ private:
     WindowInfoEntity windowInfoEntity_;
     bool isEnableKeyMapping_{true};std::string bundleName_;
     bool isPluginMode_{false};
-
-    /**
-     * Per-joystick suppression: after a skill ends with the stick pushed,
-     * suppress all camera/view routing until the stick returns to center.
-     * Indices: [0] = left stick, [1] = right stick.
-     */
-    bool stickPushedDuringSkill_[2] = {false, false};
-    bool suppressStickCamera_[2] = {false, false};
-
-    /** Cached axis values for dead-zone detection (updated on every axis event). */
-    double cachedStickAxisX_[2] = {0.0, 0.0};
-    double cachedStickAxisY_[2] = {0.0, 0.0};
-
-    /** Consecutive dead-zone frame counter for suppression clear. */
-    int32_t suppressDeadCounter_[2] = {0, 0};
-
-    static constexpr double STICK_CENTER_DEAD_ZONE = 0.05;
-    static constexpr int32_t STICK_CENTER_CONFIRM_FRAMES = 3;
 };
 }
 }

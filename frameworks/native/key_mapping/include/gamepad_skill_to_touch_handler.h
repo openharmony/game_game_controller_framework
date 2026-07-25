@@ -35,6 +35,7 @@ public:
     void HandlePointerEvent(std::shared_ptr<InputToTouchContext> &context,
                             const std::shared_ptr<MMI::PointerEvent> &pointerEvent,
                             const KeyToTouchMappingInfo &mappingInfo) override;
+    bool IsStickCentered() const;
 
 private:
     static constexpr double SKILL_DEAD_ZONE = 0.05;

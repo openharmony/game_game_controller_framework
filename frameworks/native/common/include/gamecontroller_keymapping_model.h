@@ -153,6 +153,9 @@ struct DpadKeyCodeEntity : public Parcelable {
     }
 };
 
+constexpr int32_t STICK_LEFT = 0;
+constexpr int32_t STICK_RIGHT = 1;
+
 /**
  * Key-to-Touch Mapping
  */

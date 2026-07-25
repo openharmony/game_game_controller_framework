@@ -28,7 +28,7 @@ void TriggerToTouchHandler::HandlePointerEvent(std::shared_ptr<InputToTouchConte
         HILOGW("pointerEvent or context is nullptr");
         return;
     }
-    PointerEvent::AxisType axisType = (mappingInfo.joystick == 0)
+    PointerEvent::AxisType axisType = (mappingInfo.joystick == STICK_LEFT)
         ? PointerEvent::AxisType::AXIS_TYPE_ABS_BRAKE
         : PointerEvent::AxisType::AXIS_TYPE_ABS_GAS;
     if (!pointerEvent->HasAxis(axisType)) {

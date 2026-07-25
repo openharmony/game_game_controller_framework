@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -341,13 +341,11 @@ void KeyToTouchManager::CancelGamePadHandlerTimers()
     auto obs = std::static_pointer_cast<ThumbStickObservationToTouchHandler>(
         mappingHandler_[MappingTypeEnum::THUMB_STICK_OBSERVATION_TO_TOUCH]);
     if (obs) {
-        obs->CancelTimer();
         obs->ResetState();
     }
     auto fps = std::static_pointer_cast<ThumbStickFpsObservationToTouchHandler>(
         mappingHandler_[MappingTypeEnum::THUMB_STICK_FPS_OBSERVATION_TO_TOUCH]);
     if (fps) {
-        fps->CancelTimer();
         fps->ResetState();
     }
 }
@@ -356,13 +354,13 @@ void KeyToTouchManager::InjectTriggerBridgeMappings()
 {
     KeyToTouchMappingInfo ltTrigger;
     ltTrigger.mappingType = MappingTypeEnum::TRIGGER_TO_TOUCH;
-    ltTrigger.joystick = 0;
+    ltTrigger.joystick = STICK_LEFT;
     ltTrigger.keyCode = LeftTrigger;
     triggerMappings_[0] = ltTrigger;
 
     KeyToTouchMappingInfo rtTrigger;
     rtTrigger.mappingType = MappingTypeEnum::TRIGGER_TO_TOUCH;
-    rtTrigger.joystick = 1;
+    rtTrigger.joystick = STICK_RIGHT;
     rtTrigger.keyCode = RightTrigger;
     triggerMappings_[1] = rtTrigger;
 }
@@ -723,12 +721,7 @@ void KeyToTouchManager::HandleEnableKeyMapping(bool isEnable)
 {
     isEnableKeyMapping_ = isEnable;
     HILOGI("EnableKeyMapping([%{public}d]). 1 is enable", isEnable);
-    auto fpsHandler = std::static_pointer_cast<ThumbStickFpsObservationToTouchHandler>(
-        mappingHandler_[MappingTypeEnum::THUMB_STICK_FPS_OBSERVATION_TO_TOUCH]);
-    if (fpsHandler) {
-        fpsHandler->ResetState();
-        fpsHandler->CancelTimer();
-    }
+    CancelStickTimers();
     ResetContext(gcKeyboardContext_);
     ResetContext(hoverTouchPadContext_);
     ResetContext(gamePadContext_);
@@ -755,108 +748,38 @@ bool KeyToTouchManager::IsGamePadAxisEvent(const std::shared_ptr<MMI::PointerEve
 }
 
 
-void KeyToTouchManager::DetectGamePadStickEvent(
-    const std::shared_ptr<MMI::PointerEvent> &pointerEvent,
-    bool &hasLeft, bool &hasRight) const
-{
-    hasLeft = pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_X)
-        || pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_Y);
-    hasRight = pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_Z)
-        || pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_RZ);
-
-    bool hasTrigger = pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_BRAKE)
-        || pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_GAS);
-    if (hasTrigger) {
-        hasLeft = false;
-        hasRight = false;
-        return;
-    }
-
-    if (hasLeft && hasRight) {
-        double leftMag = 0.0;
-        if (pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_X))
-            leftMag += pointerEvent->GetAxisValue(PointerEvent::AxisType::AXIS_TYPE_ABS_X)
-                     * pointerEvent->GetAxisValue(PointerEvent::AxisType::AXIS_TYPE_ABS_X);
-        if (pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_Y))
-            leftMag += pointerEvent->GetAxisValue(PointerEvent::AxisType::AXIS_TYPE_ABS_Y)
-                     * pointerEvent->GetAxisValue(PointerEvent::AxisType::AXIS_TYPE_ABS_Y);
-        leftMag = std::sqrt(leftMag);
-
-        double rightMag = 0.0;
-        auto addRightMag = [&](PointerEvent::AxisType t) {
-            if (pointerEvent->HasAxis(t)) {
-                double v = pointerEvent->GetAxisValue(t);
-                rightMag += v * v;
-            }
-        };
-        addRightMag(PointerEvent::AxisType::AXIS_TYPE_ABS_Z);
-        addRightMag(PointerEvent::AxisType::AXIS_TYPE_ABS_RZ);
-        rightMag = std::sqrt(rightMag);
-        if (leftMag > STICK_CENTER_DEAD_ZONE && rightMag < STICK_CENTER_DEAD_ZONE) {
-            hasRight = false;
-        } else if (rightMag > STICK_CENTER_DEAD_ZONE && leftMag < STICK_CENTER_DEAD_ZONE) {
-            hasLeft = false;
-        }
-    }
-}
-
-void KeyToTouchManager::RouteGamePadStick(
-    const std::shared_ptr<MMI::PointerEvent> &pointerEvent, int32_t joystick)
-{
-    bool routeToSkill = gamePadContext_->isSkillOperating
-        && gamePadContext_->currentSkillKeyInfo.joystick == joystick;
-    if (routeToSkill) {
-        stickPushedDuringSkill_[joystick] = true;
-        UpdateStickAxisCache(pointerEvent, joystick);
-        auto handler = mappingHandler_[MappingTypeEnum::GAMEPAD_SKILL_TO_TOUCH];
-        if (handler != nullptr) {
-            handler->HandlePointerEvent(gamePadContext_, pointerEvent,
-                gamePadContext_->currentSkillKeyInfo);
-        }
-        return;
-    }
-    for (auto &mappingPair : gamePadContext_->axisMappings_) {
-        if (mappingPair.second.joystick != joystick) { continue; }
-        auto handler = mappingHandler_[mappingPair.second.mappingType];
-        if (handler != nullptr) {
-            handler->HandlePointerEvent(gamePadContext_, pointerEvent, mappingPair.second);
-        }
-    }
-}
 void KeyToTouchManager::HandleGamePadAxisEvent(const std::shared_ptr<MMI::PointerEvent> &pointerEvent)
 {
-    if (gamePadContext_ == nullptr) {
+    if (gamePadContext_ == nullptr || !isEnableKeyMapping_) {
         return;
     }
-
-    bool hasLeft = false;
-    bool hasRight = false;
-    DetectGamePadStickEvent(pointerEvent, hasLeft, hasRight);
-
-    if (hasLeft) { RouteGamePadStick(pointerEvent, 0); }
-    if (hasRight) { RouteGamePadStick(pointerEvent, 1); }
-
-    // Route LT/RT triggers through TRIGGER_TO_TOUCH handler
-    if (pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_BRAKE)
-        || pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_GAS)) {
-        int32_t targetJoystick = pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_BRAKE) ? 0 : 1;
-        RouteGamePadTrigger(pointerEvent, targetJoystick);
-    }
-}
-
-void KeyToTouchManager::RouteGamePadTrigger(
-    const std::shared_ptr<MMI::PointerEvent> &pointerEvent, int32_t targetJoystick)
-{
-    for (auto &mappingPair : triggerMappings_) {
-        if (mappingPair.second.joystick != targetJoystick) {
-            continue;
+    bool hasLeftStick = pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_X)
+                     || pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_Y);
+    bool hasRightStick = pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_Z)
+                      || pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_RZ);
+    if (hasRightStick) {
+        if (gamePadContext_->isSkillOperating
+            && gamePadContext_->currentSkillKeyInfo.joystick == STICK_RIGHT) {
+            ExecuteHandle(gamePadContext_, gamePadContext_->currentSkillKeyInfo, pointerEvent);
+        } else {
+            auto it = gamePadContext_->axisMappings_.find(STICK_RIGHT);
+            if (it != gamePadContext_->axisMappings_.end()) {
+                ExecuteHandle(gamePadContext_, it->second, pointerEvent);
+            }
         }
-        auto handler = mappingHandler_[MappingTypeEnum::TRIGGER_TO_TOUCH];
-        if (handler != nullptr) {
-            handler->HandlePointerEvent(gamePadContext_, pointerEvent, mappingPair.second);
+    }
+    if (hasLeftStick) {
+        if (gamePadContext_->isSkillOperating
+            && gamePadContext_->currentSkillKeyInfo.joystick == STICK_LEFT) {
+            ExecuteHandle(gamePadContext_, gamePadContext_->currentSkillKeyInfo, pointerEvent);
+        }
+        auto it = gamePadContext_->axisMappings_.find(STICK_LEFT);
+        if (it != gamePadContext_->axisMappings_.end()) {
+            ExecuteHandle(gamePadContext_, it->second, pointerEvent);
         }
     }
 }
+
 
 void KeyToTouchManager::InjectGamepadTriggerKey(std::shared_ptr<InputToTouchContext> &context,
     int32_t keyCode, int32_t keyAction, int64_t actionTime)
@@ -890,36 +813,14 @@ void KeyToTouchManager::InjectGamepadTriggerKey(std::shared_ptr<InputToTouchCont
 }
 void KeyToTouchManager::ResetAxisHandlerStates()
 {
-    // Determine if the stick was pushed during the skill AND is still off-center.
-    // Only suppress camera if both conditions are true: stick was used AND hasn't
-    // been released yet. If the user centered the stick before ending the skill,
-    // allow camera to respond immediately.
-    bool stickWasPushed = false;
-    bool stickIsCentered = true;
-    if (gamePadContext_ != nullptr) {
-        int32_t skillJoystick = gamePadContext_->currentSkillKeyInfo.joystick;
-        if (skillJoystick >= 0 && skillJoystick <= 1) {
-            stickWasPushed = stickPushedDuringSkill_[skillJoystick];
-            stickIsCentered = IsStickInDeadZone(skillJoystick);
-        }
-        stickPushedDuringSkill_[0] = false;
-        stickPushedDuringSkill_[1] = false;
-    }
+    auto skillHandler = std::static_pointer_cast<GamepadSkillToTouchHandler>(
+        mappingHandler_[MappingTypeEnum::GAMEPAD_SKILL_TO_TOUCH]);
     CancelStickTimers();
-    // Set needCenterFirst_ based on stick state during the skill.
-    // If the stick was pushed AND is still off-center, suppress camera
-    // until the stick is centered (prevents snap after skill release).
-    // Otherwise allow camera to respond immediately.
-    bool needSuppress = stickWasPushed && !stickIsCentered;
     auto obsHandler = std::static_pointer_cast<ThumbStickObservationToTouchHandler>(
         mappingHandler_[MappingTypeEnum::THUMB_STICK_OBSERVATION_TO_TOUCH]);
     if (obsHandler) {
-        obsHandler->SetNeedCenterFirst(needSuppress);
-    }
-    auto fpsObsHandler = std::static_pointer_cast<ThumbStickFpsObservationToTouchHandler>(
-        mappingHandler_[MappingTypeEnum::THUMB_STICK_FPS_OBSERVATION_TO_TOUCH]);
-    if (fpsObsHandler) {
-        fpsObsHandler->SetNeedCenterFirst(needSuppress);
+        obsHandler->SetNeedCenterFirst(
+            skillHandler ? !skillHandler->IsStickCentered() : false);
     }
 }
 
@@ -931,44 +832,28 @@ void KeyToTouchManager::CancelStickTimers()
     auto obsHandler = std::static_pointer_cast<ThumbStickObservationToTouchHandler>(
        mappingHandler_[MappingTypeEnum::THUMB_STICK_OBSERVATION_TO_TOUCH]);
     if (obsHandler) {
-        obsHandler->CancelTimer();
         obsHandler->ResetState();
     }
     auto fpsObsHandler = std::static_pointer_cast<ThumbStickFpsObservationToTouchHandler>(
        mappingHandler_[MappingTypeEnum::THUMB_STICK_FPS_OBSERVATION_TO_TOUCH]);
     if (fpsObsHandler) {
-        fpsObsHandler->CancelTimer();
         fpsObsHandler->ResetState();
     }
 }
-void KeyToTouchManager::UpdateStickAxisCache(const std::shared_ptr<MMI::PointerEvent> &pointerEvent,
-    int32_t joystick)
+
+void KeyToTouchManager::ReleaseStickObservers()
 {
-    if (pointerEvent == nullptr) { return; }
-    if (joystick == 0) {
-        if (pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_X)) {
-            cachedStickAxisX_[0] = pointerEvent->GetAxisValue(PointerEvent::AxisType::AXIS_TYPE_ABS_X);
-        }
-        if (pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_Y)) {
-            cachedStickAxisY_[0] = pointerEvent->GetAxisValue(PointerEvent::AxisType::AXIS_TYPE_ABS_Y);
-        }
-    } else {
-        if (pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_Z)) {
-            cachedStickAxisX_[1] = pointerEvent->GetAxisValue(PointerEvent::AxisType::AXIS_TYPE_ABS_Z);
-        }
-        if (pointerEvent->HasAxis(PointerEvent::AxisType::AXIS_TYPE_ABS_RZ)) {
-            cachedStickAxisY_[1] = pointerEvent->GetAxisValue(PointerEvent::AxisType::AXIS_TYPE_ABS_RZ);
-        }
+    auto obsHandler = std::static_pointer_cast<ThumbStickObservationToTouchHandler>(
+        mappingHandler_[MappingTypeEnum::THUMB_STICK_OBSERVATION_TO_TOUCH]);
+    if (obsHandler) {
+        obsHandler->ReleaseIfActive(gamePadContext_);
+    }
+    auto fpsHandler = std::static_pointer_cast<ThumbStickFpsObservationToTouchHandler>(
+        mappingHandler_[MappingTypeEnum::THUMB_STICK_FPS_OBSERVATION_TO_TOUCH]);
+    if (fpsHandler) {
+        fpsHandler->ReleaseIfActive(gamePadContext_);
     }
 }
-
-bool KeyToTouchManager::IsStickInDeadZone(int32_t joystick) const
-{
-    double mag = std::sqrt(cachedStickAxisX_[joystick] * cachedStickAxisX_[joystick]
-        + cachedStickAxisY_[joystick] * cachedStickAxisY_[joystick]);
-    return mag < STICK_CENTER_DEAD_ZONE;
-}
-
 bool KeyToTouchManager::IsCanEnableKeyMapping()
 {
     return handleQueue_ != nullptr && isSupportKeyMapping_ && isEnableKeyMapping_ && windowInfoEntity_.isFullScreen;
@@ -1071,12 +956,7 @@ void KeyToTouchManager::UpdateFocusStatus(const std::string &bundleName, bool is
         }
         ResetContext(gcKeyboardContext_);
         ResetContext(hoverTouchPadContext_);
-        auto fpsHandler = std::static_pointer_cast<ThumbStickFpsObservationToTouchHandler>(
-            mappingHandler_[MappingTypeEnum::THUMB_STICK_FPS_OBSERVATION_TO_TOUCH]);
-        if (fpsHandler) {
-            fpsHandler->CancelTimer();
-            fpsHandler->ResetState();
-        }
+        CancelStickTimers();
         ResetContext(gamePadContext_);
     });
 }
