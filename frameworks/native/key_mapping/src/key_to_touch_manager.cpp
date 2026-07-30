@@ -33,7 +33,6 @@
 #include "thumb_stick_observation_to_touch_handler.h"
 #include "gamepad_skill_to_touch_handler.h"
 #include "gamepad_skill_cancel_to_touch_handler.h"
-#include "trigger_to_touch_handler.h"
 #include "thumb_stick_fps_observation_to_touch_handler.h"
 #include "plugin_callback_manager.h"
 #include "nlohmann/json.hpp"
@@ -72,8 +71,6 @@ KeyToTouchManager::KeyToTouchManager()
         = std::make_shared<GamepadSkillToTouchHandler>();
     mappingHandler_[MappingTypeEnum::GAMEPAD_SKILL_CANCEL_TO_TOUCH]
         = std::make_shared<GamepadSkillCancelToTouchHandler>();
-    mappingHandler_[MappingTypeEnum::TRIGGER_TO_TOUCH]
-        = std::make_shared<TriggerToTouchHandler>();
     mappingHandler_[MappingTypeEnum::THUMB_STICK_FPS_OBSERVATION_TO_TOUCH]
         = std::make_shared<ThumbStickFpsObservationToTouchHandler>();
 }
@@ -115,7 +112,7 @@ bool KeyToTouchManager::DispatchKeyEvent(const std::shared_ptr<MMI::KeyEvent> &k
     DeviceInfo deviceInfo = DelayedSingleton<MultiModalInputMgtService>::GetInstance()->GetDeviceInfo(
         keyEvent->GetDeviceId());
     if (deviceInfo.UniqIsEmpty() || deviceInfo.name == VIRTUAL_KEYBOARD_DEVICE_NAME) {
-        // 鎶樺彔PC鐨勮櫄鎷熼敭鐩樹笉閫傚悎鐜╂父鎴?
+        // 閹舵ê褰擯C閻ㄥ嫯娅勯幏鐔兼暛閻╂ü绗夐柅鍌氭値閻溾晜鐖堕幋?
         return IsDispatchToPluginMode(keyEvent);
     }
     std::unordered_set<DeviceTypeEnum> deviceTypeSet = allMonitorKeys_[keyCode];
@@ -350,20 +347,6 @@ void KeyToTouchManager::CancelGamePadHandlerTimers()
     }
 }
 
-void KeyToTouchManager::InjectTriggerBridgeMappings()
-{
-    KeyToTouchMappingInfo ltTrigger;
-    ltTrigger.mappingType = MappingTypeEnum::TRIGGER_TO_TOUCH;
-    ltTrigger.joystick = STICK_LEFT;
-    ltTrigger.keyCode = LeftTrigger;
-    triggerMappings_[0] = ltTrigger;
-
-    KeyToTouchMappingInfo rtTrigger;
-    rtTrigger.mappingType = MappingTypeEnum::TRIGGER_TO_TOUCH;
-    rtTrigger.joystick = STICK_RIGHT;
-    rtTrigger.keyCode = RightTrigger;
-    triggerMappings_[1] = rtTrigger;
-}
 
 void KeyToTouchManager::InitGpInputToTouchContext(const std::vector<KeyToTouchMappingInfo> &mappingInfos)
 {
@@ -377,7 +360,6 @@ void KeyToTouchManager::InitGpInputToTouchContext(const std::vector<KeyToTouchMa
     }
     gamePadContext_ = std::make_shared<InputToTouchContext>(GAME_PAD,
         windowInfoEntity_, mappingInfos);
-    InjectTriggerBridgeMappings();
 }
 
 void KeyToTouchManager::ReleaseContext(const std::shared_ptr<InputToTouchContext> &inputToTouchContext)
@@ -780,37 +762,6 @@ void KeyToTouchManager::HandleGamePadAxisEvent(const std::shared_ptr<MMI::Pointe
     }
 }
 
-
-void KeyToTouchManager::InjectGamepadTriggerKey(std::shared_ptr<InputToTouchContext> &context,
-    int32_t keyCode, int32_t keyAction, int64_t actionTime)
-{
-    if (context == nullptr || !isEnableKeyMapping_) {
-        return;
-    }
-    KeyToTouchMappingInfo mappingInfo;
-    bool found = false;
-    if (context->singleKeyMappings.find(keyCode) != context->singleKeyMappings.end()) {
-        mappingInfo = context->singleKeyMappings[keyCode];
-        found = true;
-    }
-    if (!found) {
-        return;
-    }
-    if (mappingHandler_.find(mappingInfo.mappingType) == mappingHandler_.end()) {
-        return;
-    }
-    auto handler = mappingHandler_[mappingInfo.mappingType];
-    if (handler == nullptr) {
-        return;
-    }
-    auto keyEvent = MMI::KeyEvent::Create();
-    keyEvent->SetKeyCode(keyCode);
-    keyEvent->SetKeyAction(keyAction);
-    keyEvent->SetActionTime(actionTime);
-    DeviceInfo deviceInfo;
-    deviceInfo.deviceType = GAME_PAD;
-    handler->HandleKeyEvent(context, keyEvent, deviceInfo, mappingInfo);
-}
 void KeyToTouchManager::ResetAxisHandlerStates()
 {
     auto skillHandler = std::static_pointer_cast<GamepadSkillToTouchHandler>(

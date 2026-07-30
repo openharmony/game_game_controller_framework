@@ -521,7 +521,7 @@ struct GameInfo : public Parcelable {
             if (deviceTypeEnum != DeviceTypeEnum::GAME_KEY_BOARD
                 && deviceTypeEnum != DeviceTypeEnum::HOVER_TOUCH_PAD
                 && deviceTypeEnum != DeviceTypeEnum::GAME_PAD) {
-                return false;
+                continue;
             }
             ret->supportedDeviceTypes.push_back(deviceType);
         }
