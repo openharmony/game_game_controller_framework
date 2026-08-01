@@ -159,7 +159,6 @@ ohos_shared_library("gamecontroller_fwk_client") {
     "key_mapping/src/thumb_stick_fps_observation_to_touch_handler.cpp",
     "key_mapping/src/gamepad_skill_to_touch_handler.cpp",
     "key_mapping/src/gamepad_skill_cancel_to_touch_handler.cpp",
-    "key_mapping/src/trigger_to_touch_handler.cpp",
     "multi_modal_input/src/device_event_callback.cpp",
     "multi_modal_input/src/device_identify_service.cpp",
     "multi_modal_input/src/device_info_service.cpp",

@@ -31,6 +31,7 @@ const int32_t TOUCH_RANGE = 10;
 const int32_t START_POINTER_ID = 3;
 const int64_t SEND_DURATION = 500000;
 static int32_t g_lastSendTime = 0;
+static ffrt::mutex g_pointerItemsMutex;
 }
 
 void BaseKeyToTouchHandler::BuildAndSendPointerEvent(std::shared_ptr<InputToTouchContext> &context,
@@ -45,16 +46,19 @@ void BaseKeyToTouchHandler::BuildAndSendPointerEvent(std::shared_ptr<InputToTouc
         return;
     }
     PointerEvent::PointerItem pointerItem = BuildPointerItem(context, touchEntity);
-    if (touchEntity.pointerAction == PointerEvent::POINTER_ACTION_UP) {
-        if (context->pointerItems.find(touchEntity.pointerId) != context->pointerItems.end()) {
-            context->pointerItems.erase(touchEntity.pointerId);
+    {
+        std::lock_guard<ffrt::mutex> lock(g_pointerItemsMutex);
+        if (touchEntity.pointerAction == PointerEvent::POINTER_ACTION_UP) {
+            if (context->pointerItems.find(touchEntity.pointerId) != context->pointerItems.end()) {
+                context->pointerItems.erase(touchEntity.pointerId);
+            }
+        } else {
+            context->pointerItems[touchEntity.pointerId] = pointerItem;
         }
-    } else {
-        context->pointerItems[touchEntity.pointerId] = pointerItem;
-    }
 
-    for (auto &pointerPair: context->pointerItems) {
-        pointerEvent->AddPointerItem(pointerPair.second);
+        for (auto &pointerPair: context->pointerItems) {
+            pointerEvent->AddPointerItem(pointerPair.second);
+        }
     }
 
     pointerEvent->SetPointerAction(touchEntity.pointerAction);
@@ -385,8 +389,7 @@ bool InputToTouchContext::IsGamePadMapping(const KeyToTouchMappingInfo &mappingI
         singleKeyMappings[mappingInfo.keyCode] = mappingInfo;
         return true;
     }
-    // TRIGGER_TO_TOUCH is stored in KeyToTouchManager::triggerMappings_, not here
-    return (mappingInfo.mappingType == TRIGGER_TO_TOUCH);
+    return false;
 }
 
 bool InputToTouchContext::HasSingleKeyDown(const int32_t keyCode)
@@ -457,12 +460,15 @@ void InputToTouchContext::ResetCurrentMouseRightClick()
 
 void InputToTouchContext::ResetTempVariables()
 {
-    currentSingleKeyMap.clear();
-    for (const auto &pointerIdWithKeyCode: pointerIdWithKeyCodeMap) {
-        DelayedSingleton<PointerManager>::GetInstance()->ReleasePointerId(pointerIdWithKeyCode.second);
+    {
+        std::lock_guard<ffrt::mutex> lock(g_pointerItemsMutex);
+        currentSingleKeyMap.clear();
+        for (const auto &pointerIdWithKeyCode: pointerIdWithKeyCodeMap) {
+            DelayedSingleton<PointerManager>::GetInstance()->ReleasePointerId(pointerIdWithKeyCode.second);
+        }
+        pointerIdWithKeyCodeMap.clear();
+        pointerItems.clear();
     }
-    pointerIdWithKeyCodeMap.clear();
-    pointerItems.clear();
     ResetCurrentCombinationKey();
     ResetCurrentSkillKeyInfo();
     ResetCurrentObserving();
@@ -540,6 +546,7 @@ void InputToTouchContext::SetCurrentMouseRightClick(const int32_t pointerId)
 
 void InputToTouchContext::ReleasePointerId(const int32_t keyCode)
 {
+    std::lock_guard<ffrt::mutex> lock(g_pointerItemsMutex);
     if (pointerIdWithKeyCodeMap.count(keyCode) != 0) {
         int32_t pointerId = pointerIdWithKeyCodeMap[keyCode];
         DelayedSingleton<PointerManager>::GetInstance()->ReleasePointerId(pointerId);
@@ -574,22 +581,25 @@ int32_t InputToTouchContext::GetEventId()
 
 void InputToTouchContext::CheckPointerSendInterval()
 {
-    if (pointerItems.size() == 0) {
-        return;
-    }
-    if ((StringUtils::GetSysClockTime() - g_lastSendTime) <= SEND_DURATION) {
-        return;
-    }
-    std::shared_ptr<PointerEvent> pointerEvent = PointerEvent::Create();
-    if (pointerEvent == nullptr) {
-        HILOGE("Create PointerEvent failed.");
-        return;
-    }
-
+    std::shared_ptr<PointerEvent> pointerEvent;
     PointerEvent::PointerItem pointerItem;
-    for (auto &pointerPair: pointerItems) {
-        pointerItem = pointerPair.second;
-        pointerEvent->AddPointerItem(pointerPair.second);
+    {
+        std::lock_guard<ffrt::mutex> lock(g_pointerItemsMutex);
+        if (pointerItems.size() == 0) {
+            return;
+        }
+        if ((StringUtils::GetSysClockTime() - g_lastSendTime) <= SEND_DURATION) {
+            return;
+        }
+        pointerEvent = PointerEvent::Create();
+        if (pointerEvent == nullptr) {
+            HILOGE("Create PointerEvent failed.");
+            return;
+        }
+        for (auto &pointerPair: pointerItems) {
+            pointerItem = pointerPair.second;
+            pointerEvent->AddPointerItem(pointerPair.second);
+        }
     }
     pointerEvent->SetPointerAction(PointerEvent::POINTER_ACTION_MOVE);
     SendPointerEvent(pointerEvent, pointerItem);
