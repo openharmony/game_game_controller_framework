@@ -48,9 +48,6 @@ private:
     int32_t pointerId_ = 0;
     double lastAxisZ_ = 0.0;
     double lastAxisRZ_ = 0.0;
-    int32_t deadCounter_ = 0;
-
-    static constexpr int32_t DEAD_STOP_TICKS = 10;
     static constexpr double DEAD_ZONE = 0.05;
     static constexpr int32_t DEFAULT_BASE_SPEED = 800;
     static constexpr double Y_AXIS_RATIO = 0.8;

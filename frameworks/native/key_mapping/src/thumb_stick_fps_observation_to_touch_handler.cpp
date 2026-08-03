@@ -31,7 +31,6 @@ void ThumbStickFpsObservationToTouchHandler::ResetState()
     CancelTimer();
     lastAxisZ_ = 0.0;
     lastAxisRZ_ = 0.0;
-    deadCounter_ = 0;
 }
 
 void ThumbStickFpsObservationToTouchHandler::CancelTimer()
@@ -167,18 +166,11 @@ void ThumbStickFpsObservationToTouchHandler::HandleAxisEvent(
 
     // Dead zone check
     if (rawMag < DEAD_ZONE) {
-        deadCounter_++;
-        if (deadCounter_ >= DEAD_STOP_TICKS) {
-            if (task_.IsActive()) {
-                DeactivateFpsObservation(context, actionTime);
-            }
-            deadCounter_ = 0;
+        if (task_.IsActive()) {
+            DeactivateFpsObservation(context, actionTime);
         }
-
         return;
     }
-    deadCounter_ = 0;
-
     // Activate if not already running
     if (!task_.IsActive()) {
         ActivateFpsObservation(context, mappingInfo, actionTime, rawZ, rawRZ, rawMag);
