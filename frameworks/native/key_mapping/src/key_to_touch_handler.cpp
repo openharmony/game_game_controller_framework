@@ -568,7 +568,7 @@ void InputToTouchContext::SendPointerEvent(std::shared_ptr<MMI::PointerEvent> &p
     pointerEvent->SetId(GetEventId());
     pointerEvent->SetPointerId(pointerItem.GetPointerId());
     pointerEvent->SetSourceType(PointerEvent::SOURCE_TYPE_TOUCHSCREEN);
-    HILOGD("pointer is [%{public}s].", pointerEvent->ToString().c_str());
+    HILOGD("pointer is [%{private}s].", pointerEvent->ToString().c_str());
     DelayedSingleton<PluginCallbackManager>::GetInstance()->SendInputEvent(windowInfoEntity.bundleName,
                                                                            pointerEvent, true);
     g_lastSendTime = pointerItem.GetDownTime();
