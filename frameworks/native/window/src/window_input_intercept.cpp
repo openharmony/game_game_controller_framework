@@ -88,8 +88,7 @@ WindowInputInterceptConsumer::WindowInputInterceptConsumer() noexcept
                                                         ffrt::queue_attr().qos(ffrt::qos_default));
     timespec t1 = {};
     timespec t2 = {};
-    if (clock_gettime(CLOCK_MONOTONIC, &t1) == GAME_CONTROLLER_SUCCESS &&
-        clock_gettime(CLOCK_REALTIME, &t2) == GAME_CONTROLLER_SUCCESS) {
+    if (clock_gettime(CLOCK_MONOTONIC, &t1) == 0 && clock_gettime(CLOCK_REALTIME, &t2) == 0) {
         int64_t monoTime = int64_t(t1.tv_sec) * ONE_SECOND_BY_NS + t1.tv_nsec;
         int64_t realTime = int64_t(t2.tv_sec) * ONE_SECOND_BY_NS + t2.tv_nsec;
         deltaTime_ = realTime - monoTime;
