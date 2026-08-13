@@ -42,7 +42,11 @@ BundleBasicInfo BundleManager::GetSelfBundleName()
     }
     AppExecFwk::BundleInfo bundleInfo;
     int32_t flags = static_cast<int32_t>(AppExecFwk::GetBundleInfoFlag::GET_BUNDLE_INFO_WITH_APPLICATION);
-    bundleMgr_->GetBundleInfoForSelf(flags, bundleInfo);
+    int32_t resultCode = bundleMgr_->GetBundleInfoForSelf(flags, bundleInfo);
+    if (resultCode != ERR_OK) {
+        HILOGE("GetBundleInfoForSelf call faied, error code: %{public}d", resultCode);
+        return bundle;
+    }
     AppExecFwk::ApplicationInfo appInfo = bundleInfo.applicationInfo;
     bundle.Convert(bundleInfo);
     HILOGI("The current bundleName [%{public}s]. version [%{public}s]", bundle.bundleName.c_str(),

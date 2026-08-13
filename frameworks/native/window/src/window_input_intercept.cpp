@@ -87,12 +87,14 @@ WindowInputInterceptConsumer::WindowInputInterceptConsumer() noexcept
     eventCallbackQueue_ = std::make_unique<ffrt::queue>("inputEventCallbackQueue",
                                                         ffrt::queue_attr().qos(ffrt::qos_default));
     timespec t1 = {};
-    clock_gettime(CLOCK_MONOTONIC, &t1);
-    int64_t monoTime = int64_t(t1.tv_sec) * ONE_SECOND_BY_NS + t1.tv_nsec;
     timespec t2 = {};
-    clock_gettime(CLOCK_REALTIME, &t2);
-    int64_t realTime = int64_t(t2.tv_sec) * ONE_SECOND_BY_NS + t2.tv_nsec;
-    deltaTime_ = realTime - monoTime;
+    if (clock_gettime(CLOCK_MONOTONIC, &t1) == 0 && clock_gettime(CLOCK_REALTIME, &t2) == 0) {
+        int64_t monoTime = int64_t(t1.tv_sec) * ONE_SECOND_BY_NS + t1.tv_nsec;
+        int64_t realTime = int64_t(t2.tv_sec) * ONE_SECOND_BY_NS + t2.tv_nsec;
+        deltaTime_ = realTime - monoTime;
+    } else {
+        HILOGE("clock_gettime call failed");
+    }
 }
 
 void WindowInputInterceptConsumer::OnInputEvent(const std::shared_ptr<MMI::KeyEvent> &keyEvent)

@@ -310,14 +310,14 @@ struct DeviceInfo : public Parcelable {
         }
 
         size = parcel.ReadInt32();
-        if (size > MAX_SIZE) {
+        if (size < 0 || size > MAX_SIZE) {
             goto error;
         }
         for (int i = 0; i < size; i++) {
             ret->ids.insert(parcel.ReadInt32());
         }
         size = parcel.ReadInt32();
-        if (size > MAX_SIZE) {
+        if (size < 0 || size > MAX_SIZE) {
             goto error;
         }
         for (int i = 0; i < size; i++) {
@@ -325,7 +325,7 @@ struct DeviceInfo : public Parcelable {
         }
 
         size = parcel.ReadInt32();
-        if (size > MAX_SIZE) {
+        if (size < 0 || size > MAX_SIZE) {
             goto error;
         }
         for (int i = 0; i < size; i++) {

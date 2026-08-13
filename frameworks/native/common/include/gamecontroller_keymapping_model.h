@@ -322,7 +322,7 @@ struct KeyToTouchMappingInfo : public Parcelable {
     static bool ReadCombinationKeys(Parcel &parcel, KeyToTouchMappingInfo* ret)
     {
         int32_t size = parcel.ReadInt32();
-        if (size > static_cast<int32_t>(MAX_COMBINATION_KEYS)) {
+        if (size < 0 || size > static_cast<int32_t>(MAX_COMBINATION_KEYS)) {
             return false;
         }
         std::vector<int32_t> combinationKeys;
@@ -508,7 +508,7 @@ struct GameInfo : public Parcelable {
     static bool ReadSupportedDeviceTypes(Parcel &parcel, GameInfo* ret)
     {
         int32_t size = parcel.ReadInt32();
-        if (size > MAX_SUPPORT_DEVICE_TYPES) {
+        if (size < 0 || size > MAX_SUPPORT_DEVICE_TYPES) {
             return false;
         }
         int32_t deviceType;
@@ -635,7 +635,7 @@ struct GameKeyMappingInfo : public Parcelable {
     static bool ReadCustomKeyMapping(Parcel &parcel, GameKeyMappingInfo* ret)
     {
         int32_t size = parcel.ReadInt32();
-        if (size > MAX_KEY_MAPPING_SIZE) {
+        if (size < 0 || size > MAX_KEY_MAPPING_SIZE) {
             return false;
         }
         for (int i = 0; i < size; i++) {
@@ -652,7 +652,7 @@ struct GameKeyMappingInfo : public Parcelable {
     static bool ReadDefaultKeyMapping(Parcel &parcel, GameKeyMappingInfo* ret)
     {
         int32_t size = parcel.ReadInt32();
-        if (size > MAX_KEY_MAPPING_SIZE) {
+        if (size < 0 || size > MAX_KEY_MAPPING_SIZE) {
             return false;
         }
         for (int i = 0; i < size; i++) {
