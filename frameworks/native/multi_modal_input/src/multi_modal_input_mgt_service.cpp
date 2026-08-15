@@ -406,8 +406,7 @@ void MultiModalInputMgtService::CheckDeviceType(DeviceInfo &deviceInfo)
         return;
     }
 
-    if (deviceInfo.sourceTypeSet.count(JOYSTICK) != 0 &&
-        deviceInfo.sourceTypeSet.count(KEYBOARD) != 0) {
+    if (deviceInfo.sourceTypeSet.count(JOYSTICK) != 0) {
         deviceInfo.deviceType = GAME_PAD;
     }
 }
