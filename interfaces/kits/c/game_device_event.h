@@ -163,7 +163,7 @@ GameController_ErrorCode OH_GameDevice_DeviceInfo_GetName(const struct GameDevic
  * @since 21
  */
 GameController_ErrorCode OH_GameDevice_DeviceInfo_GetProduct(const struct GameDevice_DeviceInfo* deviceInfo,
-                                                              int32_t* product);
+                                                             int32_t* product);
 
 /**
  * @brief Obtains vendor information from {@link GameDevice_DeviceInfo}.

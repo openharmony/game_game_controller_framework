@@ -116,17 +116,6 @@ GameController_ErrorCode GamePadProxy::ButtonHome_UnRegisterButtonInputMonitor()
     return UnRegisterButtonInputMonitor(GamePadButtonTypeEnum::ButtonHome);
 }
 
-GameController_ErrorCode GamePadProxy::ButtonOptions_RegisterButtonInputMonitor(
-    GamePad_ButtonInputMonitorCallback inputMonitorCallback)
-{
-    return RegisterButtonInputMonitor(GamePadButtonTypeEnum::ButtonOptions, inputMonitorCallback);
-}
-
-GameController_ErrorCode GamePadProxy::ButtonOptions_UnRegisterButtonInputMonitor()
-{
-    return UnRegisterButtonInputMonitor(GamePadButtonTypeEnum::ButtonOptions);
-}
-
 GameController_ErrorCode GamePadProxy::ButtonA_RegisterButtonInputMonitor(
     GamePad_ButtonInputMonitorCallback inputMonitorCallback)
 {

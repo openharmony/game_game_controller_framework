@@ -94,11 +94,6 @@ public:
 
     GameController_ErrorCode ButtonHome_UnRegisterButtonInputMonitor();
 
-    GameController_ErrorCode ButtonOptions_RegisterButtonInputMonitor(
-        GamePad_ButtonInputMonitorCallback inputMonitorCallback);
-
-    GameController_ErrorCode ButtonOptions_UnRegisterButtonInputMonitor();
-
     GameController_ErrorCode ButtonA_RegisterButtonInputMonitor(
         GamePad_ButtonInputMonitorCallback inputMonitorCallback);
 

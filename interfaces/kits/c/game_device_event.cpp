@@ -47,7 +47,7 @@ GameController_ErrorCode OH_GameDevice_DeviceInfo_GetName(const struct GameDevic
 }
 
 GameController_ErrorCode OH_GameDevice_DeviceInfo_GetProduct(const struct GameDevice_DeviceInfo* deviceInfo,
-                                                              int32_t* product)
+                                                             int32_t* product)
 {
     return OHOS::GameController::GameDeviceEventProxy::GetInstance().GetProductFromDeviceInfo(deviceInfo, product);
 }
