@@ -166,6 +166,18 @@ GameController_ErrorCode OH_GameDevice_DeviceInfo_GetProduct(const struct GameDe
                                                              int32_t* product);
 
 /**
+ * @brief Obtains vendor information from {@link GameDevice_DeviceInfo}.
+ * @param deviceInfo Pointer to the {@link GameDevice_DeviceInfo} instance.
+ * The value cannot be null. Otherwise, an error code is returned.
+ * @param vendor Pointer to the vendor information.
+ * @return Returns {@link GAME_CONTROLLER_SUCCESS} if the operation is successful.
+ * Returns {@link GAME_CONTROLLER_PARAM_ERROR} if the value of deviceInfo is null.
+ * @since 26.0.1
+ */
+GameController_ErrorCode OH_GameDevice_DeviceInfo_GetVendor(const struct GameDevice_DeviceInfo* deviceInfo,
+                                                            int32_t* vendor);
+
+/**
  * @brief Obtains the version information from {@link GameDevice_DeviceInfo}.
  * @param deviceInfo Pointer to the {@link GameDevice_DeviceInfo} instance.
  * The value cannot be null. Otherwise, an error code is returned.

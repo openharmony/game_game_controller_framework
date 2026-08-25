@@ -112,6 +112,17 @@ GameController_ErrorCode GameDeviceEventProxy::GetProductFromDeviceInfo(
     return GameController_ErrorCode::GAME_CONTROLLER_SUCCESS;
 }
 
+GameController_ErrorCode GameDeviceEventProxy::GetVendorFromDeviceInfo(
+    const struct GameDevice_DeviceInfo* deviceInfo, int32_t* vendor)
+{
+    if (deviceInfo == nullptr || vendor == nullptr) {
+        HILOGE("[CAPI][GetVendorFromDeviceInfo]deviceInfo or vendor is nullptr");
+        return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
+    }
+    *vendor = ((BasicDeviceInfo*)deviceInfo)->vendor;
+    return GameController_ErrorCode::GAME_CONTROLLER_SUCCESS;
+}
+
 GameController_ErrorCode GameDeviceEventProxy::GetVersionFromDeviceInfo(
     const struct GameDevice_DeviceInfo* deviceInfo, int32_t* version)
 {

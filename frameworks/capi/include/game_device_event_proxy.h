@@ -42,6 +42,9 @@ public:
     GameController_ErrorCode GetProductFromDeviceInfo(const struct GameDevice_DeviceInfo* deviceInfo,
                                                       int32_t* product);
 
+    GameController_ErrorCode GetVendorFromDeviceInfo(const struct GameDevice_DeviceInfo* deviceInfo,
+                                                     int32_t* vendor);
+
     GameController_ErrorCode GetVersionFromDeviceInfo(const struct GameDevice_DeviceInfo* deviceInfo,
                                                       int32_t* version);
 
