@@ -181,7 +181,7 @@ private:
 
     GameController_ErrorCode UnRegisterAxisInputMonitor(GamePadAxisSourceTypeEnum axisTypeEnum);
 };
-}// namespace GameController
-}// namespace OHOS
+}
+}
 
-#endif//GAME_CONTROLLER_FRAMEWORK_GAME_PAD_PROXY_H
+#endif //GAME_CONTROLLER_FRAMEWORK_GAME_PAD_PROXY_H

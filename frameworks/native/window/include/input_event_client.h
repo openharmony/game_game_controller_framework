@@ -74,6 +74,6 @@ public:
      */
     static void UnRegisterUnknownButtonEventCallback(const ApiTypeEnum apiTypeEnum);
 };
-}// namespace GameController
-}// namespace OHOS
-#endif//GAME_CONTROLLER_FRAMEWORK_INPUT_EVENT_CLIENT_H
+}
+}
+#endif //GAME_CONTROLLER_FRAMEWORK_INPUT_EVENT_CLIENT_H

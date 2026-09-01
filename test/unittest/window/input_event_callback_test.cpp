@@ -221,5 +221,5 @@ HWTEST_F(InputEventCallbackTest, UnRegisterUnknownButtonEventCallback_001, TestS
     ASSERT_EQ(nullptr, DelayedSingleton<InputEventCallback>::GetInstance()->gamePadUnknownButtonCallback_);
 }
 
-}// namespace GameController
-}// namespace OHOS
+}
+}

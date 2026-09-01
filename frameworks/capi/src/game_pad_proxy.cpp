@@ -399,5 +399,5 @@ void GamePadAxisEventCallback::SetCallback(GamePad_AxisInputMonitorCallback call
 {
     callback_ = callback;
 }
-}// namespace GameController
-}// namespace OHOS
+}
+}
