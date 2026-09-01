@@ -191,5 +191,5 @@ HWTEST_F(InputEventClientTest, UnRegisterUnknownButtonEventCallback_001, TestSiz
     InputEventClient::UnRegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI);
     ASSERT_EQ(nullptr, DelayedSingleton<InputEventCallback>::GetInstance()->gamePadUnknownButtonCallback_);
 }
-}// namespace GameController
-}// namespace OHOS
+}
+}

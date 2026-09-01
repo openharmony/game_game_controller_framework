@@ -223,6 +223,6 @@ private:
      */
     std::shared_ptr<WindowInputInterceptConsumer> consumer_;
 };
-}// namespace GameController
-}// namespace OHOS
-#endif//GAME_CONTROLLER_FRAMEWORK_WINDOW_INPUT_INTERCEPT_H
+}
+}
+#endif //GAME_CONTROLLER_FRAMEWORK_WINDOW_INPUT_INTERCEPT_H

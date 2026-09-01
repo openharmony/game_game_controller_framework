@@ -45,7 +45,7 @@ namespace {
 const int64_t ACTION_TIME = 1111;
 const int32_t DEVICE_ID = 12;
 const int32_t SLEEP_TIME = 50;
-}// namespace
+}
 
 class WindowInputInterceptTest : public testing::Test {
 public:
@@ -750,5 +750,5 @@ HWTEST_F(WindowInputInterceptConsumerTest, ClearProcessedDeviceId_001, TestSize.
     InputEventClient::UnRegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI);
 }
 
-}// namespace GameController
-}// namespace OHOS
+}
+}

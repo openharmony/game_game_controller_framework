@@ -80,7 +80,7 @@ const int64_t ONE_SECOND_BY_NS = 1000000000LL;
 const int32_t KEY_ACTION_DOWN = 0;
 const int32_t KEY_ACTION_UP = 1;
 const int64_t US_TO_NS = 1000LL;
-}// namespace
+}
 
 WindowInputInterceptConsumer::WindowInputInterceptConsumer() noexcept
 {
@@ -435,5 +435,5 @@ void WindowInputIntercept::ClearProcessedDeviceId(const int32_t deviceId)
     }
     consumer_->ClearProcessedDeviceId(deviceId);
 }
-}// namespace GameController
-}// namespace OHOS
+}
+}

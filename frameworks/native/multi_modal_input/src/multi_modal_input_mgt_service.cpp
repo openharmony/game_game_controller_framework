@@ -42,7 +42,7 @@ const int32_t OPR_TYPE_GET_ALL_DEVICES = 0;
  */
 const int32_t OPR_TYPE_DEVICE_ONLINE = 1;
 
-}// namespace
+}
 
 MultiModalInputMgtService::MultiModalInputMgtService()
 {
@@ -474,5 +474,5 @@ void MultiModalInputMgtService::ClearOfflineDeviceAndBroadcast(const int32_t dev
     DoDeviceEventCallback(deviceInfo, DeviceChangeType::REMOVE);
 }
 
-}// namespace GameController
-}// namespace OHOS
+}
+}

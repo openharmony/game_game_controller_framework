@@ -149,5 +149,5 @@ void InputEventCallback::OnGamePadUnknownButtonEventCallback(const GamePadButton
     }
     buttonCallback->OnButtonEventCallback(event);
 }
-}// namespace GameController
-}// namespace OHOS
+}
+}

@@ -118,7 +118,7 @@ private:
     std::shared_ptr<GamePadButtonCallbackBase> gamePadUnknownButtonCallback_;
 };
 
-}// namespace GameController
-}// namespace OHOS
+}
+}
 
-#endif//GAME_CONTROLLER_FRAMEWORK_INPUT_EVENT_CALLBACK_H
+#endif //GAME_CONTROLLER_FRAMEWORK_INPUT_EVENT_CALLBACK_H

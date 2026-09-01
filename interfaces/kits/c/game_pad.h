@@ -459,5 +459,5 @@ GameController_ErrorCode OH_GamePad_ButtonUnknown_UnregisterButtonInputMonitor(v
 }
 #endif
 
-#endif//GAME_PAD_H
+#endif //GAME_PAD_H
 /** @} */

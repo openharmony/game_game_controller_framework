@@ -60,5 +60,5 @@ void InputEventClient::UnRegisterUnknownButtonEventCallback(const ApiTypeEnum ap
 {
     DelayedSingleton<InputEventCallback>::GetInstance()->UnRegisterUnknownButtonEventCallback(apiTypeEnum);
 }
-}// namespace GameController
-}// namespace OHOS
+}
+}
