@@ -121,6 +121,9 @@ void MultiModalInputMgtService::DoDeviceEventCallback(const DeviceInfo &deviceIn
                                                       const DeviceChangeType &deviceChangeType)
 {
     eventCallbackQueue_->submit([deviceInfo, deviceChangeType, this] {
+        for (auto deviceId: deviceInfo.ids) {
+            DelayedSingleton<WindowInputIntercept>::GetInstance()->ClearProcessedDeviceId(deviceId);
+        }
         DeviceEvent deviceEvent;
         deviceEvent.deviceInfo = deviceInfo;
         deviceEvent.changeType = deviceChangeType;

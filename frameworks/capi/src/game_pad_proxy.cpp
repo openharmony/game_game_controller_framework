@@ -14,8 +14,8 @@
  */
 
 #include "game_pad_proxy.h"
-#include "gamecontroller_log.h"
 #include "gamecontroller_errors.h"
+#include "gamecontroller_log.h"
 #include "input_event_client.h"
 
 namespace OHOS {
@@ -268,6 +268,26 @@ GameController_ErrorCode GamePadProxy::RightThumbstick_RegisterAxisInputMonitor(
 GameController_ErrorCode GamePadProxy::RightThumbstick_UnRegisterAxisInputMonitor()
 {
     return UnRegisterAxisInputMonitor(GamePadAxisSourceTypeEnum::RightThumbstick);
+}
+
+GameController_ErrorCode GamePadProxy::ButtonUnknown_RegisterButtonInputMonitor(
+    GamePad_ButtonInputMonitorCallback inputMonitorCallback)
+{
+    if (inputMonitorCallback == nullptr) {
+        HILOGE("[CAPI][ButtonUnknown_RegisterButtonInputMonitor]inputMonitorCallback is nullptr");
+        return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
+    }
+
+    std::shared_ptr<GamePadButtonEventCallback> apiCallback = std::make_shared<GamePadButtonEventCallback>();
+    apiCallback->SetCallback(inputMonitorCallback);
+    InputEventClient::RegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI, apiCallback);
+    return GameController_ErrorCode::GAME_CONTROLLER_SUCCESS;
+}
+
+GameController_ErrorCode GamePadProxy::ButtonUnknown_UnRegisterButtonInputMonitor()
+{
+    InputEventClient::UnRegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI);
+    return GameController_ErrorCode::GAME_CONTROLLER_SUCCESS;
 }
 
 GameController_ErrorCode GamePadProxy::RegisterButtonInputMonitor(

@@ -17,8 +17,8 @@
 #define GAME_CONTROLLER_FRAMEWORK_GAME_PAD_PROXY_H
 
 #include <singleton.h>
-#include "game_pad_event.h"
 #include "game_controller_type.h"
+#include "game_pad_event.h"
 #include "gamecontroller_client_model.h"
 
 namespace OHOS {
@@ -53,6 +53,7 @@ private:
 
 class GamePadProxy : public Singleton<GamePadProxy> {
 DECLARE_SINGLETON(GamePadProxy);
+
 public:
     GameController_ErrorCode LeftShoulder_RegisterButtonInputMonitor(
         GamePad_ButtonInputMonitorCallback inputMonitorCallback);
@@ -163,6 +164,11 @@ public:
         GamePad_AxisInputMonitorCallback inputMonitorCallback);
 
     GameController_ErrorCode RightThumbstick_UnRegisterAxisInputMonitor();
+
+    GameController_ErrorCode ButtonUnknown_RegisterButtonInputMonitor(
+        GamePad_ButtonInputMonitorCallback inputMonitorCallback);
+
+    GameController_ErrorCode ButtonUnknown_UnRegisterButtonInputMonitor();
 
 private:
     GameController_ErrorCode RegisterButtonInputMonitor(GamePadButtonTypeEnum buttonTypeEnum,

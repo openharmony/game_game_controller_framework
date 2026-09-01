@@ -44,12 +44,14 @@ void InputEventCallbackTest::SetUp()
 {
     DelayedSingleton<InputEventCallback>::GetInstance()->gamePadButtonCallback_.clear();
     DelayedSingleton<InputEventCallback>::GetInstance()->gamePadAxisCallback_.clear();
+    DelayedSingleton<InputEventCallback>::GetInstance()->gamePadUnknownButtonCallback_ = nullptr;
 }
 
 void InputEventCallbackTest::TearDown()
 {
     DelayedSingleton<InputEventCallback>::GetInstance()->gamePadButtonCallback_.clear();
     DelayedSingleton<InputEventCallback>::GetInstance()->gamePadAxisCallback_.clear();
+    DelayedSingleton<InputEventCallback>::GetInstance()->gamePadUnknownButtonCallback_ = nullptr;
 }
 
 /**
@@ -137,6 +139,86 @@ HWTEST_F(InputEventCallbackTest, OnGamePadAxisEventCallback_002, TestSize.Level0
     DelayedSingleton<InputEventCallback>::GetInstance()->OnGamePadAxisEventCallback(axisEvent);
 
     ASSERT_EQ(0.0, callback->result_.gasValue);
+}
+
+/**
+* @tc.name: OnGamePadUnknownButtonEventCallback_001
+* @tc.desc: If a callback method exists, the callback is successful.
+* @tc.type: FUNC
+* @tc.require: issueNumber
+*/
+HWTEST_F(InputEventCallbackTest, OnGamePadUnknownButtonEventCallback_001, TestSize.Level0)
+{
+    std::shared_ptr<GamePadButtonEventCallback> callback = std::make_shared<GamePadButtonEventCallback>();
+    DelayedSingleton<InputEventCallback>::GetInstance()
+        ->RegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI, callback);
+    GamePadButtonEvent buttonEvent;
+    buttonEvent.id = 11;
+    buttonEvent.keyCodeName = "ButtonFn";
+    buttonEvent.keyCode = 0;
+    DelayedSingleton<InputEventCallback>::GetInstance()->OnGamePadUnknownButtonEventCallback(buttonEvent);
+    ASSERT_EQ(buttonEvent.id, callback->result_.id);
+    ASSERT_EQ(buttonEvent.keyCodeName, callback->result_.keyCodeName);
+    ASSERT_EQ(buttonEvent.keyCode, callback->result_.keyCode);
+}
+
+/**
+* @tc.name: OnGamePadUnknownButtonEventCallback_002
+* @tc.desc: If no callback method exists, the event is discarded.
+* @tc.type: FUNC
+* @tc.require: issueNumber
+*/
+HWTEST_F(InputEventCallbackTest, OnGamePadUnknownButtonEventCallback_002, TestSize.Level0)
+{
+    GamePadButtonEvent buttonEvent;
+    buttonEvent.id = 11;
+    buttonEvent.keyCodeName = "ButtonFn";
+    buttonEvent.keyCode = 0;
+    DelayedSingleton<InputEventCallback>::GetInstance()->OnGamePadUnknownButtonEventCallback(buttonEvent);
+    ASSERT_EQ(0, 0);
+}
+
+/**
+* @tc.name: RegisterUnknownButtonEventCallback_001
+* @tc.desc: If the value of callback is nullptr, the system discards the callback.
+* @tc.type: FUNC
+* @tc.require: issueNumber
+*/
+HWTEST_F(InputEventCallbackTest, RegisterUnknownButtonEventCallback_001, TestSize.Level0)
+{
+    DelayedSingleton<InputEventCallback>::GetInstance()
+        ->RegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI, nullptr);
+    ASSERT_EQ(nullptr, DelayedSingleton<InputEventCallback>::GetInstance()->gamePadUnknownButtonCallback_);
+}
+
+/**
+* @tc.name: RegisterUnknownButtonEventCallback_002
+* @tc.desc: If the value of callback is not nullptr, the callback is cached.
+* @tc.type: FUNC
+* @tc.require: issueNumber
+*/
+HWTEST_F(InputEventCallbackTest, RegisterUnknownButtonEventCallback_002, TestSize.Level0)
+{
+    std::shared_ptr<GamePadButtonEventCallback> callback = std::make_shared<GamePadButtonEventCallback>();
+    DelayedSingleton<InputEventCallback>::GetInstance()
+        ->RegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI, callback);
+    ASSERT_NE(nullptr, DelayedSingleton<InputEventCallback>::GetInstance()->gamePadUnknownButtonCallback_);
+}
+
+/**
+* @tc.name: UnRegisterUnknownButtonEventCallback_001
+* @tc.desc: Cancel the callback event of unknown button.
+* @tc.type: FUNC
+* @tc.require: issueNumber
+*/
+HWTEST_F(InputEventCallbackTest, UnRegisterUnknownButtonEventCallback_001, TestSize.Level0)
+{
+    std::shared_ptr<GamePadButtonEventCallback> callback = std::make_shared<GamePadButtonEventCallback>();
+    DelayedSingleton<InputEventCallback>::GetInstance()
+        ->RegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI, callback);
+    DelayedSingleton<InputEventCallback>::GetInstance()
+        ->UnRegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI);
+    ASSERT_EQ(nullptr, DelayedSingleton<InputEventCallback>::GetInstance()->gamePadUnknownButtonCallback_);
 }
 
 }

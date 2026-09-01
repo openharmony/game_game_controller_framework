@@ -32,6 +32,7 @@
 #include "gamepad_event_callback_impl.h"
 #include <input_manager.h>
 #include <key_event.h>
+#include <string>
 #include <thread>
 #include "input_event_client.h"
 
@@ -106,13 +107,13 @@ void WindowInputInterceptConsumerTest::TearDown()
                                                          GamePadAxisSourceTypeEnum::RightTriggerAxis);
     InputEventClient::UnRegisterGamePadAxisEventCallback(ApiTypeEnum::CAPI,
                                                          GamePadAxisSourceTypeEnum::Dpad);
+    InputEventClient::UnRegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI);
     multiModalInputMgtServiceMock_.reset();
     buttonCallback_ = nullptr;
     axisCallback_ = nullptr;
     consumer_ = nullptr;
     MultiModalInputMgtService::instance_ = nullptr;
 }
-
 
 /**
 * @tc.name: RegisterWindowInputIntercept_001
@@ -135,7 +136,6 @@ HWTEST_F(WindowInputInterceptTest, RegisterWindowInputIntercept_001, TestSize.Le
     ASSERT_TRUE(DelayedSingleton<WindowInputIntercept>::GetInstance()->registerDeviceIdSet_.count(newDeviceId));
     ASSERT_TRUE(consumer == DelayedSingleton<WindowInputIntercept>::GetInstance()->consumer_);
 }
-
 
 /**
 * @tc.name: UnRegisterWindowInputIntercept_001
@@ -224,25 +224,6 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_002, TestSize.Level0)
 {
     std::shared_ptr<MMI::KeyEvent> keyEvent = CreateNormalKeyEvent();
     keyEvent->SetKeyAction(4);
-
-    MultiModalInputMgtService::instance_ = multiModalInputMgtServiceMock_;
-    EXPECT_CALL(*(multiModalInputMgtServiceMock_.get()), GetDeviceInfo(keyEvent->GetDeviceId())).Times(0);
-    consumer_->OnInputEvent(keyEvent);
-    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
-    ASSERT_NE(buttonCallback_->result_.keyCode, keyEvent->GetKeyCode());
-    EXPECT_TRUE(::testing::Mock::VerifyAndClearExpectations(multiModalInputMgtServiceMock_.get()));
-}
-
-/**
-* @tc.name: OnInputEvent_003
-* @tc.desc: KeyEvent event: If an unknown key is received, the event is discarded.
-* @tc.type: FUNC
-* @tc.require: issueNumber
-*/
-HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_003, TestSize.Level0)
-{
-    std::shared_ptr<MMI::KeyEvent> keyEvent = CreateNormalKeyEvent();
-    keyEvent->SetKeyCode(KeyEvent::KEYCODE_0);
 
     MultiModalInputMgtService::instance_ = multiModalInputMgtServiceMock_;
     EXPECT_CALL(*(multiModalInputMgtServiceMock_.get()), GetDeviceInfo(keyEvent->GetDeviceId())).Times(0);
@@ -540,6 +521,233 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_014, TestSize.Level0)
 HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_015, TestSize.Level0)
 {
     TestReceiverEvent(MMI::KeyEvent::KEY_ACTION_CANCEL, 1);
+}
+
+/**
+ * @tc.name: OnInputEvent_016
+ * @tc.desc: KeyEvent event: Unknown button event from a device that has processed known gamepad keys.
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_016, TestSize.Level0)
+{
+    std::shared_ptr<GamePadButtonEventCallback> unknownButtonCallback = std::make_shared<GamePadButtonEventCallback>();
+    InputEventClient::RegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI, unknownButtonCallback);
+
+    std::shared_ptr<MMI::KeyEvent> keyEvent = MMI::KeyEvent::Create();
+    keyEvent->SetDeviceId(DEVICE_ID);
+    keyEvent->SetKeyCode(0);
+    keyEvent->SetKeyAction(MMI::KeyEvent::KEY_ACTION_UP);
+    keyEvent->SetActionTime(ACTION_TIME);
+
+    MultiModalInputMgtService::instance_ = multiModalInputMgtServiceMock_;
+    DeviceInfo deviceInfo;
+    deviceInfo.uniq = "test";
+    deviceInfo.deviceType = DeviceTypeEnum::GAME_PAD;
+    EXPECT_CALL(*(multiModalInputMgtServiceMock_.get()), GetDeviceInfo(keyEvent->GetDeviceId())).WillOnce(
+        Return(deviceInfo));
+    consumer_->processedDeviceIdSet_.insert(DEVICE_ID);
+    consumer_->OnInputEvent(keyEvent);
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
+    ASSERT_EQ(unknownButtonCallback->result_.id, keyEvent->GetDeviceId());
+    ASSERT_EQ(unknownButtonCallback->result_.keyCode, 0);
+    ASSERT_EQ(unknownButtonCallback->result_.keyCodeName, "0");
+    ASSERT_EQ(unknownButtonCallback->result_.keyAction, 1);
+    ASSERT_EQ(unknownButtonCallback->result_.uniq, deviceInfo.uniq);
+
+    InputEventClient::UnRegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI);
+}
+
+/**
+ * @tc.name: OnInputEvent_017
+ * @tc.desc: KeyEvent event: Unknown button event from a device that has not processed known gamepad keys
+ *  should be discarded.
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_017, TestSize.Level0)
+{
+    std::shared_ptr<GamePadButtonEventCallback> unknownButtonCallback = std::make_shared<GamePadButtonEventCallback>();
+    InputEventClient::RegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI, unknownButtonCallback);
+
+    std::shared_ptr<MMI::KeyEvent> keyEvent = MMI::KeyEvent::Create();
+    keyEvent->SetDeviceId(DEVICE_ID);
+    keyEvent->SetKeyCode(0);
+    keyEvent->SetKeyAction(MMI::KeyEvent::KEY_ACTION_UP);
+    keyEvent->SetActionTime(ACTION_TIME);
+
+    MultiModalInputMgtService::instance_ = multiModalInputMgtServiceMock_;
+    DeviceInfo deviceInfo;
+    deviceInfo.uniq = "test";
+    deviceInfo.deviceType = DeviceTypeEnum::UNKNOWN;
+    EXPECT_CALL(*(multiModalInputMgtServiceMock_.get()), GetDeviceInfo(keyEvent->GetDeviceId())).WillOnce(
+        Return(deviceInfo));
+    consumer_->OnInputEvent(keyEvent);
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
+    ASSERT_EQ(unknownButtonCallback->result_.keyCode, 0);
+
+    InputEventClient::UnRegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI);
+}
+
+/**
+ * @tc.name: OnInputEvent_018
+ * @tc.desc: KeyEvent event: Unknown button event with pressedKeys containing both known and unknown buttons.
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_018, TestSize.Level0)
+{
+    std::shared_ptr<GamePadButtonEventCallback> unknownButtonCallback = std::make_shared<GamePadButtonEventCallback>();
+    InputEventClient::RegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI, unknownButtonCallback);
+
+    std::shared_ptr<MMI::KeyEvent> keyEvent = MMI::KeyEvent::Create();
+    keyEvent->SetDeviceId(DEVICE_ID);
+    keyEvent->SetKeyCode(0);
+    keyEvent->SetKeyAction(MMI::KeyEvent::KEY_ACTION_UP);
+    keyEvent->SetActionTime(ACTION_TIME);
+
+    MMI::KeyEvent::KeyItem keyItem1;
+    keyItem1.SetKeyCode(GamePadButtonTypeEnum::LeftShoulder);
+    keyItem1.SetDeviceId(DEVICE_ID);
+    keyItem1.SetPressed(true);
+    keyEvent->AddPressedKeyItems(keyItem1);
+
+    MMI::KeyEvent::KeyItem keyItem2;
+    keyItem2.SetKeyCode(16);
+    keyItem2.SetDeviceId(DEVICE_ID);
+    keyItem2.SetPressed(true);
+    keyEvent->AddPressedKeyItems(keyItem2);
+
+    MultiModalInputMgtService::instance_ = multiModalInputMgtServiceMock_;
+    DeviceInfo deviceInfo;
+    deviceInfo.uniq = "test";
+    deviceInfo.deviceType = DeviceTypeEnum::GAME_PAD;
+    EXPECT_CALL(*(multiModalInputMgtServiceMock_.get()), GetDeviceInfo(keyEvent->GetDeviceId())).WillOnce(
+        Return(deviceInfo));
+    consumer_->processedDeviceIdSet_.insert(DEVICE_ID);
+    consumer_->OnInputEvent(keyEvent);
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
+    ASSERT_EQ(unknownButtonCallback->result_.id, keyEvent->GetDeviceId());
+    ASSERT_EQ(unknownButtonCallback->result_.keyCode, 0);
+    ASSERT_EQ(unknownButtonCallback->result_.keyCodeName, "0");
+    ASSERT_EQ(unknownButtonCallback->result_.keys.size(), 2);
+    ASSERT_EQ(unknownButtonCallback->result_.keys[0].keyCode, GamePadButtonTypeEnum::LeftShoulder);
+    ASSERT_EQ(unknownButtonCallback->result_.keys[0].keyCodeName, "LeftShoulder");
+    ASSERT_EQ(unknownButtonCallback->result_.keys[1].keyCode, 16);
+    ASSERT_EQ(unknownButtonCallback->result_.keys[1].keyCodeName, "16");
+
+    InputEventClient::UnRegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI);
+}
+
+/**
+* @tc.name: OnInputEvent_019
+* @tc.desc: KeyEvent event: Known button event with pressedKeys containing unknown button.
+* @tc.type: FUNC
+* @tc.require: issueNumber
+*/
+HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_019, TestSize.Level0)
+{
+    std::shared_ptr<MMI::KeyEvent> keyEvent = MMI::KeyEvent::Create();
+    keyEvent->SetDeviceId(DEVICE_ID);
+    keyEvent->SetKeyCode(GamePadButtonTypeEnum::LeftShoulder);
+    keyEvent->SetKeyAction(MMI::KeyEvent::KEY_ACTION_UP);
+    keyEvent->SetActionTime(ACTION_TIME);
+
+    MMI::KeyEvent::KeyItem keyItem;
+    keyItem.SetKeyCode(16);
+    keyItem.SetDeviceId(DEVICE_ID);
+    keyItem.SetPressed(true);
+    keyEvent->AddPressedKeyItems(keyItem);
+
+    MultiModalInputMgtService::instance_ = multiModalInputMgtServiceMock_;
+    DeviceInfo deviceInfo;
+    deviceInfo.uniq = "test";
+    EXPECT_CALL(*(multiModalInputMgtServiceMock_.get()), GetDeviceInfo(keyEvent->GetDeviceId())).WillOnce(
+        Return(deviceInfo));
+    consumer_->OnInputEvent(keyEvent);
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
+    ASSERT_EQ(buttonCallback_->result_.id, keyEvent->GetDeviceId());
+    ASSERT_EQ(buttonCallback_->result_.keyCode, GamePadButtonTypeEnum::LeftShoulder);
+    ASSERT_EQ(buttonCallback_->result_.keyCodeName, "LeftShoulder");
+    ASSERT_EQ(buttonCallback_->result_.keys.size(), 1);
+    ASSERT_EQ(buttonCallback_->result_.keys[0].keyCode, 16);
+    ASSERT_EQ(buttonCallback_->result_.keys[0].keyCodeName, "16");
+}
+
+/**
+ * @tc.name: OnInputEvent_020
+ * @tc.desc: KeyEvent event: After a known gamepad key is processed, the device id is cached and
+ *  subsequent unknown button events are processed.
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_020, TestSize.Level0)
+{
+    std::shared_ptr<GamePadButtonEventCallback> unknownButtonCallback = std::make_shared<GamePadButtonEventCallback>();
+    InputEventClient::RegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI, unknownButtonCallback);
+
+    MultiModalInputMgtService::instance_ = multiModalInputMgtServiceMock_;
+    DeviceInfo deviceInfo;
+    deviceInfo.uniq = "test";
+    EXPECT_CALL(*(multiModalInputMgtServiceMock_.get()), GetDeviceInfo(DEVICE_ID)).WillRepeatedly(Return(deviceInfo));
+
+    std::shared_ptr<MMI::KeyEvent> knownKeyEvent = MMI::KeyEvent::Create();
+    knownKeyEvent->SetDeviceId(DEVICE_ID);
+    knownKeyEvent->SetKeyCode(GamePadButtonTypeEnum::ButtonA);
+    knownKeyEvent->SetKeyAction(MMI::KeyEvent::KEY_ACTION_DOWN);
+    knownKeyEvent->SetActionTime(ACTION_TIME);
+    consumer_->OnInputEvent(knownKeyEvent);
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
+    ASSERT_TRUE(consumer_->processedDeviceIdSet_.count(DEVICE_ID));
+
+    std::shared_ptr<MMI::KeyEvent> unknownKeyEvent = MMI::KeyEvent::Create();
+    unknownKeyEvent->SetDeviceId(DEVICE_ID);
+    unknownKeyEvent->SetKeyCode(0);
+    unknownKeyEvent->SetKeyAction(MMI::KeyEvent::KEY_ACTION_UP);
+    unknownKeyEvent->SetActionTime(ACTION_TIME);
+    consumer_->OnInputEvent(unknownKeyEvent);
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
+    ASSERT_EQ(unknownButtonCallback->result_.id, DEVICE_ID);
+    ASSERT_EQ(unknownButtonCallback->result_.keyCode, 0);
+    ASSERT_EQ(unknownButtonCallback->result_.keyCodeName, "0");
+
+    InputEventClient::UnRegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI);
+}
+
+/**
+ * @tc.name: ClearProcessedDeviceId_001
+ * @tc.desc: After ClearProcessedDeviceId is called, unknown button events from the device are discarded.
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(WindowInputInterceptConsumerTest, ClearProcessedDeviceId_001, TestSize.Level0)
+{
+    std::shared_ptr<GamePadButtonEventCallback> unknownButtonCallback = std::make_shared<GamePadButtonEventCallback>();
+    InputEventClient::RegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI, unknownButtonCallback);
+
+    consumer_->processedDeviceIdSet_.insert(DEVICE_ID);
+    ASSERT_TRUE(consumer_->processedDeviceIdSet_.count(DEVICE_ID));
+
+    consumer_->ClearProcessedDeviceId(DEVICE_ID);
+    ASSERT_FALSE(consumer_->processedDeviceIdSet_.count(DEVICE_ID));
+
+    std::shared_ptr<MMI::KeyEvent> keyEvent = MMI::KeyEvent::Create();
+    keyEvent->SetDeviceId(DEVICE_ID);
+    keyEvent->SetKeyCode(16);
+    keyEvent->SetKeyAction(MMI::KeyEvent::KEY_ACTION_UP);
+    keyEvent->SetActionTime(ACTION_TIME);
+
+    MultiModalInputMgtService::instance_ = multiModalInputMgtServiceMock_;
+    DeviceInfo deviceInfo;
+    deviceInfo.uniq = "test";
+    deviceInfo.deviceType = DeviceTypeEnum::UNKNOWN;
+    EXPECT_CALL(*(multiModalInputMgtServiceMock_.get()), GetDeviceInfo(keyEvent->GetDeviceId())).WillOnce(
+        Return(deviceInfo));
+    consumer_->OnInputEvent(keyEvent);
+    ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
+    ASSERT_EQ(unknownButtonCallback->result_.keyCode, 0);
+
+    InputEventClient::UnRegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI);
 }
 
 }
