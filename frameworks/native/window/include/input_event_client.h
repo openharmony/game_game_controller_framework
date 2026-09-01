@@ -59,7 +59,21 @@ public:
      */
     static void UnRegisterGamePadAxisEventCallback(const ApiTypeEnum apiTypeEnum,
                                                    const GamePadAxisSourceTypeEnum gamePadAxisTypeEnum);
+
+    /**
+     * Registering the unknown button Callback Event
+     * @param apiTypeEnum API Source
+     * @param callback Callback Method
+     */
+    static void RegisterUnknownButtonEventCallback(const ApiTypeEnum apiTypeEnum,
+                                                   const std::shared_ptr<GamePadButtonCallbackBase> &callback);
+
+    /**
+     * Cancel the callback event of unknown button.
+     * @param apiTypeEnum API Source
+     */
+    static void UnRegisterUnknownButtonEventCallback(const ApiTypeEnum apiTypeEnum);
 };
-}
-}
-#endif //GAME_CONTROLLER_FRAMEWORK_INPUT_EVENT_CLIENT_H
+}// namespace GameController
+}// namespace OHOS
+#endif//GAME_CONTROLLER_FRAMEWORK_INPUT_EVENT_CLIENT_H

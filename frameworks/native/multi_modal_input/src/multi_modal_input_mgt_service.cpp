@@ -42,7 +42,7 @@ const int32_t OPR_TYPE_GET_ALL_DEVICES = 0;
  */
 const int32_t OPR_TYPE_DEVICE_ONLINE = 1;
 
-}
+}// namespace
 
 MultiModalInputMgtService::MultiModalInputMgtService()
 {
@@ -121,6 +121,9 @@ void MultiModalInputMgtService::DoDeviceEventCallback(const DeviceInfo &deviceIn
                                                       const DeviceChangeType &deviceChangeType)
 {
     eventCallbackQueue_->submit([deviceInfo, deviceChangeType, this] {
+        for (auto deviceId: deviceInfo.ids) {
+            DelayedSingleton<WindowInputIntercept>::GetInstance()->ClearProcessedDeviceId(deviceId);
+        }
         DeviceEvent deviceEvent;
         deviceEvent.deviceInfo = deviceInfo;
         deviceEvent.changeType = deviceChangeType;
@@ -471,5 +474,5 @@ void MultiModalInputMgtService::ClearOfflineDeviceAndBroadcast(const int32_t dev
     DoDeviceEventCallback(deviceInfo, DeviceChangeType::REMOVE);
 }
 
-}
-}
+}// namespace GameController
+}// namespace OHOS

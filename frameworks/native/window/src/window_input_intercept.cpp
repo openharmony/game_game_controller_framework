@@ -12,16 +12,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <optional>
-#include "input_manager.h"
 #include "window_input_intercept.h"
-#include "window_input_intercept_client.h"
+#include "gamecontroller_client_model.h"
 #include "gamecontroller_log.h"
 #include "input_event_callback.h"
-#include "multi_modal_input_mgt_service.h"
-#include "gamecontroller_client_model.h"
+#include "input_manager.h"
 #include "key_mapping_handle.h"
 #include "key_to_touch_manager.h"
+#include "multi_modal_input_mgt_service.h"
+#include "window_input_intercept_client.h"
+#include <optional>
+#include <string>
 
 namespace OHOS {
 namespace GameController {
@@ -67,8 +68,7 @@ const std::unordered_map<int32_t, std::pair<DeviceTypeEnum, std::string>> BUTTON
     {GamePadButtonTypeEnum::Dpad_LeftButton,
         std::make_pair(DeviceTypeEnum::GAME_PAD, "Dpad_LeftButton")},
     {GamePadButtonTypeEnum::Dpad_RightButton,
-        std::make_pair(DeviceTypeEnum::GAME_PAD, "Dpad_RightButton")}
-};
+        std::make_pair(DeviceTypeEnum::GAME_PAD, "Dpad_RightButton")}};
 
 const int64_t NS_TO_MS = 1000000LL;
 
@@ -80,7 +80,7 @@ const int64_t ONE_SECOND_BY_NS = 1000000000LL;
 const int32_t KEY_ACTION_DOWN = 0;
 const int32_t KEY_ACTION_UP = 1;
 const int64_t US_TO_NS = 1000LL;
-}
+}// namespace
 
 WindowInputInterceptConsumer::WindowInputInterceptConsumer() noexcept
 {
@@ -134,10 +134,6 @@ void WindowInputInterceptConsumer::ConsumeKeyInputEvent(const std::shared_ptr<MM
         return;
     }
     buttonEvent.keyCode = keyEvent->GetKeyCode();
-    if (BUTTON_CODE_NAME_TRANSFORMATION.find(buttonEvent.keyCode) == BUTTON_CODE_NAME_TRANSFORMATION.end()) {
-        return;
-    }
-    buttonEvent.keyCodeName = BUTTON_CODE_NAME_TRANSFORMATION.at(buttonEvent.keyCode).second;
     buttonEvent.id = keyEvent->GetDeviceId();
     DeviceInfo deviceInfo = DelayedSingleton<MultiModalInputMgtService>::GetInstance()->GetDeviceInfo(buttonEvent.id);
     if (deviceInfo.UniqIsEmpty()) {
@@ -146,29 +142,45 @@ void WindowInputInterceptConsumer::ConsumeKeyInputEvent(const std::shared_ptr<MM
         return;
     }
     buttonEvent.uniq = deviceInfo.uniq;
-    buttonEvent.actionTime = (deltaTime_ + keyEvent->GetActionTime() * US_TO_NS) / NS_TO_MS; // 将距离开机启动时长转为系统时间
+    buttonEvent.actionTime = (deltaTime_ + keyEvent->GetActionTime() * US_TO_NS) / NS_TO_MS;
+
+    if (BUTTON_CODE_NAME_TRANSFORMATION.find(buttonEvent.keyCode) != BUTTON_CODE_NAME_TRANSFORMATION.end()) {
+        buttonEvent.keyCodeName = BUTTON_CODE_NAME_TRANSFORMATION.at(buttonEvent.keyCode).second;
+        FillPressedKeys(keyEvent, deviceInfo, buttonEvent);
+        AddProcessedDeviceId(buttonEvent.id);
+        DoGamePadKeyEventCallback(buttonEvent);
+        return;
+    }
+
+    if (deviceInfo.deviceType != DeviceTypeEnum::GAME_PAD && !IsDeviceHasProcessedKeys(buttonEvent.id)) {
+        return;
+    }
+
+    buttonEvent.keyCodeName = std::to_string(buttonEvent.keyCode);
+    FillPressedKeys(keyEvent, deviceInfo, buttonEvent);
+    DoUnknownButtonEventCallback(buttonEvent);
+}
+
+void WindowInputInterceptConsumer::FillPressedKeys(const std::shared_ptr<MMI::KeyEvent> &keyEvent,
+                                                   const DeviceInfo &deviceInfo,
+                                                   GamePadButtonEvent &buttonEvent)
+{
     std::vector<int32_t> pressedKeys = keyEvent->GetPressedKeys();
     for (auto keyCode: pressedKeys) {
         if (!PressedKeyIsValid(keyEvent, keyCode, deviceInfo)) {
             continue;
         }
-
         KeyInfo keyInfo;
         keyInfo.keyCode = keyCode;
-        keyInfo.keyCodeName = BUTTON_CODE_NAME_TRANSFORMATION.at(keyCode).second;
+        keyInfo.keyCodeName = GetPressedKeyCodeName(keyCode);
         buttonEvent.keys.push_back(keyInfo);
     }
-    DoGamePadKeyEventCallback(buttonEvent);
 }
 
 bool WindowInputInterceptConsumer::PressedKeyIsValid(const std::shared_ptr<MMI::KeyEvent> &keyEvent,
                                                      int32_t pressedKeyCode,
                                                      const DeviceInfo &deviceInfo)
 {
-    if (BUTTON_CODE_NAME_TRANSFORMATION.find(pressedKeyCode) == BUTTON_CODE_NAME_TRANSFORMATION.end()) {
-        return false;
-    }
-
     std::optional<MMI::KeyEvent::KeyItem> keyItem = keyEvent->GetKeyItem(pressedKeyCode);
     if (!keyItem.has_value()) {
         HILOGW("OnKeyEvent discard pressed keyCode [%{private}d], no keyItem",
@@ -195,6 +207,14 @@ bool WindowInputInterceptConsumer::PressedKeyIsValid(const std::shared_ptr<MMI::
     return true;
 }
 
+std::string WindowInputInterceptConsumer::GetPressedKeyCodeName(int32_t keyCode)
+{
+    if (BUTTON_CODE_NAME_TRANSFORMATION.find(keyCode) != BUTTON_CODE_NAME_TRANSFORMATION.end()) {
+        return BUTTON_CODE_NAME_TRANSFORMATION.at(keyCode).second;
+    }
+    return std::to_string(keyCode);
+}
+
 bool WindowInputInterceptConsumer::IsAxisEvent(const int32_t action)
 {
     if (action != OHOS::MMI::PointerEvent::POINTER_ACTION_AXIS_BEGIN &&
@@ -207,8 +227,8 @@ bool WindowInputInterceptConsumer::IsAxisEvent(const int32_t action)
 
 void WindowInputInterceptConsumer::ConsumePointerInputEvent(const std::shared_ptr<MMI::PointerEvent> &pointerEvent)
 {
-    if (pointerEvent->GetSourceType() != MMI::PointerEvent::SOURCE_TYPE_TOUCHSCREEN
-        && IsAxisEvent(pointerEvent->GetPointerAction())) {
+    if (pointerEvent->GetSourceType() != MMI::PointerEvent::SOURCE_TYPE_TOUCHSCREEN &&
+        IsAxisEvent(pointerEvent->GetPointerAction())) {
         ConsumeGamePadAxisInputEvent(pointerEvent);
     }
 }
@@ -233,6 +253,13 @@ void WindowInputInterceptConsumer::DoGamePadKeyEventCallback(const GamePadButton
 {
     eventCallbackQueue_->submit([buttonEvent, this] {
         DelayedSingleton<InputEventCallback>::GetInstance()->OnGamePadButtonEventCallback(buttonEvent);
+    });
+}
+
+void WindowInputInterceptConsumer::DoUnknownButtonEventCallback(const GamePadButtonEvent &buttonEvent)
+{
+    eventCallbackQueue_->submit([buttonEvent, this] {
+        DelayedSingleton<InputEventCallback>::GetInstance()->OnGamePadUnknownButtonEventCallback(buttonEvent);
     });
 }
 
@@ -337,6 +364,26 @@ bool WindowInputInterceptConsumer::IsNotifyOpenTemplateConfigPage(const std::sha
     return DelayedSingleton<KeyMappingHandle>::GetInstance()->IsNotifyOpenTemplateConfigPage(keyEvent);
 }
 
+bool WindowInputInterceptConsumer::IsDeviceHasProcessedKeys(const int32_t deviceId)
+{
+    std::lock_guard<ffrt::mutex> lock(processedDeviceIdMutex_);
+    return processedDeviceIdSet_.find(deviceId) != processedDeviceIdSet_.end();
+}
+
+void WindowInputInterceptConsumer::AddProcessedDeviceId(const int32_t deviceId)
+{
+    std::lock_guard<ffrt::mutex> lock(processedDeviceIdMutex_);
+    processedDeviceIdSet_.insert(deviceId);
+}
+
+void WindowInputInterceptConsumer::ClearProcessedDeviceId(const int32_t deviceId)
+{
+    std::lock_guard<ffrt::mutex> lock(processedDeviceIdMutex_);
+    if (processedDeviceIdSet_.erase(deviceId) > 0) {
+        HILOGI("ClearProcessedDeviceId. the deviceId is %{public}d", deviceId);
+    }
+}
+
 WindowInputIntercept::~WindowInputIntercept()
 {
 }
@@ -379,5 +426,14 @@ void WindowInputIntercept::UnRegisterAllWindowInputIntercept()
     }
     registerDeviceIdSet_.clear();
 }
+
+void WindowInputIntercept::ClearProcessedDeviceId(const int32_t deviceId)
+{
+    std::lock_guard<std::mutex> lock(registerMutex_);
+    if (consumer_ == nullptr) {
+        return;
+    }
+    consumer_->ClearProcessedDeviceId(deviceId);
 }
-}
+}// namespace GameController
+}// namespace OHOS

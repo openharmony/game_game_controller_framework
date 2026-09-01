@@ -16,6 +16,7 @@
 #ifndef GAME_CONTROLLER_FRAMEWORK_INPUT_EVENT_CALLBACK_H
 #define GAME_CONTROLLER_FRAMEWORK_INPUT_EVENT_CALLBACK_H
 
+#include <cpp/mutex.h>
 #include <singleton.h>
 #include <unordered_map>
 #include "gamecontroller_client_model.h"
@@ -24,6 +25,7 @@ namespace OHOS {
 namespace GameController {
 class InputEventCallback : public DelayedSingleton<InputEventCallback> {
 DECLARE_DELAYED_SINGLETON(InputEventCallback);
+
 public:
     /**
      * Registering the Gamepad button Callback Event
@@ -73,10 +75,32 @@ public:
      */
     void OnGamePadButtonEventCallback(const GamePadButtonEvent &event);
 
-private:
-    std::mutex registerAxisMutex_;
+    /**
+     * Registering the unknown button Callback Event
+     * @param apiTypeEnum API Source
+     * @param callback Callback Method
+     */
+    void RegisterUnknownButtonEventCallback(const ApiTypeEnum apiTypeEnum,
+                                            const std::shared_ptr<GamePadButtonCallbackBase> &callback);
 
-    std::mutex registerButtonMutex_;
+    /**
+     * Cancel the callback event of unknown button.
+     * @param apiTypeEnum API Source
+     */
+    void UnRegisterUnknownButtonEventCallback(const ApiTypeEnum apiTypeEnum);
+
+    /**
+     * Perform Unknown Button Event Callback
+     * @param event Button Event
+     */
+    void OnGamePadUnknownButtonEventCallback(const GamePadButtonEvent &event);
+
+private:
+    ffrt::mutex registerAxisMutex_;
+
+    ffrt::mutex registerButtonMutex_;
+
+    ffrt::mutex registerUnknownButtonMutex_;
 
     /**
      * Callback method cache for axis
@@ -87,9 +111,14 @@ private:
      * Callback method cache for button
      */
     std::unordered_map<GamePadButtonTypeEnum, std::shared_ptr<GamePadButtonCallbackBase>> gamePadButtonCallback_;
+
+    /**
+     * Callback method cache for unknown button
+     */
+    std::shared_ptr<GamePadButtonCallbackBase> gamePadUnknownButtonCallback_;
 };
 
-}
-}
+}// namespace GameController
+}// namespace OHOS
 
-#endif //GAME_CONTROLLER_FRAMEWORK_INPUT_EVENT_CALLBACK_H
+#endif//GAME_CONTROLLER_FRAMEWORK_INPUT_EVENT_CALLBACK_H

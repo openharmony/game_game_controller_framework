@@ -16,11 +16,12 @@
 #ifndef GAME_CONTROLLER_FRAMEWORK_WINDOW_INPUT_INTERCEPT_H
 #define GAME_CONTROLLER_FRAMEWORK_WINDOW_INPUT_INTERCEPT_H
 
+#include "gamecontroller_client_model.h"
+#include "window_input_intercept_consumer.h"
+#include <cpp/mutex.h>
+#include <cpp/queue.h>
 #include <singleton.h>
 #include <unordered_set>
-#include "window_input_intercept_consumer.h"
-#include "gamecontroller_client_model.h"
-#include <cpp/queue.h>
 
 namespace OHOS {
 namespace GameController {
@@ -34,6 +35,12 @@ public:
     void OnInputEvent(const std::shared_ptr<MMI::KeyEvent> &keyEvent) override;
 
     void OnInputEvent(const std::shared_ptr<MMI::PointerEvent> &pointerEvent) override;
+
+    /**
+     * Clears the cached processed device id when the device goes online or offline.
+     * @param deviceId Device ID.
+     */
+    void ClearProcessedDeviceId(const int32_t deviceId);
 
 private:
     /**
@@ -93,6 +100,12 @@ private:
     void DoGamePadKeyEventCallback(const GamePadButtonEvent &buttonEvent);
 
     /**
+     * Executes the unknown button event callback of the GamePad.
+     * @param buttonEvent Button Event
+     */
+    void DoUnknownButtonEventCallback(const GamePadButtonEvent &buttonEvent);
+
+    /**
      * Executes the axis event callback of the GamePad.
      * @param axisEvent Axis Event
      */
@@ -112,11 +125,41 @@ private:
                            const DeviceInfo &deviceInfo);
 
     /**
+     * Get key code name from either known or unknown button map.
+     * @param keyCode Key code
+     * @return Returns key code name if found; returns empty string otherwise.
+     */
+    std::string GetPressedKeyCodeName(int32_t keyCode);
+
+    /**
+     * Fill pressed keys info to button event.
+     * @param keyEvent Key Event
+     * @param deviceInfo Device Information
+     * @param buttonEvent Button Event
+     */
+    void FillPressedKeys(const std::shared_ptr<MMI::KeyEvent> &keyEvent,
+                         const DeviceInfo &deviceInfo,
+                         GamePadButtonEvent &buttonEvent);
+
+    /**
      * Indicates whether notify open template page.
      * @param keyEvent Key Event
      * @return true means notify open template page.
      */
     bool IsNotifyOpenTemplateConfigPage(const std::shared_ptr<MMI::KeyEvent> &keyEvent);
+
+    /**
+     * Checks whether the device has already processed known gamepad keys.
+     * @param deviceId Device ID.
+     * @return true means the device has processed known gamepad keys.
+     */
+    bool IsDeviceHasProcessedKeys(const int32_t deviceId);
+
+    /**
+     * Caches the device id that has already processed known gamepad keys.
+     * @param deviceId Device ID.
+     */
+    void AddProcessedDeviceId(const int32_t deviceId);
 
 private:
     /**
@@ -128,10 +171,21 @@ private:
      * Difference between the time span from startup to the current time and the actual timestamp, in ns.
      */
     int64_t deltaTime_ = 0;
+
+    /**
+     * Mutex for processedDeviceIdSet_
+     */
+    ffrt::mutex processedDeviceIdMutex_;
+
+    /**
+     * Set of device IDs that have already processed known gamepad keys.
+     */
+    std::unordered_set<int32_t> processedDeviceIdSet_;
 };
 
 class WindowInputIntercept : public DelayedSingleton<WindowInputIntercept> {
 DECLARE_DELAYED_SINGLETON(WindowInputIntercept);
+
 public:
     /**
      * Registers window input event interception for a specified deviceId.
@@ -150,6 +204,12 @@ public:
      */
     void UnRegisterAllWindowInputIntercept();
 
+    /**
+     * Clears the cached processed device id when the device goes online or offline.
+     * @param deviceId Device ID.
+     */
+    void ClearProcessedDeviceId(const int32_t deviceId);
+
 private:
     std::mutex registerMutex_;
 
@@ -161,8 +221,8 @@ private:
     /**
      * Consumer of window input event
      */
-    std::shared_ptr<Rosen::IInputEventInterceptConsumer> consumer_;
+    std::shared_ptr<WindowInputInterceptConsumer> consumer_;
 };
-}
-}
-#endif //GAME_CONTROLLER_FRAMEWORK_WINDOW_INPUT_INTERCEPT_H
+}// namespace GameController
+}// namespace OHOS
+#endif//GAME_CONTROLLER_FRAMEWORK_WINDOW_INPUT_INTERCEPT_H

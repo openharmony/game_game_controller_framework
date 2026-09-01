@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-
 #include "game_pad.h"
 #include "game_pad_proxy.h"
 
@@ -281,3 +280,14 @@ GameController_ErrorCode OH_GamePad_RightThumbstick_UnregisterAxisInputMonitor(v
     return OHOS::GameController::GamePadProxy::GetInstance().RightThumbstick_UnRegisterAxisInputMonitor();
 }
 
+GameController_ErrorCode OH_GamePad_ButtonUnknown_RegisterButtonInputMonitor(
+    GamePad_ButtonInputMonitorCallback inputMonitorCallback)
+{
+    return OHOS::GameController::GamePadProxy::GetInstance().ButtonUnknown_RegisterButtonInputMonitor(
+        inputMonitorCallback);
+}
+
+GameController_ErrorCode OH_GamePad_ButtonUnknown_UnregisterButtonInputMonitor(void)
+{
+    return OHOS::GameController::GamePadProxy::GetInstance().ButtonUnknown_UnRegisterButtonInputMonitor();
+}
