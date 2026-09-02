@@ -208,6 +208,7 @@ struct InputToTouchContext {
     void ResetTempVariables();
 
     bool IsGamePadMapping(const KeyToTouchMappingInfo &mappingInfo);
+
     void ReleasePointerId(const int32_t keyCode);
 
     /**
@@ -276,7 +277,7 @@ struct MouseMoveReq {
 };
 
 class PointerManager : public DelayedSingleton<PointerManager> {
-    DECLARE_DELAYED_SINGLETON(PointerManager)
+DECLARE_DELAYED_SINGLETON(PointerManager)
 
 public:
     /**
