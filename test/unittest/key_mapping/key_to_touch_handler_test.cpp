@@ -43,6 +43,7 @@ const int32_t MAX_HEIGHT = 1260;
 const int32_t MOUSE_LEFT_BUTTON_ID = 0;
 const int32_t MOUSE_RIGHT_BUTTON_ID = 1;
 const int32_t POINTER_ID_START = 3;
+const int32_t POINTER_ID_START_NON_TV = 1;
 const int32_t RADIUS = 100;
 }
 
@@ -476,11 +477,13 @@ public:
     void SetUp() override
     {
         pointerManager_ = DelayedSingleton<PointerManager>::GetInstance();
+        pointerManager_->SetIsTvDevice(true);
     }
 
     void TearDown() override
     {
         pointerManager_->pointerIdCacheSet_.clear();
+        pointerManager_->isTvDevice_ = false;
         pointerManager_.reset();
     }
 
@@ -541,6 +544,85 @@ HWTEST_F(PointerManagerTest, ReleasePointerId_001, TestSize.Level0)
  */
 HWTEST_F(PointerManagerTest, ReleasePointerId_002, TestSize.Level0)
 {
+    int32_t pointerId1 = pointerManager_->ApplyPointerId();
+    int32_t pointerId2 = pointerManager_->ApplyPointerId();
+
+    pointerManager_->ReleasePointerId(pointerId1);
+    int32_t pointerId3 = pointerManager_->ApplyPointerId();
+
+    ASSERT_EQ(pointerId3, pointerId1);
+}
+
+/**
+ * @tc.name: SetIsTvDevice_001
+ * @tc.desc: SetIsTvDevice should set isTvDevice_ flag correctly
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(PointerManagerTest, SetIsTvDevice_001, TestSize.Level0)
+{
+    pointerManager_->SetIsTvDevice(false);
+
+    ASSERT_FALSE(pointerManager_->isTvDevice_);
+}
+
+/**
+ * @tc.name: SetIsTvDevice_002
+ * @tc.desc: SetIsTvDevice with true should set isTvDevice_ flag correctly
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(PointerManagerTest, SetIsTvDevice_002, TestSize.Level0)
+{
+    pointerManager_->SetIsTvDevice(false);
+    pointerManager_->SetIsTvDevice(true);
+
+    ASSERT_TRUE(pointerManager_->isTvDevice_);
+}
+
+/**
+ * @tc.name: ApplyPointerId_NonTv_001
+ * @tc.desc: On non-TV device, ApplyPointerId should return pointerId starting from 1
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(PointerManagerTest, ApplyPointerId_NonTv_001, TestSize.Level0)
+{
+    pointerManager_->SetIsTvDevice(false);
+
+    int32_t pointerId = pointerManager_->ApplyPointerId();
+
+    ASSERT_EQ(pointerId, POINTER_ID_START_NON_TV);
+}
+
+/**
+ * @tc.name: ApplyPointerId_NonTv_002
+ * @tc.desc: On non-TV device, ApplyPointerId should return different pointerIds for multiple calls
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(PointerManagerTest, ApplyPointerId_NonTv_002, TestSize.Level0)
+{
+    pointerManager_->SetIsTvDevice(false);
+
+    int32_t pointerId1 = pointerManager_->ApplyPointerId();
+    int32_t pointerId2 = pointerManager_->ApplyPointerId();
+    int32_t pointerId3 = pointerManager_->ApplyPointerId();
+
+    ASSERT_EQ(pointerId1, POINTER_ID_START_NON_TV);
+    ASSERT_EQ(pointerId2, POINTER_ID_START_NON_TV + 1);
+    ASSERT_EQ(pointerId3, POINTER_ID_START_NON_TV + 2);
+}
+
+/**
+ * @tc.name: ReleasePointerId_NonTv_001
+ * @tc.desc: On non-TV device, after releasing a pointerId, ApplyPointerId should return the same pointerId
+ * @tc.type: FUNC
+ * @tc.require: issueNumber
+ */
+HWTEST_F(PointerManagerTest, ReleasePointerId_NonTv_001, TestSize.Level0)
+{
+    pointerManager_->SetIsTvDevice(false);
     int32_t pointerId1 = pointerManager_->ApplyPointerId();
     int32_t pointerId2 = pointerManager_->ApplyPointerId();
 

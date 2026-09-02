@@ -208,6 +208,7 @@ struct InputToTouchContext {
     void ResetTempVariables();
 
     bool IsGamePadMapping(const KeyToTouchMappingInfo &mappingInfo);
+
     void ReleasePointerId(const int32_t keyCode);
 
     /**
@@ -291,6 +292,13 @@ public:
      */
     void ReleasePointerId(const int32_t pointerId);
 
+    /**
+     * Set whether the current device is a TV device.
+     * @param isTvDevice true means TV device, pointerId starts from 3;
+     *                   false means non-TV, pointerId starts from 1
+     */
+    void SetIsTvDevice(bool isTvDevice);
+
 private:
     ffrt::mutex locker;
 
@@ -298,6 +306,12 @@ private:
      * The set of pointerId already are applied
      */
     std::unordered_set<int32_t> pointerIdCacheSet_;
+
+    /**
+     * Whether the current device is a TV device.
+     * Default is false (non-TV), pointerId starts from 1.
+     */
+    bool isTvDevice_{false};
 };
 
 class BaseKeyToTouchHandler {

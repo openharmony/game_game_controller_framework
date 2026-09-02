@@ -45,6 +45,7 @@ const int32_t GAME_CONTROLLER_UID = 6227;
 const int KEY_MAPPING_ENABLE = 1;
 const int KEYCODE_OPEN_TEMP_FOR_HOVER_TOUCH_CONTROLLER = 3107;
 const char* PLUGIN_LIB_PATH = "/system/lib64/libgamecontroller_anco_plugin.z.so";
+const std::string TV_DEVICE_TYPE = "tv";
 static BundleBasicInfo g_bundleInfo;
 static bool g_isPluginMode = false;
 }
@@ -102,6 +103,8 @@ bool InputToTouchClient::IsSupportKeyMapping()
 
 void InputToTouchClient::StartInputMonitor()
 {
+    bool isTv = OHOS::system::GetDeviceType() == TV_DEVICE_TYPE;
+    DelayedSingleton<PointerManager>::GetInstance()->SetIsTvDevice(isTv);
     if (!g_isPluginMode) {
         DelayedSingleton<KeyToTouchManager>::GetInstance()->SetCurrentBundleName(g_bundleInfo.bundleName, true, false);
         DelayedSingleton<WindowInfoManager>::GetInstance()->InitWindowInfo(g_bundleInfo.bundleName);

@@ -29,6 +29,7 @@ const int32_t DEVICE_ID = 3;
 const double ANGLE = 180.0;
 const int32_t TOUCH_RANGE = 10;
 const int32_t START_POINTER_ID = 3;
+const int32_t START_POINTER_ID_NON_TV = 1;
 const int64_t SEND_DURATION = 500000;
 static int32_t g_lastSendTime = 0;
 static ffrt::mutex g_pointerItemsMutex;
@@ -616,12 +617,12 @@ PointerManager::~PointerManager()
 int32_t PointerManager::ApplyPointerId()
 {
     std::lock_guard<ffrt::mutex> lock(locker);
-    int32_t pointerId = START_POINTER_ID;
+    int32_t pointerId = isTvDevice_ ? START_POINTER_ID : START_POINTER_ID_NON_TV;
     while (true) {
-        // Starting from 3, query an unused pointerId
+        // Starting from the start pointerId, query an unused pointerId
         if (pointerIdCacheSet_.count(pointerId) == 0) {
             pointerIdCacheSet_.insert(pointerId);
-            HILOGI("ApplyPointerId [%{public}d]", pointerId);
+            HILOGI("ApplyPointerId [%{public}d], isTvDevice [%{public}d]", pointerId, isTvDevice_);
             return pointerId;
         }
         pointerId++;
@@ -633,6 +634,13 @@ void PointerManager::ReleasePointerId(const int32_t pointerId)
     std::lock_guard<ffrt::mutex> lock(locker);
     pointerIdCacheSet_.erase(pointerId);
     HILOGI("ReleasePointerId [%{public}d]", pointerId);
+}
+
+void PointerManager::SetIsTvDevice(bool isTvDevice)
+{
+    std::lock_guard<ffrt::mutex> lock(locker);
+    isTvDevice_ = isTvDevice;
+    HILOGI("SetIsTvDevice [%{public}d]", isTvDevice);
 }
 }
 }
