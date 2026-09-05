@@ -58,6 +58,7 @@ ohos_shared_library("ohgame_controller") {
   public_configs = [ ":game_controller_capi_config" ]
 
   deps = [
+    ":ohgame_controller_stub_versionscript",
     "${game_controller_framework_innerkits_path}:gamecontroller_client",
     "${game_controller_framework_innerkits_path}:gamecontroller_fwk_client",
   ]
