@@ -1,0 +1,14 @@
+{
+    global:
+    extern "C++" {
+        OHOS::GameController::GameDeviceClient*;
+        OHOS::GameController::GameControllerPluginClient*;
+        OHOS::GameController::DeviceCallback*;
+        OHOS::GameController::WindowOprCallback*;
+        OHOS::GameController::SaEventCallback*;
+        OHOS::GameController::InputEventClient*;
+        OHOS::GameController::InputToTouchClient*;
+    };
+    local:
+        *;
+};

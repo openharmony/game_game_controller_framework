@@ -13,6 +13,7 @@
 
 import("//build/ohos.gni")
 import("//build/ohos_var.gni")
+import("//build/ohos/native_stub/native_stub.gni")
 import("//domains/game/game_controller_framework/game_controller_framework.gni")
 
 config("game_controller_capi_config") {
@@ -22,6 +23,10 @@ config("game_controller_capi_config") {
   ]
 
   defines = []
+}
+
+ohos_native_stub_versionscript("ohgame_controller_stub_versionscript") {
+  stub_description_file = "./libohgame_controller.ndk.json"
 }
 
 ohos_shared_library("ohgame_controller") {
@@ -66,4 +71,7 @@ ohos_shared_library("ohgame_controller") {
   relative_install_dir = "ndk/"
   subsystem_name = "game"
   part_name = "game_controller_framework"
+  version_script =
+    get_label_info(":ohgame_controller_stub_versionscript", "target_gen_dir") + "/" +
+    get_label_info(":ohgame_controller_stub_versionscript", "name") + stub_version_script_suffix
 }

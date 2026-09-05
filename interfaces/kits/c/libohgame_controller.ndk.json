@@ -318,5 +318,17 @@
   {
     "first_introduced": "21",
     "name": "OH_GameDevice_DeviceInfo_GetDeviceType"
+  },
+  {
+    "first_introduced": "26.0.1",
+    "name": "OH_GameDevice_DeviceInfo_GetVendor"
+  },
+  {
+    "first_introduced": "26.0.1",
+    "name": "OH_GamePad_ButtonUnknown_RegisterButtonInputMonitor"
+  },
+  {
+    "first_introduced": "26.0.1",
+    "name": "OH_GamePad_ButtonUnknown_UnregisterButtonInputMonitor"
   }
 ]

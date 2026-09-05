@@ -1,0 +1,16 @@
+{
+    global:
+    extern "C++" {
+        OHOS::GameController::StringUtils*;
+        OHOS::GameController::GameKeyMappingInfo*;
+        OHOS::GameController::GameControllerServerClient*;
+        OHOS::GameController::GameControllerServerClientProxy*;
+        OHOS::GameController::GameControllerServerInterfaceProxy*;
+        OHOS::GameController::GameControllerServerInterfaceStub*;
+        OHOS::GameController::GameControllerSaLoadCallback*;
+        OHOS::GameController::GameControllerSaDeathRecipient*;
+        OHOS::GameController::IGameControllerServerInterface*;
+    };
+    local:
+        *;
+};
