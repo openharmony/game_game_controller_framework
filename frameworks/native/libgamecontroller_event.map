@@ -1,0 +1,11 @@
+{
+    global:
+    extern "C++" {
+        RegisterEntryModule;
+        *vtable*for*;
+        *typeinfo*for*;
+        *VTT*for*;
+    };
+    local:
+        *;
+};
