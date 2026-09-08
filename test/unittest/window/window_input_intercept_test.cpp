@@ -531,7 +531,7 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_015, TestSize.Level0)
  */
 HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_016, TestSize.Level0)
 {
-    std::shared_ptr<GamePadButtonEventCallback> nonstandardButtonCallback = std::make_shared<GamePadButtonEventCallback>();
+    auto nonstandardButtonCallback = std::make_shared<GamePadButtonEventCallback>();
     InputEventClient::RegisterNonstandardButtonEventCallback(ApiTypeEnum::CAPI, nonstandardButtonCallback);
 
     std::shared_ptr<MMI::KeyEvent> keyEvent = MMI::KeyEvent::Create();
@@ -567,7 +567,7 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_016, TestSize.Level0)
  */
 HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_017, TestSize.Level0)
 {
-    std::shared_ptr<GamePadButtonEventCallback> nonstandardButtonCallback = std::make_shared<GamePadButtonEventCallback>();
+    auto nonstandardButtonCallback = std::make_shared<GamePadButtonEventCallback>();
     InputEventClient::RegisterNonstandardButtonEventCallback(ApiTypeEnum::CAPI, nonstandardButtonCallback);
 
     std::shared_ptr<MMI::KeyEvent> keyEvent = MMI::KeyEvent::Create();
@@ -597,7 +597,7 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_017, TestSize.Level0)
  */
 HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_018, TestSize.Level0)
 {
-    std::shared_ptr<GamePadButtonEventCallback> nonstandardButtonCallback = std::make_shared<GamePadButtonEventCallback>();
+    auto nonstandardButtonCallback = std::make_shared<GamePadButtonEventCallback>();
     InputEventClient::RegisterNonstandardButtonEventCallback(ApiTypeEnum::CAPI, nonstandardButtonCallback);
 
     std::shared_ptr<MMI::KeyEvent> keyEvent = MMI::KeyEvent::Create();
