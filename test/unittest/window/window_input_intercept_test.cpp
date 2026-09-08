@@ -683,7 +683,7 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_019, TestSize.Level0)
  */
 HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_020, TestSize.Level0)
 {
-    std::shared_ptr<GamePadButtonEventCallback> nonstandardButtonCallback = std::make_shared<GamePadButtonEventCallback>();
+    auto nonstandardButtonCallback = std::make_shared<GamePadButtonEventCallback>();
     InputEventClient::RegisterNonstandardButtonEventCallback(ApiTypeEnum::CAPI, nonstandardButtonCallback);
 
     MultiModalInputMgtService::instance_ = multiModalInputMgtServiceMock_;
@@ -722,7 +722,7 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_020, TestSize.Level0)
  */
 HWTEST_F(WindowInputInterceptConsumerTest, ClearProcessedDeviceId_001, TestSize.Level0)
 {
-    std::shared_ptr<GamePadButtonEventCallback> nonstandardButtonCallback = std::make_shared<GamePadButtonEventCallback>();
+    auto nonstandardButtonCallback = std::make_shared<GamePadButtonEventCallback>();
     InputEventClient::RegisterNonstandardButtonEventCallback(ApiTypeEnum::CAPI, nonstandardButtonCallback);
 
     consumer_->processedDeviceIdSet_.insert(DEVICE_ID);
