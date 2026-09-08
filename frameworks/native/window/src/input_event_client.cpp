@@ -50,15 +50,16 @@ void InputEventClient::UnRegisterGamePadAxisEventCallback(const ApiTypeEnum apiT
                                                                                             gamePadAxisTypeEnum);
 }
 
-void InputEventClient::RegisterUnknownButtonEventCallback(const ApiTypeEnum apiTypeEnum,
-                                                          const std::shared_ptr<GamePadButtonCallbackBase> &callback)
+void InputEventClient::RegisterNonstandardButtonEventCallback(
+    const ApiTypeEnum apiTypeEnum,
+    const std::shared_ptr<GamePadButtonCallbackBase> &callback)
 {
-    DelayedSingleton<InputEventCallback>::GetInstance()->RegisterUnknownButtonEventCallback(apiTypeEnum, callback);
+    DelayedSingleton<InputEventCallback>::GetInstance()->RegisterNonstandardButtonEventCallback(apiTypeEnum, callback);
 }
 
-void InputEventClient::UnRegisterUnknownButtonEventCallback(const ApiTypeEnum apiTypeEnum)
+void InputEventClient::UnRegisterNonstandardButtonEventCallback(const ApiTypeEnum apiTypeEnum)
 {
-    DelayedSingleton<InputEventCallback>::GetInstance()->UnRegisterUnknownButtonEventCallback(apiTypeEnum);
+    DelayedSingleton<InputEventCallback>::GetInstance()->UnRegisterNonstandardButtonEventCallback(apiTypeEnum);
 }
 }
 }

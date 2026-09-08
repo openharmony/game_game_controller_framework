@@ -325,10 +325,10 @@
   },
   {
     "first_introduced": "26.0.1",
-    "name": "OH_GamePad_ButtonUnknown_RegisterButtonInputMonitor"
+    "name": "OH_GamePad_ButtonNonstandard_RegisterButtonInputMonitor"
   },
   {
     "first_introduced": "26.0.1",
-    "name": "OH_GamePad_ButtonUnknown_UnregisterButtonInputMonitor"
+    "name": "OH_GamePad_ButtonNonstandard_UnregisterButtonInputMonitor"
   }
 ]

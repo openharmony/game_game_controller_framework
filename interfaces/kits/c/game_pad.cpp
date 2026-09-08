@@ -280,14 +280,14 @@ GameController_ErrorCode OH_GamePad_RightThumbstick_UnregisterAxisInputMonitor(v
     return OHOS::GameController::GamePadProxy::GetInstance().RightThumbstick_UnRegisterAxisInputMonitor();
 }
 
-GameController_ErrorCode OH_GamePad_ButtonUnknown_RegisterButtonInputMonitor(
+GameController_ErrorCode OH_GamePad_ButtonNonstandard_RegisterButtonInputMonitor(
     GamePad_ButtonInputMonitorCallback inputMonitorCallback)
 {
-    return OHOS::GameController::GamePadProxy::GetInstance().ButtonUnknown_RegisterButtonInputMonitor(
+    return OHOS::GameController::GamePadProxy::GetInstance().ButtonNonstandard_RegisterButtonInputMonitor(
         inputMonitorCallback);
 }
 
-GameController_ErrorCode OH_GamePad_ButtonUnknown_UnregisterButtonInputMonitor(void)
+GameController_ErrorCode OH_GamePad_ButtonNonstandard_UnregisterButtonInputMonitor(void)
 {
-    return OHOS::GameController::GamePadProxy::GetInstance().ButtonUnknown_UnRegisterButtonInputMonitor();
+    return OHOS::GameController::GamePadProxy::GetInstance().ButtonNonstandard_UnRegisterButtonInputMonitor();
 }

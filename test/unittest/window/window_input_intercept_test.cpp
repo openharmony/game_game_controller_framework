@@ -107,7 +107,7 @@ void WindowInputInterceptConsumerTest::TearDown()
                                                          GamePadAxisSourceTypeEnum::RightTriggerAxis);
     InputEventClient::UnRegisterGamePadAxisEventCallback(ApiTypeEnum::CAPI,
                                                          GamePadAxisSourceTypeEnum::Dpad);
-    InputEventClient::UnRegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI);
+    InputEventClient::UnRegisterNonstandardButtonEventCallback(ApiTypeEnum::CAPI);
     multiModalInputMgtServiceMock_.reset();
     buttonCallback_ = nullptr;
     axisCallback_ = nullptr;
@@ -531,8 +531,8 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_015, TestSize.Level0)
  */
 HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_016, TestSize.Level0)
 {
-    std::shared_ptr<GamePadButtonEventCallback> unknownButtonCallback = std::make_shared<GamePadButtonEventCallback>();
-    InputEventClient::RegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI, unknownButtonCallback);
+    auto nonstandardButtonCallback = std::make_shared<GamePadButtonEventCallback>();
+    InputEventClient::RegisterNonstandardButtonEventCallback(ApiTypeEnum::CAPI, nonstandardButtonCallback);
 
     std::shared_ptr<MMI::KeyEvent> keyEvent = MMI::KeyEvent::Create();
     keyEvent->SetDeviceId(DEVICE_ID);
@@ -549,13 +549,13 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_016, TestSize.Level0)
     consumer_->processedDeviceIdSet_.insert(DEVICE_ID);
     consumer_->OnInputEvent(keyEvent);
     ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
-    ASSERT_EQ(unknownButtonCallback->result_.id, keyEvent->GetDeviceId());
-    ASSERT_EQ(unknownButtonCallback->result_.keyCode, 0);
-    ASSERT_EQ(unknownButtonCallback->result_.keyCodeName, "0");
-    ASSERT_EQ(unknownButtonCallback->result_.keyAction, 1);
-    ASSERT_EQ(unknownButtonCallback->result_.uniq, deviceInfo.uniq);
+    ASSERT_EQ(nonstandardButtonCallback->result_.id, keyEvent->GetDeviceId());
+    ASSERT_EQ(nonstandardButtonCallback->result_.keyCode, 0);
+    ASSERT_EQ(nonstandardButtonCallback->result_.keyCodeName, "0");
+    ASSERT_EQ(nonstandardButtonCallback->result_.keyAction, 1);
+    ASSERT_EQ(nonstandardButtonCallback->result_.uniq, deviceInfo.uniq);
 
-    InputEventClient::UnRegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI);
+    InputEventClient::UnRegisterNonstandardButtonEventCallback(ApiTypeEnum::CAPI);
 }
 
 /**
@@ -567,8 +567,8 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_016, TestSize.Level0)
  */
 HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_017, TestSize.Level0)
 {
-    std::shared_ptr<GamePadButtonEventCallback> unknownButtonCallback = std::make_shared<GamePadButtonEventCallback>();
-    InputEventClient::RegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI, unknownButtonCallback);
+    auto nonstandardButtonCallback = std::make_shared<GamePadButtonEventCallback>();
+    InputEventClient::RegisterNonstandardButtonEventCallback(ApiTypeEnum::CAPI, nonstandardButtonCallback);
 
     std::shared_ptr<MMI::KeyEvent> keyEvent = MMI::KeyEvent::Create();
     keyEvent->SetDeviceId(DEVICE_ID);
@@ -584,9 +584,9 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_017, TestSize.Level0)
         Return(deviceInfo));
     consumer_->OnInputEvent(keyEvent);
     ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
-    ASSERT_EQ(unknownButtonCallback->result_.keyCode, 0);
+    ASSERT_EQ(nonstandardButtonCallback->result_.keyCode, 0);
 
-    InputEventClient::UnRegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI);
+    InputEventClient::UnRegisterNonstandardButtonEventCallback(ApiTypeEnum::CAPI);
 }
 
 /**
@@ -597,8 +597,8 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_017, TestSize.Level0)
  */
 HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_018, TestSize.Level0)
 {
-    std::shared_ptr<GamePadButtonEventCallback> unknownButtonCallback = std::make_shared<GamePadButtonEventCallback>();
-    InputEventClient::RegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI, unknownButtonCallback);
+    auto nonstandardButtonCallback = std::make_shared<GamePadButtonEventCallback>();
+    InputEventClient::RegisterNonstandardButtonEventCallback(ApiTypeEnum::CAPI, nonstandardButtonCallback);
 
     std::shared_ptr<MMI::KeyEvent> keyEvent = MMI::KeyEvent::Create();
     keyEvent->SetDeviceId(DEVICE_ID);
@@ -627,16 +627,16 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_018, TestSize.Level0)
     consumer_->processedDeviceIdSet_.insert(DEVICE_ID);
     consumer_->OnInputEvent(keyEvent);
     ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
-    ASSERT_EQ(unknownButtonCallback->result_.id, keyEvent->GetDeviceId());
-    ASSERT_EQ(unknownButtonCallback->result_.keyCode, 0);
-    ASSERT_EQ(unknownButtonCallback->result_.keyCodeName, "0");
-    ASSERT_EQ(unknownButtonCallback->result_.keys.size(), 2);
-    ASSERT_EQ(unknownButtonCallback->result_.keys[0].keyCode, GamePadButtonTypeEnum::LeftShoulder);
-    ASSERT_EQ(unknownButtonCallback->result_.keys[0].keyCodeName, "LeftShoulder");
-    ASSERT_EQ(unknownButtonCallback->result_.keys[1].keyCode, 16);
-    ASSERT_EQ(unknownButtonCallback->result_.keys[1].keyCodeName, "16");
+    ASSERT_EQ(nonstandardButtonCallback->result_.id, keyEvent->GetDeviceId());
+    ASSERT_EQ(nonstandardButtonCallback->result_.keyCode, 0);
+    ASSERT_EQ(nonstandardButtonCallback->result_.keyCodeName, "0");
+    ASSERT_EQ(nonstandardButtonCallback->result_.keys.size(), 2);
+    ASSERT_EQ(nonstandardButtonCallback->result_.keys[0].keyCode, GamePadButtonTypeEnum::LeftShoulder);
+    ASSERT_EQ(nonstandardButtonCallback->result_.keys[0].keyCodeName, "LeftShoulder");
+    ASSERT_EQ(nonstandardButtonCallback->result_.keys[1].keyCode, 16);
+    ASSERT_EQ(nonstandardButtonCallback->result_.keys[1].keyCodeName, "16");
 
-    InputEventClient::UnRegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI);
+    InputEventClient::UnRegisterNonstandardButtonEventCallback(ApiTypeEnum::CAPI);
 }
 
 /**
@@ -683,8 +683,8 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_019, TestSize.Level0)
  */
 HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_020, TestSize.Level0)
 {
-    std::shared_ptr<GamePadButtonEventCallback> unknownButtonCallback = std::make_shared<GamePadButtonEventCallback>();
-    InputEventClient::RegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI, unknownButtonCallback);
+    auto nonstandardButtonCallback = std::make_shared<GamePadButtonEventCallback>();
+    InputEventClient::RegisterNonstandardButtonEventCallback(ApiTypeEnum::CAPI, nonstandardButtonCallback);
 
     MultiModalInputMgtService::instance_ = multiModalInputMgtServiceMock_;
     DeviceInfo deviceInfo;
@@ -707,11 +707,11 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_020, TestSize.Level0)
     unknownKeyEvent->SetActionTime(ACTION_TIME);
     consumer_->OnInputEvent(unknownKeyEvent);
     ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
-    ASSERT_EQ(unknownButtonCallback->result_.id, DEVICE_ID);
-    ASSERT_EQ(unknownButtonCallback->result_.keyCode, 0);
-    ASSERT_EQ(unknownButtonCallback->result_.keyCodeName, "0");
+    ASSERT_EQ(nonstandardButtonCallback->result_.id, DEVICE_ID);
+    ASSERT_EQ(nonstandardButtonCallback->result_.keyCode, 0);
+    ASSERT_EQ(nonstandardButtonCallback->result_.keyCodeName, "0");
 
-    InputEventClient::UnRegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI);
+    InputEventClient::UnRegisterNonstandardButtonEventCallback(ApiTypeEnum::CAPI);
 }
 
 /**
@@ -722,8 +722,8 @@ HWTEST_F(WindowInputInterceptConsumerTest, OnInputEvent_020, TestSize.Level0)
  */
 HWTEST_F(WindowInputInterceptConsumerTest, ClearProcessedDeviceId_001, TestSize.Level0)
 {
-    std::shared_ptr<GamePadButtonEventCallback> unknownButtonCallback = std::make_shared<GamePadButtonEventCallback>();
-    InputEventClient::RegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI, unknownButtonCallback);
+    auto nonstandardButtonCallback = std::make_shared<GamePadButtonEventCallback>();
+    InputEventClient::RegisterNonstandardButtonEventCallback(ApiTypeEnum::CAPI, nonstandardButtonCallback);
 
     consumer_->processedDeviceIdSet_.insert(DEVICE_ID);
     ASSERT_TRUE(consumer_->processedDeviceIdSet_.count(DEVICE_ID));
@@ -745,9 +745,9 @@ HWTEST_F(WindowInputInterceptConsumerTest, ClearProcessedDeviceId_001, TestSize.
         Return(deviceInfo));
     consumer_->OnInputEvent(keyEvent);
     ffrt::this_task::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
-    ASSERT_EQ(unknownButtonCallback->result_.keyCode, 0);
+    ASSERT_EQ(nonstandardButtonCallback->result_.keyCode, 0);
 
-    InputEventClient::UnRegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI);
+    InputEventClient::UnRegisterNonstandardButtonEventCallback(ApiTypeEnum::CAPI);
 }
 
 }

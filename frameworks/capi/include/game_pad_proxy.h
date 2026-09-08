@@ -165,10 +165,10 @@ public:
 
     GameController_ErrorCode RightThumbstick_UnRegisterAxisInputMonitor();
 
-    GameController_ErrorCode ButtonUnknown_RegisterButtonInputMonitor(
+    GameController_ErrorCode ButtonNonstandard_RegisterButtonInputMonitor(
         GamePad_ButtonInputMonitorCallback inputMonitorCallback);
 
-    GameController_ErrorCode ButtonUnknown_UnRegisterButtonInputMonitor();
+    GameController_ErrorCode ButtonNonstandard_UnRegisterButtonInputMonitor();
 
 private:
     GameController_ErrorCode RegisterButtonInputMonitor(GamePadButtonTypeEnum buttonTypeEnum,

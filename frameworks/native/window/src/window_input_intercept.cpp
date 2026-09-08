@@ -158,7 +158,7 @@ void WindowInputInterceptConsumer::ConsumeKeyInputEvent(const std::shared_ptr<MM
 
     buttonEvent.keyCodeName = std::to_string(buttonEvent.keyCode);
     FillPressedKeys(keyEvent, deviceInfo, buttonEvent);
-    DoUnknownButtonEventCallback(buttonEvent);
+    DoNonstandardButtonEventCallback(buttonEvent);
 }
 
 void WindowInputInterceptConsumer::FillPressedKeys(const std::shared_ptr<MMI::KeyEvent> &keyEvent,
@@ -256,10 +256,10 @@ void WindowInputInterceptConsumer::DoGamePadKeyEventCallback(const GamePadButton
     });
 }
 
-void WindowInputInterceptConsumer::DoUnknownButtonEventCallback(const GamePadButtonEvent &buttonEvent)
+void WindowInputInterceptConsumer::DoNonstandardButtonEventCallback(const GamePadButtonEvent &buttonEvent)
 {
     eventCallbackQueue_->submit([buttonEvent, this] {
-        DelayedSingleton<InputEventCallback>::GetInstance()->OnGamePadUnknownButtonEventCallback(buttonEvent);
+        DelayedSingleton<InputEventCallback>::GetInstance()->OnGamePadNonstandardButtonEventCallback(buttonEvent);
     });
 }
 
