@@ -438,22 +438,22 @@ GameController_ErrorCode OH_GamePad_RightThumbstick_RegisterAxisInputMonitor(
 GameController_ErrorCode OH_GamePad_RightThumbstick_UnregisterAxisInputMonitor(void);
 
 /**
- * @brief Registers a monitor for the unknown button event.
+ * @brief Registers a monitor for the nonstandard button event.
  * @param inputMonitorCallback Callback function, which is {@link GamePad_ButtonInputMonitorCallback}.
  * The value cannot be null. Otherwise, an error code is returned.
  * @return Returns {@link GAME_CONTROLLER_SUCCESS} if the operation is successful.
  * Returns {@link GAME_CONTROLLER_PARAM_ERROR} if the value of inputMonitorCallback is null.
  * @since 26.0.1
  */
-GameController_ErrorCode OH_GamePad_ButtonUnknown_RegisterButtonInputMonitor(
+GameController_ErrorCode OH_GamePad_ButtonNonstandard_RegisterButtonInputMonitor(
     GamePad_ButtonInputMonitorCallback inputMonitorCallback);
 
 /**
- * @brief Unregisters the monitor for the unknown button event.
+ * @brief Unregisters the monitor for the nonstandard button event.
  * @return Returns {@link GAME_CONTROLLER_SUCCESS} if the operation is successful.
  * @since 26.0.1
  */
-GameController_ErrorCode OH_GamePad_ButtonUnknown_UnregisterButtonInputMonitor(void);
+GameController_ErrorCode OH_GamePad_ButtonNonstandard_UnregisterButtonInputMonitor(void);
 
 #ifdef __cplusplus
 }

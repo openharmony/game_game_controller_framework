@@ -65,14 +65,14 @@ public:
      * @param apiTypeEnum API Source
      * @param callback Callback Method
      */
-    static void RegisterUnknownButtonEventCallback(const ApiTypeEnum apiTypeEnum,
-                                                   const std::shared_ptr<GamePadButtonCallbackBase> &callback);
+    static void RegisterNonstandardButtonEventCallback(const ApiTypeEnum apiTypeEnum,
+                                                       const std::shared_ptr<GamePadButtonCallbackBase> &callback);
 
     /**
      * Cancel the callback event of unknown button.
      * @param apiTypeEnum API Source
      */
-    static void UnRegisterUnknownButtonEventCallback(const ApiTypeEnum apiTypeEnum);
+    static void UnRegisterNonstandardButtonEventCallback(const ApiTypeEnum apiTypeEnum);
 };
 }
 }

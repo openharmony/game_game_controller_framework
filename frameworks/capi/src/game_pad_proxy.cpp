@@ -270,23 +270,23 @@ GameController_ErrorCode GamePadProxy::RightThumbstick_UnRegisterAxisInputMonito
     return UnRegisterAxisInputMonitor(GamePadAxisSourceTypeEnum::RightThumbstick);
 }
 
-GameController_ErrorCode GamePadProxy::ButtonUnknown_RegisterButtonInputMonitor(
+GameController_ErrorCode GamePadProxy::ButtonNonstandard_RegisterButtonInputMonitor(
     GamePad_ButtonInputMonitorCallback inputMonitorCallback)
 {
     if (inputMonitorCallback == nullptr) {
-        HILOGE("[CAPI][ButtonUnknown_RegisterButtonInputMonitor]inputMonitorCallback is nullptr");
+        HILOGE("[CAPI][ButtonNonstandard_RegisterButtonInputMonitor]inputMonitorCallback is nullptr");
         return GameController_ErrorCode::GAME_CONTROLLER_PARAM_ERROR;
     }
 
     std::shared_ptr<GamePadButtonEventCallback> apiCallback = std::make_shared<GamePadButtonEventCallback>();
     apiCallback->SetCallback(inputMonitorCallback);
-    InputEventClient::RegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI, apiCallback);
+    InputEventClient::RegisterNonstandardButtonEventCallback(ApiTypeEnum::CAPI, apiCallback);
     return GameController_ErrorCode::GAME_CONTROLLER_SUCCESS;
 }
 
-GameController_ErrorCode GamePadProxy::ButtonUnknown_UnRegisterButtonInputMonitor()
+GameController_ErrorCode GamePadProxy::ButtonNonstandard_UnRegisterButtonInputMonitor()
 {
-    InputEventClient::UnRegisterUnknownButtonEventCallback(ApiTypeEnum::CAPI);
+    InputEventClient::UnRegisterNonstandardButtonEventCallback(ApiTypeEnum::CAPI);
     return GameController_ErrorCode::GAME_CONTROLLER_SUCCESS;
 }
 

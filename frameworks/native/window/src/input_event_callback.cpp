@@ -119,30 +119,31 @@ void InputEventCallback::OnGamePadButtonEventCallback(const GamePadButtonEvent &
     buttonCallback->OnButtonEventCallback(event);
 }
 
-void InputEventCallback::RegisterUnknownButtonEventCallback(const ApiTypeEnum apiTypeEnum,
-                                                            const std::shared_ptr<GamePadButtonCallbackBase> &callback)
+void InputEventCallback::RegisterNonstandardButtonEventCallback(
+    const ApiTypeEnum apiTypeEnum,
+    const std::shared_ptr<GamePadButtonCallbackBase> &callback)
 {
     if (callback == nullptr) {
         return;
     }
-    std::lock_guard<ffrt::mutex> lock(registerUnknownButtonMutex_);
-    HILOGI("[InputEventCallback]RegisterUnknownButtonEventCallback ApiTypeEnum is %{public}d", apiTypeEnum);
-    gamePadUnknownButtonCallback_ = callback;
+    std::lock_guard<ffrt::mutex> lock(registerNonstandardButtonMutex_);
+    HILOGI("[InputEventCallback]RegisterNonstandardButtonEventCallback ApiTypeEnum is %{public}d", apiTypeEnum);
+    gamePadNonstandardButtonCallback_ = callback;
 }
 
-void InputEventCallback::UnRegisterUnknownButtonEventCallback(const ApiTypeEnum apiTypeEnum)
+void InputEventCallback::UnRegisterNonstandardButtonEventCallback(const ApiTypeEnum apiTypeEnum)
 {
-    std::lock_guard<ffrt::mutex> lock(registerUnknownButtonMutex_);
-    HILOGI("[InputEventCallback]UnRegisterUnknownButtonEventCallback ApiTypeEnum is %{public}d", apiTypeEnum);
-    gamePadUnknownButtonCallback_ = nullptr;
+    std::lock_guard<ffrt::mutex> lock(registerNonstandardButtonMutex_);
+    HILOGI("[InputEventCallback]UnRegisterNonstandardButtonEventCallback ApiTypeEnum is %{public}d", apiTypeEnum);
+    gamePadNonstandardButtonCallback_ = nullptr;
 }
 
-void InputEventCallback::OnGamePadUnknownButtonEventCallback(const GamePadButtonEvent &event)
+void InputEventCallback::OnGamePadNonstandardButtonEventCallback(const GamePadButtonEvent &event)
 {
     std::shared_ptr<GamePadButtonCallbackBase> buttonCallback = nullptr;
     {
-        std::lock_guard<ffrt::mutex> lock(registerUnknownButtonMutex_);
-        buttonCallback = gamePadUnknownButtonCallback_;
+        std::lock_guard<ffrt::mutex> lock(registerNonstandardButtonMutex_);
+        buttonCallback = gamePadNonstandardButtonCallback_;
     }
     if (buttonCallback == nullptr) {
         return;

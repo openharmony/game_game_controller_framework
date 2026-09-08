@@ -103,7 +103,7 @@ private:
      * Executes the unknown button event callback of the GamePad.
      * @param buttonEvent Button Event
      */
-    void DoUnknownButtonEventCallback(const GamePadButtonEvent &buttonEvent);
+    void DoNonstandardButtonEventCallback(const GamePadButtonEvent &buttonEvent);
 
     /**
      * Executes the axis event callback of the GamePad.

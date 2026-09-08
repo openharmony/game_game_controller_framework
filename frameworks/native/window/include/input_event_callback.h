@@ -80,27 +80,27 @@ public:
      * @param apiTypeEnum API Source
      * @param callback Callback Method
      */
-    void RegisterUnknownButtonEventCallback(const ApiTypeEnum apiTypeEnum,
-                                            const std::shared_ptr<GamePadButtonCallbackBase> &callback);
+    void RegisterNonstandardButtonEventCallback(const ApiTypeEnum apiTypeEnum,
+                                                const std::shared_ptr<GamePadButtonCallbackBase> &callback);
 
     /**
      * Cancel the callback event of unknown button.
      * @param apiTypeEnum API Source
      */
-    void UnRegisterUnknownButtonEventCallback(const ApiTypeEnum apiTypeEnum);
+    void UnRegisterNonstandardButtonEventCallback(const ApiTypeEnum apiTypeEnum);
 
     /**
      * Perform Unknown Button Event Callback
      * @param event Button Event
      */
-    void OnGamePadUnknownButtonEventCallback(const GamePadButtonEvent &event);
+    void OnGamePadNonstandardButtonEventCallback(const GamePadButtonEvent &event);
 
 private:
     ffrt::mutex registerAxisMutex_;
 
     ffrt::mutex registerButtonMutex_;
 
-    ffrt::mutex registerUnknownButtonMutex_;
+    ffrt::mutex registerNonstandardButtonMutex_;
 
     /**
      * Callback method cache for axis
@@ -115,7 +115,7 @@ private:
     /**
      * Callback method cache for unknown button
      */
-    std::shared_ptr<GamePadButtonCallbackBase> gamePadUnknownButtonCallback_;
+    std::shared_ptr<GamePadButtonCallbackBase> gamePadNonstandardButtonCallback_;
 };
 
 }
