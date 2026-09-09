@@ -115,11 +115,6 @@ enum GamePadButtonTypeEnum {
      */
     ButtonMenu = 2312,
 
-    /*
-     * KEYCODE_BUTTON_MODE
-     */
-    ButtonOptions = 2313,
-
     ButtonA = 2301,
     ButtonB = 2302,
     ButtonC = 2303,
