@@ -48,8 +48,6 @@ const std::unordered_map<int32_t, std::pair<DeviceTypeEnum, std::string>> BUTTON
         std::make_pair(DeviceTypeEnum::GAME_PAD, "ButtonHome")},
     {GamePadButtonTypeEnum::ButtonMenu,
         std::make_pair(DeviceTypeEnum::GAME_PAD, "ButtonMenu")},
-    {GamePadButtonTypeEnum::ButtonOptions,
-        std::make_pair(DeviceTypeEnum::GAME_PAD, "ButtonOptions")},
     {GamePadButtonTypeEnum::ButtonA,
         std::make_pair(DeviceTypeEnum::GAME_PAD, "ButtonA")},
     {GamePadButtonTypeEnum::ButtonB,
