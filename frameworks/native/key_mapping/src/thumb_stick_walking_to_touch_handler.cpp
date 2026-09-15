@@ -27,9 +27,9 @@ void ThumbStickWalkingToTouchHandler::HandlePointerEvent(std::shared_ptr<InputTo
         HILOGW("pointerEvent or context is nullptr");
         return;
     }
-    int32_t action = pointerEvent->GetPointerAction();
 
     // 仅处理轴事件（AXIS_BEGIN/AXIS_UPDATE/AXIS_END），非轴事件直接返回
+    int32_t action = pointerEvent->GetPointerAction();
     if (action != PointerEvent::POINTER_ACTION_AXIS_BEGIN
         && action != PointerEvent::POINTER_ACTION_AXIS_UPDATE
         && action != PointerEvent::POINTER_ACTION_AXIS_END) {

@@ -61,9 +61,9 @@ void ThumbStickFpsObservationToTouchHandler::HandlePointerEvent(
     if (pointerEvent == nullptr || context == nullptr) {
         return;
     }
-    int32_t action = pointerEvent->GetPointerAction();
 
     // 仅处理轴事件（AXIS_BEGIN/AXIS_UPDATE/AXIS_END），非轴事件直接返回
+    int32_t action = pointerEvent->GetPointerAction();
     if (action != PointerEvent::POINTER_ACTION_AXIS_BEGIN
         && action != PointerEvent::POINTER_ACTION_AXIS_UPDATE
         && action != PointerEvent::POINTER_ACTION_AXIS_END) {
@@ -195,7 +195,7 @@ void ThumbStickFpsObservationToTouchHandler::HandleAxisEvent(
     // 读取轴值并更新缓存，随后计算轴值模长用于死区判断
     UpdateStickAxes(pointerEvent, axisZ, axisRZ);
     double rawMag = std::sqrt(lastAxisZ_ * lastAxisZ_ + lastAxisRZ_ * lastAxisRZ_);
-    
+
     // 更新观察任务的摇杆数据，供定时任务计算移动量
     task_.UpdateJoystickData(lastAxisZ_, lastAxisRZ_);
 
