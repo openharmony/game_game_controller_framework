@@ -49,6 +49,7 @@ void GamepadSkillCancelToTouchHandler::HandleKeyDown(std::shared_ptr<InputToTouc
     moveEntity.actionTime = keyEvent->GetActionTime();
     BuildAndSendPointerEvent(context, moveEntity);
 
+    // 直接在技能取消区域抬起的话技能还是会释放，需要延迟一下再抬起；和手操作一样，当前hap侧配置200
     int64_t delayUs = static_cast<int64_t>(mappingInfo.delayTime) * DELAY_MS_TO_US;
     if (delayUs > 0) {
         HILOGI("Gamepad skill cancel: MOVE to(%d,%d), UP in %lldus",
