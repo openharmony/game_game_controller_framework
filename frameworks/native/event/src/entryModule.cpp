@@ -19,7 +19,7 @@
 using namespace OHOS::GameController;
 
 
-extern "C" __attribute__((constructor)) void RegisterEntryModule(void)
+extern "C" __attribute__((constructor)) void OHOS_GameController_RegisterEntryModule(void)
 {
     HILOG_I("begin load gamecontroller_event");
     PublicEventListener::SubscribeEvent();

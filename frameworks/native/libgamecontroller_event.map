@@ -1,7 +1,7 @@
 {
     global:
     extern "C++" {
-        RegisterEntryModule;
+        OHOS_GameController_RegisterEntryModule;
         *vtable*for*;
         *typeinfo*for*;
         *VTT*for*;
