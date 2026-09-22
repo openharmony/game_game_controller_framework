@@ -252,7 +252,7 @@ private:
     /**
      * @brief ffrt定时器句柄
      */
-    ffrt_timer_t timerHandle_;
+    ffrt_timer_t timerHandle_ = 0;
 
     /**
      * @brief 上次回调的时间戳，用于计算时间增量
