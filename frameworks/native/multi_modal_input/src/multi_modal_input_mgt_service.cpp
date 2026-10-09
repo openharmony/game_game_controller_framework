@@ -22,6 +22,7 @@
 #include "window_input_intercept.h"
 #include "key_mapping_service.h"
 #include "gamecontroller_utils.h"
+#include "shortcut_key_handler.h"
 
 namespace OHOS {
 namespace GameController {
@@ -471,6 +472,25 @@ void MultiModalInputMgtService::ClearOfflineDeviceAndBroadcast(const int32_t dev
     // Broadcast device offline
     DelayedSingleton<KeyMappingService>::GetInstance()->BroadCastDeviceInfo(deviceInfo);
 
+    // Send reset event to gtx when gamepad disconnects
+    if (deviceInfo.deviceType == GAME_PAD) {
+        // Check if there are still other gamepads connected
+        int gamePadCount = 0;
+        for (const auto &[uniq, info] : deviceInfoByUniqMap_) {
+            if (info.deviceType == GAME_PAD) {
+                gamePadCount++;
+            }
+        }
+        if (gamePadCount == 0) {
+            HILOGI("[GameController][ClearOfflineDeviceAndBroadcast]Last GamePad disconnected, send reset event to "
+                   "gtx");
+            ShortcutKeyHandler::SendKeyMappingResetNotify();
+        } else {
+            HILOGI("[GameController][ClearOfflineDeviceAndBroadcast]GamePad disconnected, but %{public}d still "
+                   "connected, skip reset",
+                   gamePadCount);
+        }
+    }
     DoDeviceEventCallback(deviceInfo, DeviceChangeType::REMOVE);
 }
 

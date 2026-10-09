@@ -369,8 +369,12 @@ InputToTouchContext::InputToTouchContext(const DeviceTypeEnum &type,
             isMonitorMouse = true;
         } else if (IsGamePadMapping(mappingInfo)) {
             // handled by IsGamePadMapping
-        } else if (mappingInfo.mappingType == SINGE_KEY_TO_TOUCH) {
+        } else if (mappingInfo.mappingType == SINGE_KEY_TO_TOUCH
+            || mappingInfo.mappingType == SHORTCUT_KEY) {
             singleKeyMappings[mappingInfo.keyCode] = mappingInfo;
+            if (mappingInfo.mappingType == SHORTCUT_KEY) {
+                HILOGI("[CONTEXT]InputToTouchContext: SHORTCUT_KEY loaded, keyCode[%{public}d]", mappingInfo.keyCode);
+            }
         } else {
             HILOGW("unknown mappingType[%{public}d]", static_cast<int32_t>(mappingInfo.mappingType));
         }

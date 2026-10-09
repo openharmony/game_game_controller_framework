@@ -46,7 +46,8 @@ std::unordered_map<MappingTypeEnum, CheckHandler> checkKeyMappingHandlerMap = {
     {MappingTypeEnum::GAMEPAD_SKILL_TO_TOUCH,           &GameKeyMappingInfo::CheckGamepadSkill},
     {MappingTypeEnum::GAMEPAD_SKILL_CANCEL_TO_TOUCH,    &GameKeyMappingInfo::CheckGamepadSkillCancel},
     {MappingTypeEnum::TRIGGER_TO_TOUCH,                   &GameKeyMappingInfo::CheckTriggerToTouch},
-    {MappingTypeEnum::THUMB_STICK_FPS_OBSERVATION_TO_TOUCH, &GameKeyMappingInfo::CheckThumbStickFpsObservation}
+    {MappingTypeEnum::THUMB_STICK_FPS_OBSERVATION_TO_TOUCH, &GameKeyMappingInfo::CheckThumbStickFpsObservation},
+    {MappingTypeEnum::SHORTCUT_KEY,                       &GameKeyMappingInfo::CheckShortcutKey}
 };
 }
 
@@ -413,6 +414,21 @@ bool GameKeyMappingInfo::CheckThumbStickFpsObservation(KeyToTouchMappingInfo &cu
         HILOGE("THUMB_STICK_FPS_OBSERVATION_TO_TOUCH's xStep or yStep must be greater than 0");
         return false;
     }
+    return true;
+}
+
+bool GameKeyMappingInfo::CheckShortcutKey(KeyToTouchMappingInfo &currentKeyMapping, ParameterByCheck &parameter)
+{
+    if (parameter.uniqKeyCodeMap.find(currentKeyMapping.keyCode) != parameter.uniqKeyCodeMap.end()) {
+        HILOGE("keycode has been used by another mapping");
+        return false;
+    }
+    parameter.uniqKeyCodeMap[currentKeyMapping.keyCode] = currentKeyMapping.mappingType;
+    currentKeyMapping.SetDpadInfoToDefault();
+    currentKeyMapping.combinationKeys.clear();
+    currentKeyMapping.SetSkillRangeRadiusToDefault();
+    currentKeyMapping.SetStepToDefault();
+    HILOGI("[CHECK]CheckShortcutKey success, keyCode[%{public}d]", currentKeyMapping.keyCode);
     return true;
 }
 
