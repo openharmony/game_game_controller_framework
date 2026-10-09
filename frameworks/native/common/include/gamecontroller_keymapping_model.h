@@ -32,7 +32,7 @@ const size_t COMBINATION_LAST_KEYCODE_IDX = 1;
 const int32_t MAX_KEY_MAPPING_SIZE = 100;
 const size_t MAX_BUNDLE_NAME_LENGTH = 256;
 const size_t MAX_VERSION_LENGTH = 50;
-const size_t SUM_OF_MAPPING_TYPE = 17;
+const size_t SUM_OF_MAPPING_TYPE = 18;
 const int32_t MAX_SUPPORT_DEVICE_TYPES = 2;
 
 struct ParameterByCheck {
@@ -92,7 +92,10 @@ enum MappingTypeEnum {
     TRIGGER_TO_TOUCH = 15,
 
     // FPS-style thumbstick observation with velocity integration
-    THUMB_STICK_FPS_OBSERVATION_TO_TOUCH = 16
+    THUMB_STICK_FPS_OBSERVATION_TO_TOUCH = 16,
+
+    // Shortcut key for game controller - not touch mapping, sends event to gtx
+    SHORTCUT_KEY = 17
 };
 
 /**
@@ -302,7 +305,7 @@ struct KeyToTouchMappingInfo : public Parcelable {
         }
 
         if (mappingType < static_cast<int32_t>(SINGE_KEY_TO_TOUCH) ||
-            mappingType > static_cast<int32_t>(THUMB_STICK_FPS_OBSERVATION_TO_TOUCH)) {
+            mappingType > static_cast<int32_t>(SHORTCUT_KEY)) {
             return false;
         }
         ret->mappingType = static_cast<MappingTypeEnum>(mappingType);
@@ -739,6 +742,8 @@ struct GameKeyMappingInfo : public Parcelable {
     bool CheckKeyMappingForHoverTouchPad(std::vector<KeyToTouchMappingInfo> &KeyToTouchMappings);
 
     bool IsStepValid(const KeyToTouchMappingInfo &currentKeyMapping);
+
+    bool CheckShortcutKey(KeyToTouchMappingInfo &currentKeyMapping, ParameterByCheck &parameter);
 
     /**
      * Indicates whether to delete the default configuration based on the bundle name.

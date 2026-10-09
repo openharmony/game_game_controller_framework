@@ -38,6 +38,7 @@
 #include "nlohmann/json.hpp"
 #include <fstream>
 #include <cmath>
+#include "shortcut_key_handler.h"
 
 namespace OHOS {
 namespace GameController {
@@ -73,6 +74,8 @@ KeyToTouchManager::KeyToTouchManager()
         = std::make_shared<GamepadSkillCancelToTouchHandler>();
     mappingHandler_[MappingTypeEnum::THUMB_STICK_FPS_OBSERVATION_TO_TOUCH]
         = std::make_shared<ThumbStickFpsObservationToTouchHandler>();
+    mappingHandler_[MappingTypeEnum::SHORTCUT_KEY]
+        = std::make_shared<ShortcutKeyHandler>();
 }
 
 KeyToTouchManager::~KeyToTouchManager()
@@ -707,6 +710,10 @@ void KeyToTouchManager::HandleEnableKeyMapping(bool isEnable)
     ResetContext(gcKeyboardContext_);
     ResetContext(hoverTouchPadContext_);
     ResetContext(gamePadContext_);
+    if (!isEnableKeyMapping_) {
+        HILOGI("EnableKeyMapping disabled, send reset event to gtx");
+        ShortcutKeyHandler::SendKeyMappingResetNotify();
+    }
 }
 
 void KeyToTouchManager::ResetContext(std::shared_ptr<InputToTouchContext> &context)
@@ -898,12 +905,16 @@ void KeyToTouchManager::UpdateFocusStatus(const std::string &bundleName, bool is
     if (handleQueue_ == nullptr) {
         return;
     }
-    handleQueue_->submit([bundleName, this] {
+    handleQueue_->submit([bundleName, isFocus, this] {
         std::lock_guard<ffrt::mutex> lock(checkMutex_);
         if (bundleName != bundleName_) {
             HILOGW("Discard the UpdateFocusStatus Operate. Because the bundleName[%{public}s] is not same "
                    "with bundleName_[%{public}s]", bundleName.c_str(), bundleName_.c_str());
             return;
+        }
+        if (!isFocus) {
+            HILOGI("Focus lost, send reset event to gtx and clear contexts");
+            ShortcutKeyHandler::SendKeyMappingResetNotify();
         }
         ResetContext(gcKeyboardContext_);
         ResetContext(hoverTouchPadContext_);
