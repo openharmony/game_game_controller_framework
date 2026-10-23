@@ -373,7 +373,7 @@ InputToTouchContext::InputToTouchContext(const DeviceTypeEnum &type,
             || mappingInfo.mappingType == SHORTCUT_KEY) {
             singleKeyMappings[mappingInfo.keyCode] = mappingInfo;
             if (mappingInfo.mappingType == SHORTCUT_KEY) {
-                HILOGI("[CONTEXT]InputToTouchContext: SHORTCUT_KEY loaded, keyCode[%{public}d]", mappingInfo.keyCode);
+                HILOGI("[CONTEXT]InputToTouchContext: SHORTCUT_KEY loaded, keyCode[%{private}d]", mappingInfo.keyCode);
             }
         } else {
             HILOGW("unknown mappingType[%{public}d]", static_cast<int32_t>(mappingInfo.mappingType));

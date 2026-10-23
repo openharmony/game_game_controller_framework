@@ -37,7 +37,7 @@ void ShortcutKeyHandler::HandleKeyDown(std::shared_ptr<InputToTouchContext> &con
                                        const KeyToTouchMappingInfo &mappingInfo,
                                        const DeviceInfo &deviceInfo)
 {
-    HILOGI("[SHORTCUT_HANDLER]HandleKeyDown, keyCode[%{public}d]", keyEvent->GetKeyCode());
+    HILOGI("[SHORTCUT_HANDLER]HandleKeyDown, keyCode[%{private}d]", keyEvent->GetKeyCode());
 }
 
 void ShortcutKeyHandler::HandleKeyUp(std::shared_ptr<InputToTouchContext> &context,
@@ -45,7 +45,7 @@ void ShortcutKeyHandler::HandleKeyUp(std::shared_ptr<InputToTouchContext> &conte
                                      const DeviceInfo &deviceInfo)
 {
     int32_t keyCode = keyEvent->GetKeyCode();
-    HILOGI("[SHORTCUT_HANDLER]HandleKeyUp, keyCode[%{public}d], send status event to gtx", keyCode);
+    HILOGI("[SHORTCUT_HANDLER]HandleKeyUp, keyCode[%{private}d], send status event to gtx", keyCode);
     
     EventFwk::CommonEventPublishInfo publishInfo;
     publishInfo.SetOrdered(false);
