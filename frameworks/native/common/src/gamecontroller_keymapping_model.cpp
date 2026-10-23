@@ -428,7 +428,7 @@ bool GameKeyMappingInfo::CheckShortcutKey(KeyToTouchMappingInfo &currentKeyMappi
     currentKeyMapping.combinationKeys.clear();
     currentKeyMapping.SetSkillRangeRadiusToDefault();
     currentKeyMapping.SetStepToDefault();
-    HILOGI("[CHECK]CheckShortcutKey success, keyCode[%{public}d]", currentKeyMapping.keyCode);
+    HILOGI("[CHECK]CheckShortcutKey success, keyCode[%{private}d]", currentKeyMapping.keyCode);
     return true;
 }
 
